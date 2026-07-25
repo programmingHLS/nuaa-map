@@ -51,25 +51,32 @@ export function BuildingSpriteLayer({
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        const nw = img.naturalWidth;
-        const nh = img.naturalHeight;
-        const sw = Math.ceil(nw / DOWNSAMPLE);
-        const sh = Math.ceil(nh / DOWNSAMPLE);
+        try {
+          const nw = img.naturalWidth;
+          const nh = img.naturalHeight;
+          const sw = Math.ceil(nw / DOWNSAMPLE);
+          const sh = Math.ceil(nh / DOWNSAMPLE);
 
-        const cvs = document.createElement('canvas');
-        cvs.width = sw;
-        cvs.height = sh;
-        const ctx = cvs.getContext('2d', { willReadFrequently: true })!;
-        ctx.drawImage(img, 0, 0, sw, sh);
-        const data = ctx.getImageData(0, 0, sw, sh).data;
+          const cvs = document.createElement('canvas');
+          cvs.width = sw;
+          cvs.height = sh;
+          const ctx = cvs.getContext('2d', { willReadFrequently: true })!;
+          ctx.drawImage(img, 0, 0, sw, sh);
+          const data = ctx.getImageData(0, 0, sw, sh).data;
 
-        // 提取 alpha 通道
-        const alpha = new Uint8Array(sw * sh);
-        for (let i = 0; i < sw * sh; i++) {
-          alpha[i] = data[i * 4 + 3];
+          // 提取 alpha 通道
+          const alpha = new Uint8Array(sw * sh);
+          for (let i = 0; i < sw * sh; i++) {
+            alpha[i] = data[i * 4 + 3];
+          }
+
+          cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh };
+        } catch (e) {
+          console.error(`精灵图加载失败（可能是 CDN 跨域问题）：${sprite.image}`, e);
         }
-
-        cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh };
+      };
+      img.onerror = () => {
+        console.error(`精灵图加载失败：${sprite.image}`);
       };
       img.src = sprite.image;
     });
