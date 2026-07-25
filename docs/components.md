@@ -41,7 +41,7 @@ interface MapViewProps {
 ### 关键常量
 
 ```typescript
-const MAP_SRC = '/hand-drawn-map-v1.jpg';  // 底图路径，替换手绘地图时改这里
+const MAP_SRC = '/tianmuhu-map.jpg';  // 底图路径，替换手绘地图时改这里
 ```
 
 ### 内部状态
@@ -117,8 +117,8 @@ interface BuildingPopoverProps {
 ### 关键常量
 
 ```typescript
-const POPOVER_W = 340;       // 弹窗宽度
-const POPOVER_MAX_H = 580;   // 弹窗最大高度
+const POPOVER_W = 300;       // 弹窗宽度
+const POPOVER_MAX_H = 500;   // 弹窗最大高度
 ```
 
 ### 修改周边设施
@@ -164,7 +164,7 @@ interface ChatWidgetProps {
 ### 搜索过滤
 - `searchTerm` 状态驱动 `filteredEntries`（`useMemo`）
 - 同时匹配 `question` 和 `answer`，大小写不敏感
-- 匹配关键词用 `<mark>` 高亮（`utils/highlight.tsx`）
+- 匹配关键词用 `<mark>` 高亮（`utils/highlight.ts`）
 
 ### 动画
 - 面板入场/退场：CSS animation（`panelPhase` 状态机）
@@ -263,7 +263,7 @@ interface Props {
 |------|------|------|
 | `utils/pinyin.ts` | `toPinyin()`, `toPinyinAbbr()` | 中文→拼音（搜索用） |
 | `utils/search.ts` | `levenshtein()`, `findSimilar()` | 编辑距离 + 相似推荐 |
-| `utils/highlight.tsx` | `highlightMatch()` | 关键词高亮（返回 JSX 片段） |
+| `utils/highlight.ts` | `highlightMatch()` | 关键词高亮（返回 JSX 片段） |
 
 ---
 

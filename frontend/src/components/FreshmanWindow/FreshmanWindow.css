@@ -218,11 +218,15 @@
 
 /* ── 面板内容 ── */
 .freshman-window__main {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   position: relative;
   z-index: 1;
 }
@@ -460,6 +464,8 @@
   max-height: min(400px, 50vh);
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   scrollbar-gutter: stable;
 }
 

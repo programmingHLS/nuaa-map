@@ -219,6 +219,18 @@ export function FreshmanWindow() {
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [expanded]);
 
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const stopTouch = (e: TouchEvent) => { e.stopPropagation(); };
+    el.addEventListener('touchstart', stopTouch, { passive: true });
+    el.addEventListener('touchmove', stopTouch, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', stopTouch);
+      el.removeEventListener('touchmove', stopTouch);
+    };
+  }, [panelPhase]);
+
   const handleToggleClick = () => {
     if (expanded) {
       closePanel();
@@ -279,6 +291,8 @@ export function FreshmanWindow() {
           onMouseDown={(event) => event.stopPropagation()}
           onMouseMove={(event) => event.stopPropagation()}
           onMouseUp={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
           onWheelCapture={(event) => event.stopPropagation()}
         >
           <div className="freshman-window__main">
