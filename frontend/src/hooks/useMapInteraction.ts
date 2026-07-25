@@ -229,6 +229,14 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
     setIsDragging(false);
   }, []);
 
+  /* touchcancel：系统中断手势时强制复位，防止 ref 状态残留阻塞 wheel 事件 */
+  const handleTouchCancel = useCallback(() => {
+    dragRef.current.active = false;
+    pinchRef.current.lastDist = 0;
+    setTransform(transformRef.current);
+    setIsDragging(false);
+  }, []);
+
   /* ── 适应屏幕：宽度适配，左右边界对齐窗口 ── */
   const resetTransform = useCallback(() => {
     const container = containerRef.current;
@@ -293,6 +301,7 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
       onTouchStart: handleTouchStartWithDoubleTap,
       onTouchMove: handleTouchMove,
       onTouchEnd: handleTouchEnd,
+      onTouchCancel: handleTouchCancel,
       onDoubleClick: handleDoubleTap,
     },
     resetTransform,
