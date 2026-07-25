@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { useMapInteraction, clampTransform } from '../../hooks/useMapInteraction';
 import { HotspotLayer } from './HotspotLayer';
+import { BuildingSpriteLayer } from './BuildingSpriteLayer';
 import { BuildingPopover } from '../BuildingPopover/BuildingPopover';
 import { FreshmanWindow } from '../FreshmanWindow/FreshmanWindow';
 import type { Building, BuildingClickData, MapImageMeta, MapTransform } from '../../types';
@@ -166,6 +167,17 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
           alt="南航天目湖校区地图" onLoad={handleImageLoad} draggable={false} />
 
         {imageMeta.loaded && (
+          <BuildingSpriteLayer
+            buildings={buildings}
+            transform={transform}
+            containerRef={containerRef}
+            onBuildingClick={onBuildingClick}
+            selectedBuildingId={selectedBuilding?.id}
+            disabled={!!selectedBuilding}
+          />
+        )}
+
+        {imageMeta.loaded && (
           <HotspotLayer
             buildings={buildings}
             imageWidth={imageMeta.width}
@@ -173,7 +185,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
             transform={transform}
             onBuildingClick={onBuildingClick}
             selectedBuildingId={selectedBuilding?.id}
-            disabled={!!selectedBuilding}
+            disabled={true}
           />
         )}
       </div>
