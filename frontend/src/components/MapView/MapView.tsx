@@ -30,6 +30,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [imageMeta, setImageMeta] = useState<MapImageMeta>({ width: 0, height: 0, loaded: false });
+  const [spritesReady, setSpritesReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   // Refs 保存最新值，供 resize 事件使用（避免闭包过期）
@@ -136,7 +137,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
       ref={containerRef}
       {...handlers}
     >
-      {!imageMeta.loaded && (
+      {(!imageMeta.loaded || !spritesReady) && (
         <div className="map-loading">
           <div className="map-loading-card">
             <div className="map-loading-icon">
@@ -151,7 +152,9 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
               <div className="map-loading-bar-fill" />
             </div>
             <p className="map-loading-text">地图加载中…</p>
-            <p className="map-loading-sub">正在加载天目湖校区手绘地图</p>
+            <p className="map-loading-sub">
+              {!imageMeta.loaded ? '正在加载天目湖校区手绘地图' : '正在加载建筑详情…'}
+            </p>
           </div>
         </div>
       )}
@@ -175,6 +178,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
             onBuildingClick={onBuildingClick}
             selectedBuildingId={selectedBuilding?.id}
             disabled={!!selectedBuilding}
+            onReady={() => setSpritesReady(true)}
           />
         )}
 

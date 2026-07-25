@@ -10,6 +10,7 @@ interface BuildingSpriteLayerProps {
   onBuildingClick: (data: BuildingClickData) => void;
   selectedBuildingId?: string;
   disabled?: boolean;
+  onReady?: () => void;
 }
 
 /** 离屏 canvas 缓存：降采样后的 alpha 数据 */
@@ -37,6 +38,7 @@ export function BuildingSpriteLayer({
   onBuildingClick,
   selectedBuildingId,
   disabled,
+  onReady,
 }: BuildingSpriteLayerProps) {
   const [activeIdx, setActiveIdx] = useState<number>(-1);
   const cacheRef = useRef<(SpriteCache | null)[]>([]);
@@ -45,7 +47,9 @@ export function BuildingSpriteLayer({
 
   /* 预加载所有精灵图到离屏 canvas */
   useEffect(() => {
-    cacheRef.current = buildingSprites.map(() => null);
+    let loaded = 0;
+    const total = buildingSprites.length;
+    cacheRef.current = new Array(total).fill(null);
 
     buildingSprites.forEach((sprite, idx) => {
       const img = new Image();
@@ -74,9 +78,13 @@ export function BuildingSpriteLayer({
         } catch (e) {
           console.error(`精灵图加载失败（可能是 CDN 跨域问题）：${sprite.image}`, e);
         }
+        loaded++;
+        if (loaded >= total) onReady?.();
       };
       img.onerror = () => {
         console.error(`精灵图加载失败：${sprite.image}`);
+        loaded++;
+        if (loaded >= total) onReady?.();
       };
       img.src = sprite.image;
     });
