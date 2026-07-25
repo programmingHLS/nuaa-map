@@ -40,5 +40,6 @@ jobs:
             GIT_SSH_COMMAND='ssh -i ~/.ssh/github_deploy_key -o StrictHostKeyChecking=accept-new' \
               git fetch origin main
             git reset --hard origin/main
+            docker compose down
             docker compose up -d --build
           "
