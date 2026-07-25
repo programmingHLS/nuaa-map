@@ -7,13 +7,14 @@ interface HotspotLayerProps {
   imageHeight: number;
   transform: MapTransform;
   onBuildingClick: (data: BuildingClickData) => void;
+  onBuildingHover?: (buildingId: string | null) => void;
   selectedBuildingId?: string;
   disabled?: boolean;
 }
 
 export function HotspotLayer({
   buildings, imageWidth, imageHeight, transform,
-  onBuildingClick, selectedBuildingId, disabled,
+  onBuildingClick, onBuildingHover, selectedBuildingId, disabled,
 }: HotspotLayerProps) {
   return (
     <div className="hotspot-layer" style={{ width: imageWidth, height: imageHeight }}>
@@ -40,6 +41,8 @@ export function HotspotLayer({
             className={`hotspot hotspot--cat-${b.category} ${isSelected ? 'hotspot--selected' : ''}`}
             style={{ left: x, top: y, width, height, ...(disabled ? { pointerEvents: 'none' } : {}) }}
             onClick={handleClick}
+            onMouseEnter={() => onBuildingHover?.(b.id)}
+            onMouseLeave={() => onBuildingHover?.(null)}
             aria-label={`查看 ${b.name} 详情`}
           >
             <span className="hotspot-marker" style={{ transform: `scale(${invScale})`, transformOrigin: 'center center' }}>

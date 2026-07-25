@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>建筑精灵图定位调整工具</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+/* 顶部工具栏 */
+.toolbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 16px; background: #16213e; border-bottom: 1px solid #0f3460;
+  flex-shrink: 0; z-index: 1000;
+}
+.toolbar h1 { font-size: 14px; font-weight: 600; color: #e94560; margin-right: 16px; }
+.toolbar button {
+  padding: 6px 14px; border: 1px solid #0f3460; border-radius: 6px;
+  background: #0f3460; color: #eee; cursor: pointer; font-size: 12px;
+  transition: all 0.2s;
+}
+.toolbar button:hover { background: #e94560; border-color: #e94560; }
+.toolbar button.active { background: #e94560; border-color: #e94560; }
+.toolbar .sep { width: 1px; height: 24px; background: #0f3460; }
+.toolbar label { font-size: 12px; color: #aaa; }
+.toolbar input[type="range"] { width: 100px; }
+.toolbar .info { font-size: 11px; color: #888; margin-left: auto; }
+
+/* 左侧面板 */
+.main { display: flex; flex: 1; overflow: hidden; }
+.panel {
+  width: 260px; background: #16213e; border-right: 1px solid #0f3460;
+  overflow-y: auto; flex-shrink: 0; padding: 8px;
+}
+.panel-item {
+  padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; margin-bottom: 4px; transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.panel-item:hover { background: #0f3460; }
+.panel-item.selected { background: #0f3460; border-color: #e94560; }
+.panel-item .name { font-weight: 600; }
+.panel-item .meta { font-size: 10px; color: #888; margin-top: 2px; }
+
+/* 画布区域 */
+.canvas-wrap {
+  flex: 1; position: relative; overflow: hidden; cursor: grab;
+}
+.canvas-wrap.dragging { cursor: grabbing; }
+.canvas {
+  position: absolute; top: 0; left: 0; transform-origin: 0 0;
+}
+.canvas img.map-bg {
+  display: block; user-select: none; -webkit-user-drag: none;
+  opacity: 0.85;
+}
+
+/* 精灵图 */
+.sprite {
+  position: absolute; cursor: move; user-select: none;
+  border: 2px solid transparent; border-radius: 4px;
+  transition: border-color 0.15s;
+}
+.sprite:hover { border-color: rgba(233, 69, 96, 0.5); }
+.sprite.selected { border-color: #e94560; box-shadow: 0 0 12px rgba(233, 69, 96, 0.4); }
+.sprite img {
+  width: 100%; height: 100%; object-fit: contain;
+  pointer-events: none; user-select: none; -webkit-user-drag: none;
+}
+.sprite .resize-handle {
+  position: absolute; right: -6px; bottom: -6px;
+  width: 12px; height: 12px; background: #e94560;
+  border-radius: 50%; cursor: nwse-resize;
+  display: none;
+}
+.sprite.selected .resize-handle { display: block; }
+
+/* hotspot 标记点 */
+.hotspot-dot {
+  position: absolute; width: 8px; height: 8px;
+  background: #4ecdc4; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; opacity: 0.7;
+}
+
+/* 右侧属性面板 */
+.props {
+  width: 240px; background: #16213e; border-left: 1px solid #0f3460;
+  padding: 12px; overflow-y: auto; flex-shrink: 0;
+}
+.props h3 { font-size: 12px; color: #e94560; margin-bottom: 8px; }
+.props .field { margin-bottom: 10px; }
+.props .field label { display: block; font-size: 11px; color: #888; margin-bottom: 3px; }
+.props .field input {
+  width: 100%; padding: 4px 8px; background: #0f3460; border: 1px solid #1a1a2e;
+  border-radius: 4px; color: #eee; font-size: 12px;
+}
+.props .field input:focus { outline: none; border-color: #e94560; }
+.props .coords { font-size: 11px; color: #aaa; line-height: 1.8; }
+
+/* 导出弹窗 */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 9999; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #16213e; border: 1px solid #0f3460; border-radius: 12px;
+  padding: 20px; width: 700px; max-height: 80vh; display: flex; flex-direction: column;
+}
+.modal h2 { font-size: 16px; margin-bottom: 12px; color: #e94560; }
+.modal textarea {
+  flex: 1; min-height: 400px; background: #1a1a2e; border: 1px solid #0f3460;
+  border-radius: 8px; color: #4ecdc4; font-family: 'Fira Code', monospace;
+  font-size: 11px; padding: 12px; resize: none;
+}
+.modal .actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+.modal .actions button {
+  padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px;
+}
+.modal .actions .btn-copy { background: #e94560; color: #fff; }
+.modal .actions .btn-close { background: #0f3460; color: #eee; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>精灵图定位工具</h1>
+  <button id="btn-save">导出配置</button>
+  <button id="btn-reset">重置视图</button>
+  <div class="sep"></div>
+  <label>底图透明度</label>
+  <input type="range" id="map-opacity" min="0" max="100" value="85">
+  <div class="sep"></div>
+  <label><input type="checkbox" id="show-hotspots" checked> 显示hotspot</label>
+  <label><input type="checkbox" id="show-all" checked> 显示全部精灵</label>
+  <div class="info" id="zoom-info">缩放: 100%</div>
+</div>
+
+<div class="main">
+  <div class="panel" id="panel"></div>
+  <div class="canvas-wrap" id="canvas-wrap">
+    <div class="canvas" id="canvas">
+      <img class="map-bg" id="map-bg" src="../frontend/public/hand-drawn-map-v1.jpg" draggable="false">
+    </div>
+  </div>
+  <div class="props" id="props">
+    <h3>属性</h3>
+    <p style="font-size:11px;color:#666;">点击左侧列表或画布上的精灵图来选中</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>导出 building-sprites.ts 配置数据</h2>
+    <textarea id="export-data" readonly></textarea>
+    <div class="actions">
+      <button class="btn-copy" id="btn-copy">复制到剪贴板</button>
+      <button class="btn-close" id="btn-modal-close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 数据 =====
+const SPRITES = [
+  { image: '巡天楼.png', buildingIds: ['building-006'], names: ['巡天楼'] },
+  { image: '牧星楼.png', buildingIds: ['building-007'], names: ['牧星楼'] },
+  { image: '笃行楼.png', buildingIds: ['building-008'], names: ['笃行楼'] },
+  { image: '知行楼.png', buildingIds: ['building-009'], names: ['知行楼'] },
+  { image: '尚德楼.png', buildingIds: ['building-010'], names: ['尚德楼'] },
+  { image: '明慧楼A+B.png', buildingIds: ['building-011','building-012'], names: ['明慧楼A','明慧楼B'] },
+  { image: '明慧楼C+D.png', buildingIds: ['building-013','building-014'], names: ['明慧楼C','明慧楼D'] },
+  { image: '问天体育馆.png', buildingIds: ['building-015'], names: ['问天图书馆'] },
+  { image: '南山苑餐厅.png', buildingIds: ['building-016'], names: ['南山苑餐厅'] },
+  { image: '东篱苑餐厅.png', buildingIds: ['building-017'], names: ['东篱苑餐厅'] },
+  { image: '南山苑1号楼+2号楼.png', buildingIds: ['building-018','building-019'], names: ['南山苑1号楼','南山苑2号楼'] },
+  { image: '东篱苑6号楼（同7、8、南山苑3号楼）.png', buildingIds: ['building-020'], names: ['南山苑3号楼'] },
+  { image: '东篱苑6号楼（同7、8、南山苑3号楼）.png', buildingIds: ['building-023'], names: ['东篱苑6号楼'] },
+  { image: '东篱苑6号楼（同7、8、南山苑3号楼）.png', buildingIds: ['building-024'], names: ['东篱苑7号楼'] },
+  { image: '东篱苑6号楼（同7、8、南山苑3号楼）.png', buildingIds: ['building-025'], names: ['东篱苑8号楼'] },
+  { image: '南山苑4号楼.png', buildingIds: ['building-021'], names: ['南山苑4号楼'] },
+  { image: '东篱苑5号楼.png', buildingIds: ['building-022'], names: ['东篱苑5号楼'] },
+  { image: '职工公寓.png', buildingIds: ['building-026'], names: ['职工公寓'] },
+  { image: '体育馆游泳馆.png', buildingIds: ['building-027'], names: ['体育馆游泳馆'] },
+  { image: '西体育场.png', buildingIds: ['building-028'], names: ['西体育场'] },
+  { image: '东体育场.png', buildingIds: ['building-029'], names: ['东体育场'] },
+  { image: '风雨操场.png', buildingIds: ['building-030'], names: ['风雨操场'] },
+  { image: '师生服务大厅+综合服务楼.png', buildingIds: ['building-031','building-032'], names: ['综合服务楼','师生服务大厅'] },
+  { image: '校医院.png', buildingIds: ['building-033'], names: ['校医院'] },
+  { image: '垃圾中转站开闭所.png', buildingIds: ['building-035'], names: ['垃圾中转站开闭所'] },
+  { image: '看台.png', buildingIds: ['building-036'], names: ['看台'] },
+];
+
+// 默认配置（已校准的值，null 表示用 hotspot 中心 + 500 宽度）
+const DEFAULTS = [
+  { cx: 3650, cy: 2379, dw: 500 },   // 巡天楼
+  { cx: 4453, cy: 2817, dw: 651 },   // 牧星楼
+  { cx: 2280, cy: 2035, dw: 736 },   // 笃行楼
+  { cx: 2099, cy: 2479, dw: 970 },   // 知行楼
+  { cx: 2744, cy: 3112, dw: 1182 },  // 尚德楼
+  { cx: 4389, cy: 3360, dw: 1356 },  // 明慧楼A+B
+  { cx: 4940, cy: 3046, dw: 884 },   // 明慧楼C+D
+  { cx: 3768, cy: 2915, dw: 798 },   // 问天体育馆
+  { cx: 3953, cy: 2125, dw: 500 },   // 南山苑餐厅
+  { cx: 5363, cy: 2614, dw: 554 },   // 东篱苑餐厅
+  { cx: 3294, cy: 1798, dw: 500 },   // 南山苑1+2号楼
+  { cx: 5719, cy: 2791, dw: 560 },   // 南山苑3号楼
+  null,                               // 东篱苑6号楼（默认）
+  null,                               // 东篱苑7号楼（默认）
+  null,                               // 东篱苑8号楼（默认）
+  { cx: 4333, cy: 1959, dw: 500 },   // 南山苑4号楼
+  { cx: 5033, cy: 2461, dw: 640 },   // 东篱苑5号楼
+  { cx: 3307, cy: 1605, dw: 500 },   // 职工公寓
+  { cx: 4146, cy: 3677, dw: 500 },   // 体育馆游泳馆
+  { cx: 1802, cy: 1725, dw: 736 },   // 西体育场
+  { cx: 5079, cy: 3990, dw: 989 },   // 东体育场
+  { cx: 1308, cy: 1994, dw: 547 },   // 风雨操场
+  { cx: 2604, cy: 1669, dw: 500 },   // 师生服务大厅+综合服务楼
+  { cx: 2701, cy: 1486, dw: 500 },   // 校医院
+  { cx: 2846, cy: 1422, dw: 500 },   // 垃圾中转站开闭所
+  { cx: 1430, cy: 1563, dw: 566 },   // 看台
+];
+
+// hotspot 数据（从 mock-buildings.json 提取中心点）
+const HOTSPOTS = {
+  'building-001': {x:3114,y:1516}, 'building-002': {x:4955,y:2159},
+  'building-003': {x:2563,y:3428}, 'building-004': {x:858,y:1968},
+  'building-005': {x:6102,y:3662}, 'building-006': {x:3650,y:2379},
+  'building-007': {x:4581,y:2761}, 'building-008': {x:2267,y:1976},
+  'building-009': {x:2059,y:2442}, 'building-010': {x:2695,y:3010},
+  'building-011': {x:4303,y:3258}, 'building-012': {x:4600,y:3317},
+  'building-013': {x:5155,y:2970}, 'building-014': {x:4808,y:2825},
+  'building-015': {x:3777,y:2724}, 'building-016': {x:3953,y:2125},
+  'building-017': {x:5379,y:2586}, 'building-018': {x:3043,y:1786},
+  'building-019': {x:3544,y:1809}, 'building-020': {x:4320,y:2231},
+  'building-021': {x:4333,y:1959}, 'building-022': {x:5047,y:2412},
+  'building-023': {x:5736,y:2759}, 'building-024': {x:5979,y:3240},
+  'building-025': {x:6172,y:2934}, 'building-026': {x:3307,y:1605},
+  'building-027': {x:4146,y:3677}, 'building-028': {x:1811,y:1716},
+  'building-029': {x:5084,y:3962}, 'building-030': {x:1259,y:1959},
+  'building-031': {x:2696,y:1689}, 'building-032': {x:2512,y:1649},
+  'building-033': {x:2701,y:1486}, 'building-034': {x:3073,y:2701},
+  'building-035': {x:2846,y:1422}, 'building-036': {x:1442,y:1561},
+};
+
+// ===== 状态 =====
+let viewScale = 0.12;
+let viewX = 0, viewY = 0;
+let selectedIdx = -1;
+let dragging = null; // { type: 'pan'|'move'|'resize', ... }
+let spriteStates = []; // { cx, cy, width, height (natural), displayWidth }
+
+// ===== 初始化 =====
+const canvasWrap = document.getElementById('canvas-wrap');
+const canvas = document.getElementById('canvas');
+const mapBg = document.getElementById('map-bg');
+const panel = document.getElementById('panel');
+const propsPanel = document.getElementById('props');
+
+function getCentroid(buildingIds) {
+  let cx = 0, cy = 0, n = 0;
+  for (const id of buildingIds) {
+    const h = HOTSPOTS[id];
+    if (h) { cx += h.x; cy += h.y; n++; }
+  }
+  return n > 0 ? { x: cx / n, y: cy / n } : { x: 0, y: 0 };
+}
+
+function init() {
+  // 初始化精灵状态（优先用 DEFAULTS，否则用 hotspot 中心 + 500）
+  spriteStates = SPRITES.map((s, i) => {
+    const def = DEFAULTS[i];
+    if (def) {
+      return { cx: def.cx, cy: def.cy, displayWidth: def.dw, naturalW: 0, naturalH: 0 };
+    }
+    const c = getCentroid(s.buildingIds);
+    return { cx: c.x, cy: c.y, displayWidth: 500, naturalW: 0, naturalH: 0 };
+  });
+
+  // 加载精灵图获取自然尺寸
+  SPRITES.forEach((s, i) => {
+    const img = new Image();
+    img.onload = () => {
+      spriteStates[i].naturalW = img.naturalWidth;
+      spriteStates[i].naturalH = img.naturalHeight;
+      renderSprites();
+    };
+    img.src = '../assets/map/buildings/' + encodeURIComponent(s.image);
+  });
+
+  // 构建面板
+  renderPanel();
+
+  // 地图加载后适配视图
+  mapBg.onload = () => {
+    resetView();
+    renderSprites();
+  };
+
+  // 事件
+  canvasWrap.addEventListener('mousedown', onCanvasMouseDown);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+  canvasWrap.addEventListener('wheel', onWheel, { passive: false });
+
+  document.getElementById('btn-save').onclick = exportConfig;
+  document.getElementById('btn-reset').onclick = resetView;
+  document.getElementById('map-opacity').oninput = (e) => {
+    mapBg.style.opacity = e.target.value / 100;
+  };
+  document.getElementById('show-hotspots').onchange = () => renderSprites();
+  document.getElementById('show-all').onchange = () => renderSprites();
+
+  document.getElementById('btn-copy').onclick = () => {
+    document.getElementById('export-data').select();
+    document.execCommand('copy');
+    navigator.clipboard?.writeText(document.getElementById('export-data').value);
+  };
+  document.getElementById('btn-modal-close').onclick = () => {
+    document.getElementById('modal').classList.remove('show');
+  };
+}
+
+function resetView() {
+  const cw = canvasWrap.clientWidth;
+  const ch = canvasWrap.clientHeight;
+  const mw = mapBg.naturalWidth || 7176;
+  const mh = mapBg.naturalHeight || 5382;
+  viewScale = Math.min(cw / mw, ch / mh) * 0.9;
+  viewX = (cw - mw * viewScale) / 2;
+  viewY = (ch - mh * viewScale) / 2;
+  updateCanvasTransform();
+}
+
+function updateCanvasTransform() {
+  canvas.style.transform = `translate(${viewX}px, ${viewY}px) scale(${viewScale})`;
+  document.getElementById('zoom-info').textContent = `缩放: ${(viewScale * 100).toFixed(1)}%`;
+}
+
+// ===== 渲染 =====
+function renderPanel() {
+  panel.innerHTML = SPRITES.map((s, i) => `
+    <div class="panel-item ${i === selectedIdx ? 'selected' : ''}" data-idx="${i}">
+      <div class="name">${s.names.join(' + ')}</div>
+      <div class="meta">${s.image}</div>
+    </div>
+  `).join('');
+  panel.querySelectorAll('.panel-item').forEach(el => {
+    el.onclick = () => selectSprite(parseInt(el.dataset.idx));
+  });
+}
+
+function renderSprites() {
+  // 清除旧精灵
+  canvas.querySelectorAll('.sprite, .hotspot-dot').forEach(el => el.remove());
+
+  const showHotspots = document.getElementById('show-hotspots').checked;
+  const showAll = document.getElementById('show-all').checked;
+
+  // 画 hotspot 点
+  if (showHotspots) {
+    for (const [id, pos] of Object.entries(HOTSPOTS)) {
+      const dot = document.createElement('div');
+      dot.className = 'hotspot-dot';
+      dot.style.left = pos.x + 'px';
+      dot.style.top = pos.y + 'px';
+      dot.title = id;
+      canvas.appendChild(dot);
+    }
+  }
+
+  // 画精灵
+  SPRITES.forEach((s, i) => {
+    if (!showAll && i !== selectedIdx) return;
+    const st = spriteStates[i];
+    if (!st.naturalW) return;
+
+    const aspect = st.naturalH / st.naturalW;
+    const w = st.displayWidth;
+    const h = w * aspect;
+
+    const el = document.createElement('div');
+    el.className = 'sprite' + (i === selectedIdx ? ' selected' : '');
+    el.dataset.idx = i;
+    el.style.left = (st.cx - w / 2) + 'px';
+    el.style.top = (st.cy - h / 2) + 'px';
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
+
+    const img = document.createElement('img');
+    img.src = '../assets/map/buildings/' + encodeURIComponent(s.image);
+    img.draggable = false;
+    el.appendChild(img);
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    el.appendChild(handle);
+
+    el.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      if (e.target === handle) {
+        selectSprite(i);
+        dragging = { type: 'resize', idx: i, startX: e.clientX, startY: e.clientY, startW: st.displayWidth };
+      } else {
+        selectSprite(i);
+        dragging = { type: 'move', idx: i, startX: e.clientX, startY: e.clientY, startCx: st.cx, startCy: st.cy };
+      }
+    });
+
+    canvas.appendChild(el);
+  });
+
+  updateProps();
+}
+
+function selectSprite(idx) {
+  selectedIdx = idx;
+  renderPanel();
+  renderSprites();
+}
+
+function updateProps() {
+  if (selectedIdx < 0) {
+    propsPanel.innerHTML = '<h3>属性</h3><p style="font-size:11px;color:#666;">点击选中精灵图</p>';
+    return;
+  }
+  const s = SPRITES[selectedIdx];
+  const st = spriteStates[selectedIdx];
+  propsPanel.innerHTML = `
+    <h3>${s.names.join(' + ')}</h3>
+    <div class="coords">
+      <div>中心 X: <strong>${Math.round(st.cx)}</strong></div>
+      <div>中心 Y: <strong>${Math.round(st.cy)}</strong></div>
+      <div>显示宽度: <strong>${Math.round(st.displayWidth)}</strong>px</div>
+      <div>原始尺寸: ${st.naturalW}x${st.naturalH}</div>
+      <div>建筑IDs: ${s.buildingIds.join(', ')}</div>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>中心 X</label>
+      <input type="number" id="prop-cx" value="${Math.round(st.cx)}">
+    </div>
+    <div class="field">
+      <label>中心 Y</label>
+      <input type="number" id="prop-cy" value="${Math.round(st.cy)}">
+    </div>
+    <div class="field">
+      <label>显示宽度 (px)</label>
+      <input type="number" id="prop-w" value="${Math.round(st.displayWidth)}">
+    </div>
+  `;
+  document.getElementById('prop-cx').onchange = (e) => { st.cx = parseFloat(e.target.value); renderSprites(); };
+  document.getElementById('prop-cy').onchange = (e) => { st.cy = parseFloat(e.target.value); renderSprites(); };
+  document.getElementById('prop-w').onchange = (e) => { st.displayWidth = parseFloat(e.target.value); renderSprites(); };
+}
+
+// ===== 交互 =====
+function onCanvasMouseDown(e) {
+  if (e.target === canvasWrap || e.target === canvas || e.target === mapBg) {
+    dragging = { type: 'pan', startX: e.clientX, startY: e.clientY, startVX: viewX, startVY: viewY };
+    canvasWrap.classList.add('dragging');
+  }
+}
+
+function onMouseMove(e) {
+  if (!dragging) return;
+  const dx = e.clientX - dragging.startX;
+  const dy = e.clientY - dragging.startY;
+
+  if (dragging.type === 'pan') {
+    viewX = dragging.startVX + dx;
+    viewY = dragging.startVY + dy;
+    updateCanvasTransform();
+  } else if (dragging.type === 'move') {
+    const st = spriteStates[dragging.idx];
+    st.cx = dragging.startCx + dx / viewScale;
+    st.cy = dragging.startCy + dy / viewScale;
+    renderSprites();
+  } else if (dragging.type === 'resize') {
+    const st = spriteStates[dragging.idx];
+    st.displayWidth = Math.max(50, dragging.startW + dx / viewScale);
+    renderSprites();
+  }
+}
+
+function onMouseUp() {
+  dragging = null;
+  canvasWrap.classList.remove('dragging');
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  const rect = canvasWrap.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const oldScale = viewScale;
+  const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  viewScale = Math.max(0.02, Math.min(2, viewScale * factor));
+
+  // 以鼠标位置为中心缩放
+  viewX = mx - (mx - viewX) * (viewScale / oldScale);
+  viewY = my - (my - viewY) * (viewScale / oldScale);
+  updateCanvasTransform();
+}
+
+// ===== 导出 =====
+function exportConfig() {
+  const lines = spriteStates.map((st, i) => {
+    const s = SPRITES[i];
+    const ids = s.buildingIds.map(id => `'${id}'`).join(', ');
+    return `  {\n    image: '/buildings/sprites/${s.image}',\n    buildingIds: [${ids}],\n    displayWidth: ${Math.round(st.displayWidth)},\n    centerX: ${Math.round(st.cx)},\n    centerY: ${Math.round(st.cy)},\n  }`;
+  });
+  const output = `// 由精灵图定位工具自动生成\nexport const buildingSprites = [\n${lines.join(',\n')}\n];\n`;
+  document.getElementById('export-data').value = output;
+  document.getElementById('modal').classList.add('show');
+}
+
+init();
+</script>
+</body>
+</html>

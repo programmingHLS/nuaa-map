@@ -1,0 +1,50 @@
+/* ===== 建筑精灵图层 ===== */
+
+.sprite-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 精灵图容器 —— 默认隐藏，不拦截事件 */
+.building-sprite {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0.88);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.3s ease,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.3s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
+  will-change: transform, opacity, filter;
+}
+
+.building-sprite-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ---- 激活态：浮出 + 放大 ---- */
+.building-sprite--active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.08);
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.25))
+          drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
+  z-index: 100;
+}
+
+/* 移动端：减弱放大效果 */
+@media (max-width: 640px) {
+  .building-sprite--active {
+    transform: translate(-50%, -50%) scale(1.04);
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
+  }
+}
