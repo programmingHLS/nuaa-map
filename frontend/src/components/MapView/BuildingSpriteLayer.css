@@ -11,17 +11,23 @@
 }
 
 /* 精灵图容器 —— 默认隐藏，不拦截事件 */
+/*
+ * transition 分两层设计：
+ *   - 基础层（这里）：使用普通 ease-out，控制鼠标**离开**时的动画 —— 平滑缩回原位，不会弹性回弹
+ *   - 激活层（--active 内）：使用弹性 bezier，覆盖基础层控制鼠标**进入**时的动画 —— 有弹入效果
+ * --active 类被移除时，基础层 transition 接管退出动画，建筑平滑缩回 scale(0.88) 并隐没。
+ */
 .building-sprite {
   position: absolute;
   transform: translate(-50%, -50%) scale(0.88);
   opacity: 0;
   pointer-events: none;
-  transition:
-    opacity 0.3s ease,
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    filter 0.3s ease;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
-  will-change: transform, opacity, filter;
+  /* 退出动画：简短平滑，不弹性回缩 */
+  transition:
+    opacity 0.2s ease,
+    transform 0.25s ease-out,
+    filter 0.2s ease;
 }
 
 .building-sprite-img {
@@ -33,12 +39,18 @@
 }
 
 /* ---- 激活态：浮出 + 放大 ---- */
+/* 进入动画：弹性 bezier，覆盖基础层的 ease-out */
 .building-sprite--active {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.08);
   filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.25))
           drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
   z-index: 100;
+  transition:
+    opacity 0.3s ease,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.3s ease;
+  will-change: transform, opacity, filter;
 }
 
 /* 移动端：减弱放大效果 */
