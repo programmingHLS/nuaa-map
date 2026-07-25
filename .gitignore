@@ -44,5 +44,12 @@ coverage/
 .playwright-mcp/
 tianmuhu-campus-map.png
 
+# Large static images served via CDN (Cloudflare R2)
+# Use scripts/upload-sprites-to-r2.cjs to upload
+frontend/public/hand-drawn-map-v1.jpg
+frontend/public/tianmuhu-map.jpg
+frontend/public/placeholder-map.svg
+frontend/public/buildings/sprites/
+
 # Claude Code
 .claude/

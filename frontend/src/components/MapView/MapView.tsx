@@ -5,9 +5,10 @@ import { BuildingSpriteLayer } from './BuildingSpriteLayer';
 import { BuildingPopover } from '../BuildingPopover/BuildingPopover';
 import { FreshmanWindow } from '../FreshmanWindow/FreshmanWindow';
 import type { Building, BuildingClickData, MapImageMeta, MapTransform } from '../../types';
+import { R2_BASE } from '../../config/cdn';
 import './MapView.css';
 
-const MAP_SRC = '/hand-drawn-map-v1.jpg';
+const MAP_SRC = `${R2_BASE}/map/hand-drawn-map-v1.jpg`;
 
 export interface MapViewState {
   transform: MapTransform;
