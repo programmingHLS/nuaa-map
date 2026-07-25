@@ -145,7 +145,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
                 <rect x="12" y="16" width="40" height="32" rx="3" stroke="currentColor" strokeWidth="2" opacity="0.3"/>
                 <path d="M12 28h40" stroke="currentColor" strokeWidth="2" opacity="0.2"/>
                 <path d="M18 36h14" stroke="currentColor" strokeWidth="2" opacity="0.15"/>
-                <circle cx="32" cy="36" r="9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="56.5" className="map-loading-pin"/>
+                <circle cx="32" cy="40" r="9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="56.5" className="map-loading-pin"/>
               </svg>
             </div>
             <div className="map-loading-bar-track">
