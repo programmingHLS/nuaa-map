@@ -178,7 +178,7 @@ export function BuildingSpriteLayer({
     const el = containerRef.current;
     if (!el) return;
 
-    const onClick = (e: MouseEvent) => {
+    const onClick = () => {
       if (disabled || activeIdx < 0) return;
       const sprite = buildingSprites[activeIdx];
       const targetBuilding = buildings.find((b) => b.id === sprite.buildingIds[0]);
