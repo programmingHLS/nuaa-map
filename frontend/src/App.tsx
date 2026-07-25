@@ -57,10 +57,12 @@ function App() {
 
   return (
     <div className="app">
-      <TopBar
-        buildings={buildings}
-        onSearchSelect={handleSearchSelect}
-      />
+      <ErrorBoundary name="顶部导航">
+        <TopBar
+          buildings={buildings}
+          onSearchSelect={handleSearchSelect}
+        />
+      </ErrorBoundary>
       <main className="app-main">
         <ErrorBoundary name="地图">
           <MapView
