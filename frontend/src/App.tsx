@@ -7,6 +7,7 @@ import { ChatWidget } from './components/ChatWidget/ChatWidget';
 import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import type { Building, BuildingClickData, MapTransform } from './types';
 import mockBuildings from './data/mock-buildings.json';
+import { CDN_BASE } from './config/cdn';
 import './App.css';
 
 const DEFAULT_MAP_STATE: MapViewState = {
@@ -75,7 +76,7 @@ function App() {
       </main>
       {!selectedBuilding && (
         <Minimap
-          imageSrc={mapState.imageSrc || '/placeholder-map.svg'}
+          imageSrc={mapState.imageSrc || `${CDN_BASE}/map/placeholder-map.svg`}
           imageWidth={mapState.imageWidth}
           imageHeight={mapState.imageHeight}
           transform={mapState.transform}

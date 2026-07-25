@@ -44,5 +44,11 @@ coverage/
 .playwright-mcp/
 tianmuhu-campus-map.png
 
+# Large static images served via CDN (腾讯云 COS)
+frontend/public/hand-drawn-map-v1.jpg
+frontend/public/tianmuhu-map.jpg
+frontend/public/placeholder-map.svg
+frontend/public/buildings/sprites/
+
 # Claude Code
 .claude/
