@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Building, ChatMessage } from '../../types';
+import { CDN_BASE } from '../../config/cdn';
 import './BuildingPopover.css';
 
-/** R2/CDN 图片基础 URL，未配置时回退到本地路径 */
-const IMAGE_BASE = import.meta.env.VITE_IMAGE_BASE_URL || '';
-
-const resolveImageUrl = (path: string) =>
-  IMAGE_BASE ? `${IMAGE_BASE}${path}` : path;
+const resolveImageUrl = (path: string) => `${CDN_BASE}${path}`;
 
 interface BuildingPopoverProps {
   building: Building;
