@@ -9,10 +9,13 @@
  *   frontend/public/hand-drawn-map-v1.jpg    → map/hand-drawn-map-v1.jpg
  *   frontend/public/placeholder-map.svg     → map/placeholder-map.svg
  *   frontend/public/buildings/sprites/*.png → sprites/*.png
+ *
+ * 注意：新克隆仓库没有 public/ 下的图片文件（已由 .gitignore 排除），
+ * 图片来源：assets/map/buildings/ 下为美工源文件，需复制到 public/ 后再运行本脚本。
  */
 const COS = require('cos-nodejs-sdk-v5');
 const { readFileSync, existsSync } = require('fs');
-const { join, extname } = require('path');
+const { join, extname, relative } = require('path');
 const { readdir } = require('fs/promises');
 
 // 优先用环境变量，其次从项目根目录的 .env 文件读取
@@ -52,7 +55,10 @@ function uploadFile(localPath, key) {
   return new Promise((resolve, reject) => {
     const buf = readFileSync(localPath);
     const ct = MIME_MAP[extname(localPath).toLowerCase()] || 'application/octet-stream';
-    cos.putObject({ Bucket: BUCKET, Region: REGION, Key: key, Body: buf, ContentType: ct }, (err, data) => {
+    cos.putObject({
+      Bucket: BUCKET, Region: REGION, Key: key, Body: buf, ContentType: ct,
+      CacheControl: 'public, max-age=604800',  // 1 周 CDN 缓存，更新后需 Ctrl+Shift+R 刷新
+    }, (err, data) => {
       if (err) reject(err);
       else resolve(data);
     });
@@ -96,7 +102,7 @@ async function main() {
 
   // 2. 精灵图
   for await (const fp of walk(spritesDir)) {
-    const basename = fp.replace(spritesDir + '\\', '').replace(spritesDir + '/', '').replace(/\\/g, '/');
+    const basename = relative(spritesDir, fp).replace(/\\/g, '/');  // 跨平台安全路径
     const key = 'sprites/' + basename;
     try {
       await uploadFile(fp, key);

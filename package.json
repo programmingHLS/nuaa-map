@@ -1,4 +1,6 @@
 {
+  "private": true,
+  "description": "NUAAMap 运维脚本依赖（非前端项目），仅含 COS 上传等工具脚本所需包",
   "dependencies": {
     "cos-nodejs-sdk-v5": "^3.0.0"
   }
