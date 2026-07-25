@@ -83,8 +83,8 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 6,
     "images": [
-      "/buildings/xuntian/01.jpg",
-      "/buildings/xuntian/02.jpg"
+      "/buildings/xuntian/01.webp",
+      "/buildings/xuntian/02.webp"
     ]
   },
   {
@@ -101,8 +101,8 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 5,
     "images": [
-      "/buildings/muxing/01.jpg",
-      "/buildings/muxing/02.jpg"
+      "/buildings/muxing/01.webp",
+      "/buildings/muxing/02.webp"
     ]
   },
   {
@@ -119,8 +119,8 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 5,
     "images": [
-      "/buildings/duxing/01.jpg",
-      "/buildings/duxing/02.jpg"
+      "/buildings/duxing/01.webp",
+      "/buildings/duxing/02.webp"
     ]
   },
   {
@@ -137,8 +137,8 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 5,
     "images": [
-      "/buildings/zhixing/01.jpg",
-      "/buildings/zhixing/02.jpg"
+      "/buildings/zhixing/01.webp",
+      "/buildings/zhixing/02.webp"
     ]
   },
   {
@@ -155,8 +155,8 @@
     "openTime": "周一至周五 7:00-21:00",
     "floors": 4,
     "images": [
-      "/buildings/shangde/01.jpg",
-      "/buildings/shangde/02.jpg"
+      "/buildings/shangde/01.webp",
+      "/buildings/shangde/02.webp"
     ]
   },
   {
@@ -173,8 +173,8 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 5,
     "images": [
-      "/buildings/minghui/a-01.jpg",
-      "/buildings/minghui/a-02.jpg"
+      "/buildings/minghui/a-01.webp",
+      "/buildings/minghui/a-02.webp"
     ]
   },
   {
@@ -191,9 +191,9 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 5,
     "images": [
-      "/buildings/minghui/b-01.jpg",
-      "/buildings/minghui/b-02.jpg",
-      "/buildings/minghui/b-03.jpg"
+      "/buildings/minghui/b-01.webp",
+      "/buildings/minghui/b-02.webp",
+      "/buildings/minghui/b-03.webp"
     ]
   },
   {
@@ -210,7 +210,7 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 5,
     "images": [
-      "/buildings/minghui/c-01.jpg"
+      "/buildings/minghui/c-01.webp"
     ]
   },
   {
@@ -227,8 +227,8 @@
     "openTime": "周一至周五 7:00-21:30",
     "floors": 5,
     "images": [
-      "/buildings/minghui/d-01.jpg",
-      "/buildings/minghui/d-02.jpg"
+      "/buildings/minghui/d-01.webp",
+      "/buildings/minghui/d-02.webp"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "openTime": "周一至周日 8:00-22:00",
     "floors": 9,
     "images": [
-      "/buildings/tushuguan/01.jpg"
+      "/buildings/tushuguan/01.webp"
     ]
   },
   {
@@ -262,8 +262,8 @@
     "openTime": "早餐 7:00-9:00 | 午餐 11:00-13:00 | 晚餐 17:00-18:45 | 夜宵 19:00-22:00(仅1层)",
     "floors": 3,
     "images": [
-      "/buildings/nanshan/01.jpg",
-      "/buildings/nanshan/02.jpg"
+      "/buildings/nanshan/01.webp",
+      "/buildings/nanshan/02.webp"
     ]
   },
   {
@@ -280,8 +280,8 @@
     "openTime": "早餐 7:00-9:00 | 午餐 11:00-13:00 | 晚餐 17:00-18:45",
     "floors": 3,
     "images": [
-      "/buildings/dongli/02.jpg",
-      "/buildings/dongli/03.jpg"
+      "/buildings/dongli/02.webp",
+      "/buildings/dongli/03.webp"
     ]
   },
   {
@@ -297,9 +297,9 @@
     "description": "本科生宿舍，四人间，上床下桌，独立卫浴。",
     "floors": 7,
     "images": [
-      "/buildings/nanshan-sushe/b1-01.jpg",
-      "/buildings/nanshan-sushe/b1-02.jpg",
-      "/buildings/nanshan-sushe/b1-03.jpg"
+      "/buildings/nanshan-sushe/b1-01.webp",
+      "/buildings/nanshan-sushe/b1-02.webp",
+      "/buildings/nanshan-sushe/b1-03.webp"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "description": "本科生宿舍，四人间，配备空调和热水器。",
     "floors": 7,
     "images": [
-      "/buildings/nanshan-sushe/b2-01.jpg"
+      "/buildings/nanshan-sushe/b2-01.webp"
     ]
   },
   {
@@ -331,7 +331,7 @@
     "description": "本科生宿舍，四人间，独立卫浴。",
     "floors": 7,
     "images": [
-      "/buildings/nanshan-sushe/b3-01.jpg"
+      "/buildings/nanshan-sushe/b3-01.webp"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "description": "本科生宿舍，四人间，配备空调和热水器。",
     "floors": 7,
     "images": [
-      "/buildings/nanshan-sushe/b4-01.jpg"
+      "/buildings/nanshan-sushe/b4-01.webp"
     ]
   },
   {
@@ -363,8 +363,8 @@
     "description": "研究生宿舍，两人间，配备独立卫浴和空调。",
     "floors": 11,
     "images": [
-      "/buildings/dongli-sushe/01.jpg",
-      "/buildings/dongli-sushe/02.jpg"
+      "/buildings/dongli-sushe/01.webp",
+      "/buildings/dongli-sushe/02.webp"
     ]
   },
   {
@@ -419,9 +419,9 @@
     "description": "教师公寓及培训中心，教职工周转住宿。",
     "floors": 6,
     "images": [
-      "/buildings/zhigong/01.jpg",
-      "/buildings/zhigong/02.jpg",
-      "/buildings/zhigong/03.jpg"
+      "/buildings/zhigong/01.webp",
+      "/buildings/zhigong/02.webp",
+      "/buildings/zhigong/03.webp"
     ]
   },
   {
@@ -438,7 +438,7 @@
     "openTime": "周一至周日 9:00-21:00",
     "floors": 2,
     "images": [
-      "/buildings/jianxiang/01.jpg"
+      "/buildings/jianxiang/01.webp"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "openTime": "全天开放",
     "floors": 0,
     "images": [
-      "/buildings/xicao/01.jpg"
+      "/buildings/xicao/01.webp"
     ]
   },
   {
@@ -472,8 +472,8 @@
     "openTime": "全天开放",
     "floors": 0,
     "images": [
-      "/buildings/dongcao/01.jpg",
-      "/buildings/dongcao/02.jpg"
+      "/buildings/dongcao/01.webp",
+      "/buildings/dongcao/02.webp"
     ]
   },
   {
@@ -490,7 +490,7 @@
     "openTime": "健身房 周一至周四 12:30-13:30/18:00-21:00，周五 12:30-21:00，周末 9:00-21:00",
     "floors": 1,
     "images": [
-      "/buildings/fengyu/01.jpg"
+      "/buildings/fengyu/01.webp"
     ]
   },
   {
@@ -507,8 +507,8 @@
     "openTime": "周一至周日 8:00-20:00",
     "floors": 5,
     "images": [
-      "/buildings/zonghe/01.jpg",
-      "/buildings/zonghe/02.jpg"
+      "/buildings/zonghe/01.webp",
+      "/buildings/zonghe/02.webp"
     ]
   },
   {
@@ -525,8 +525,8 @@
     "openTime": "周一至周五 8:00-12:00, 14:00-17:00",
     "floors": 1,
     "images": [
-      "/buildings/fuwu/01.jpg",
-      "/buildings/fuwu/02.jpg"
+      "/buildings/fuwu/01.webp",
+      "/buildings/fuwu/02.webp"
     ]
   },
   {
@@ -543,8 +543,8 @@
     "openTime": "门诊 8:30-12:15, 14:00-17:45 | 急诊 24小时",
     "floors": 4,
     "images": [
-      "/buildings/xiaoyiyuan/01.jpg",
-      "/buildings/xiaoyiyuan/02.jpg"
+      "/buildings/xiaoyiyuan/01.webp",
+      "/buildings/xiaoyiyuan/02.webp"
     ]
   },
   {
@@ -561,7 +561,7 @@
     "openTime": "全天开放",
     "floors": 0,
     "images": [
-      "/buildings/sishuihu.jpg"
+      "/buildings/sishuihu.webp"
     ]
   },
   {
