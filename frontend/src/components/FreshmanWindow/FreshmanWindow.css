@@ -223,6 +223,8 @@
   gap: 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   position: relative;
   z-index: 1;
 }
@@ -459,6 +461,8 @@
   gap: 8px;
   max-height: min(400px, 50vh);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }

@@ -144,7 +144,10 @@ export function BuildingPopover({
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [chatMsgs]);
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  /* 仅桌面端自动聚焦输入框，移动端聚焦会弹出键盘导致弹窗滚到底部 */
+  useEffect(() => {
+    if (window.innerWidth > 640) inputRef.current?.focus();
+  }, []);
   useEffect(() => {
     const el = popoverRef.current;
     if (!el) return;

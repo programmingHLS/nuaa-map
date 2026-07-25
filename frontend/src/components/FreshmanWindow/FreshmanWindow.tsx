@@ -279,6 +279,8 @@ export function FreshmanWindow() {
           onMouseDown={(event) => event.stopPropagation()}
           onMouseMove={(event) => event.stopPropagation()}
           onMouseUp={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
           onWheelCapture={(event) => event.stopPropagation()}
         >
           <div className="freshman-window__main">
