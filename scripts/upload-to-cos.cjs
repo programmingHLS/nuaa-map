@@ -11,14 +11,27 @@
  *   frontend/public/buildings/sprites/*.png → sprites/*.png
  */
 const COS = require('cos-nodejs-sdk-v5');
-const { readFileSync } = require('fs');
+const { readFileSync, existsSync } = require('fs');
 const { join, extname } = require('path');
 const { readdir } = require('fs/promises');
+
+// 优先用环境变量，其次从项目根目录的 .env 文件读取
+function loadEnv() {
+  if (process.env.COS_SECRET_ID && process.env.COS_SECRET_KEY) return;
+  const envFile = join(__dirname, '..', '.env');
+  if (!existsSync(envFile)) return;
+  const lines = readFileSync(envFile, 'utf-8').split(/\r?\n/);
+  for (const line of lines) {
+    const m = line.match(/^\s*(COS_SECRET_\w+)\s*=\s*(.+)/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+  }
+}
+loadEnv();
 
 const SECRET_ID = process.env.COS_SECRET_ID;
 const SECRET_KEY = process.env.COS_SECRET_KEY;
 if (!SECRET_ID || !SECRET_KEY) {
-  console.error('请设置环境变量 COS_SECRET_ID 和 COS_SECRET_KEY');
+  console.error('请设置环境变量 COS_SECRET_ID 和 COS_SECRET_KEY，或在项目根目录创建 .env 文件');
   process.exit(1);
 }
 const BUCKET = 'nuaamap-1378966268';
