@@ -88,6 +88,12 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
 
   /* ── 滚轮缩放（以鼠标位置为中心，钳制边界） ── */
   const handleWheel = useCallback((e: WheelEvent) => {
+    // 触控手势活跃期间不处理滚轮事件：移动端 pinch 缩放时部分浏览器
+    // （Android Chrome 等）会同时触发 touchmove 和 wheel 事件。
+    // 若 handleWheel 调用 setTransform 触发 React 重渲染，会与
+    // handleTouchMove 的直接 DOM 操控冲突，形成渲染风暴导致页面崩溃。
+    if (dragRef.current.active || pinchRef.current.lastDist > 0) return;
+
     e.preventDefault();
     const container = containerRef.current;
     if (!container || !imageSize) return;
@@ -223,6 +229,14 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
     setIsDragging(false);
   }, []);
 
+  /* touchcancel：系统中断手势时强制复位，防止 ref 状态残留阻塞 wheel 事件 */
+  const handleTouchCancel = useCallback(() => {
+    dragRef.current.active = false;
+    pinchRef.current.lastDist = 0;
+    setTransform(transformRef.current);
+    setIsDragging(false);
+  }, []);
+
   /* ── 适应屏幕：宽度适配，左右边界对齐窗口 ── */
   const resetTransform = useCallback(() => {
     const container = containerRef.current;
@@ -287,6 +301,7 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
       onTouchStart: handleTouchStartWithDoubleTap,
       onTouchMove: handleTouchMove,
       onTouchEnd: handleTouchEnd,
+      onTouchCancel: handleTouchCancel,
       onDoubleClick: handleDoubleTap,
     },
     resetTransform,
