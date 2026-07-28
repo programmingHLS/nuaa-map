@@ -88,7 +88,8 @@ export function BuildingSpriteLayer({
         if (loaded >= total) onReady?.();
       };
       img.onerror = () => {
-        console.error(`精灵图加载失败：${sprite.image}`);
+        // 图片 404 或网络错误，建占位缓存保证包围盒命中可用
+        cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: sprite.displayWidth, naturalH: sprite.displayWidth, corsBlocked: true };
         loaded++;
         if (loaded >= total) onReady?.();
       };
