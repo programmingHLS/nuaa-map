@@ -43,6 +43,8 @@ export function BuildingSpriteLayer({
   onReady,
 }: BuildingSpriteLayerProps) {
   const [activeIdx, setActiveIdx] = useState<number>(-1);
+  const activeIdxRef = useRef(activeIdx);
+  activeIdxRef.current = activeIdx;
   const cacheRef = useRef<(SpriteCache | null)[]>([]);
   const rafRef = useRef<number>(0);
   const layerRef = useRef<HTMLDivElement>(null);
@@ -187,8 +189,9 @@ export function BuildingSpriteLayer({
     if (!el) return;
 
     const onClick = () => {
-      if (disabled || activeIdx < 0) return;
-      const sprite = buildingSprites[activeIdx];
+      const idx = activeIdxRef.current;
+      if (disabled || idx < 0) return;
+      const sprite = buildingSprites[idx];
       const ids = sprite.buildingIds;
       // 如果当前已有选中的兄弟建筑，切换到下一个
       let pickId = ids[0];
