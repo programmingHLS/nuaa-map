@@ -47,6 +47,9 @@ export function BuildingSpriteLayer({
   const rafRef = useRef<number>(0);
   const layerRef = useRef<HTMLDivElement>(null);
 
+  /* disabled 时重置 hover 状态 */
+  useEffect(() => { if (disabled) setActiveIdx(-1); }, [disabled]);
+
   /* 预加载所有精灵图到离屏 canvas */
   useEffect(() => {
     let loaded = 0;
@@ -76,10 +79,10 @@ export function BuildingSpriteLayer({
             alpha[i] = data[i * 4 + 3];
           }
 
-          const allZero = alpha.every(a => a === 0);
-        cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh, corsBlocked: allZero };
+          cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh, corsBlocked: false };
         } catch (e) {
-          console.error(`精灵图加载失败（可能是 CDN 跨域问题）：${sprite.image}`, e);
+          // CDN 跨域导致 getImageData 失败，回退到包围盒命中
+          cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: img.naturalWidth, naturalH: img.naturalHeight, corsBlocked: true };
         }
         loaded++;
         if (loaded >= total) onReady?.();
