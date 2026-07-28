@@ -31,9 +31,9 @@ function App() {
     const cx = b.hotspot.x + b.hotspot.width / 2;
     const cy = b.hotspot.y + b.hotspot.height / 2;
     const { scale } = transform;
-    // 弹窗在建筑上方 ~400px，建筑下移 200px 给弹窗留空间
+    // 弹窗高 580px，建筑下移 300px 给弹窗留足够空间
     window.dispatchEvent(new CustomEvent('map-navigate', {
-      detail: { scale, x: containerWidth / 2 - cx * scale, y: containerHeight / 2 - cy * scale + 200 },
+      detail: { scale, x: containerWidth / 2 - cx * scale, y: containerHeight / 2 - cy * scale + 300 },
     }));
   }, [mapState]);
 
