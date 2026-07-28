@@ -183,35 +183,54 @@ export function BuildingSpriteLayer({
     };
   }, [containerRef, screenToMap, hitTest, disabled]);
 
+  /* 触发建筑点击 */
+  const doBuildingClick = useCallback((spriteIdx: number) => {
+    if (disabled || spriteIdx < 0) return;
+    const sprite = buildingSprites[spriteIdx];
+    const ids = sprite.buildingIds;
+    let pickId = ids[0];
+    if (selectedBuildingId && ids.includes(selectedBuildingId)) {
+      const curIdx = ids.indexOf(selectedBuildingId);
+      pickId = ids[(curIdx + 1) % ids.length];
+    }
+    const targetBuilding = buildings.find((b) => b.id === pickId);
+    if (!targetBuilding) return;
+    const screenX = transform.x + targetBuilding.hotspot.x * transform.scale;
+    const screenY = transform.y + targetBuilding.hotspot.y * transform.scale;
+    const screenWidth = targetBuilding.hotspot.width * transform.scale;
+    const screenHeight = targetBuilding.hotspot.height * transform.scale;
+    onBuildingClick({ building: targetBuilding, screenX, screenY, screenWidth, screenHeight });
+  }, [disabled, selectedBuildingId, buildings, transform, onBuildingClick]);
+
   /* 点击处理：多建筑精灵图点击时循环切换 */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const onClick = () => {
-      const idx = activeIdxRef.current;
-      if (disabled || idx < 0) return;
-      const sprite = buildingSprites[idx];
-      const ids = sprite.buildingIds;
-      // 如果当前已有选中的兄弟建筑，切换到下一个
-      let pickId = ids[0];
-      if (selectedBuildingId && ids.includes(selectedBuildingId)) {
-        const curIdx = ids.indexOf(selectedBuildingId);
-        pickId = ids[(curIdx + 1) % ids.length];
-      }
-      const targetBuilding = buildings.find((b) => b.id === pickId);
-      if (!targetBuilding) return;
-
-      const screenX = transform.x + targetBuilding.hotspot.x * transform.scale;
-      const screenY = transform.y + targetBuilding.hotspot.y * transform.scale;
-      const screenWidth = targetBuilding.hotspot.width * transform.scale;
-      const screenHeight = targetBuilding.hotspot.height * transform.scale;
-      onBuildingClick({ building: targetBuilding, screenX, screenY, screenWidth, screenHeight });
+      doBuildingClick(activeIdxRef.current);
     };
 
     el.addEventListener('click', onClick);
-    return () => el.removeEventListener('click', onClick);
-  }, [containerRef, activeIdx, buildings, transform, onBuildingClick, disabled]);
+    // 移动端：touch-action:none 可能阻止合成 click，用 touchend 兜底
+    const onTouchEnd = (e: TouchEvent) => {
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      const pos = screenToMap(touch.clientX, touch.clientY);
+      if (!pos) return;
+      const hit = hitTest(pos.mx, pos.my);
+      if (hit < 0) return;
+      // 同步更新 activeIdx 并触发 click
+      activeIdxRef.current = hit;
+      setActiveIdx(hit);
+      doBuildingClick(hit);
+    };
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('click', onClick);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [containerRef, doBuildingClick, screenToMap, hitTest]);
 
   return (
     <div
