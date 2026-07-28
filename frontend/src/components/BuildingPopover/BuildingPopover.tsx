@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { Building, ChatMessage } from '../../types';
 import { CDN_BASE } from '../../config/cdn';
+import { buildingSprites } from '../../data/building-sprites';
 import './BuildingPopover.css';
 
 const resolveImageUrl = (path: string) => `${CDN_BASE}${path}`;
@@ -98,6 +99,15 @@ export function BuildingPopover({
   const openStatus = getOpenStatus(building.openTime);
   const nearby = getNearby(building, buildings);
   const catColor = CATEGORY_COLORS[building.category];
+
+  /* 同一精灵图的兄弟建筑（用于切换） */
+  const spriteSiblings = useMemo(() => {
+    const sprite = buildingSprites.find(s => s.buildingIds.includes(building.id));
+    if (!sprite || sprite.buildingIds.length <= 1) return null;
+    return sprite.buildingIds
+      .map(id => buildings.find(b => b.id === id))
+      .filter(Boolean) as Building[];
+  }, [building.id, buildings]);
 
   /* 图片列表：优先 images 数组，回退到单张 imageUrl */
   const imageList = building.images && building.images.length > 0
@@ -237,6 +247,14 @@ export function BuildingPopover({
     }
   }
 
+  // 钳制底部：弹窗不超出容器
+  if (!anchorAbove && containerHeight > 0) {
+    const maxBottom = containerHeight - 8;
+    if (anchorTop + maxPopH > maxBottom) {
+      maxPopH = Math.max(POPOVER_MIN_H, maxBottom - anchorTop);
+    }
+  }
+
   let popLeft = hotspotCX - POPOVER_W / 2;
   popLeft = Math.max(8, Math.min(popLeft, containerWidth - POPOVER_W - 8));
   const arrowOff = hotspotCX - (popLeft + POPOVER_W / 2);
@@ -324,10 +342,36 @@ export function BuildingPopover({
           ) : null}
 
           <div className="popover-header">
-            <div>
-              <span className="popover-category" style={{ color: catColor }}>{CATEGORY_LABELS[building.category]}</span>
-              <h3 className="popover-name">{building.name}</h3>
-            </div>
+            {spriteSiblings && (
+              <div className="popover-sprite-switch">
+                <button className="popover-switch-btn" aria-label="上一个"
+                  onClick={() => {
+                    const idx = spriteSiblings.findIndex(b => b.id === building.id);
+                    const prev = spriteSiblings[(idx - 1 + spriteSiblings.length) % spriteSiblings.length];
+                    onNavigateToBuilding(prev);
+                  }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div>
+                  <span className="popover-category" style={{ color: catColor }}>{CATEGORY_LABELS[building.category]}</span>
+                  <h3 className="popover-name">{building.name}</h3>
+                </div>
+                <button className="popover-switch-btn" aria-label="下一个"
+                  onClick={() => {
+                    const idx = spriteSiblings.findIndex(b => b.id === building.id);
+                    const next = spriteSiblings[(idx + 1) % spriteSiblings.length];
+                    onNavigateToBuilding(next);
+                  }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+            )}
+            {!spriteSiblings && (
+              <div>
+                <span className="popover-category" style={{ color: catColor }}>{CATEGORY_LABELS[building.category]}</span>
+                <h3 className="popover-name">{building.name}</h3>
+              </div>
+            )}
             <button className="popover-close" onClick={onClose} aria-label="关闭">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round">

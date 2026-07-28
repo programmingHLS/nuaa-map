@@ -173,7 +173,7 @@ export function BuildingSpriteLayer({
     };
   }, [containerRef, screenToMap, hitTest, disabled]);
 
-  /* 点击处理（通过 container 的 click 事件触发） */
+  /* 点击处理：多建筑精灵图点击时循环切换 */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -181,7 +181,14 @@ export function BuildingSpriteLayer({
     const onClick = () => {
       if (disabled || activeIdx < 0) return;
       const sprite = buildingSprites[activeIdx];
-      const targetBuilding = buildings.find((b) => b.id === sprite.buildingIds[0]);
+      const ids = sprite.buildingIds;
+      // 如果当前已有选中的兄弟建筑，切换到下一个
+      let pickId = ids[0];
+      if (selectedBuildingId && ids.includes(selectedBuildingId)) {
+        const curIdx = ids.indexOf(selectedBuildingId);
+        pickId = ids[(curIdx + 1) % ids.length];
+      }
+      const targetBuilding = buildings.find((b) => b.id === pickId);
       if (!targetBuilding) return;
 
       const screenX = transform.x + targetBuilding.hotspot.x * transform.scale;
