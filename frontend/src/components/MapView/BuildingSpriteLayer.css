@@ -53,9 +53,22 @@
   will-change: transform, opacity, filter;
 }
 
-/* 移动端：减弱放大效果 */
+/* 选中态：与 hover 一致的放大效果（弹窗打开时保持） */
+.building-sprite--selected {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.12);
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.25))
+          drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
+  z-index: 100;
+}
+
+/* 移动端 */
 @media (max-width: 640px) {
   .building-sprite--active {
+    transform: translate(-50%, -50%) scale(1.08);
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
+  }
+  .building-sprite--selected {
     transform: translate(-50%, -50%) scale(1.08);
     filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
   }
