@@ -6,7 +6,7 @@ import { BuildingPopover } from '../BuildingPopover/BuildingPopover';
 import { FreshmanWindow } from '../FreshmanWindow/FreshmanWindow';
 import type { Building, BuildingClickData, MapImageMeta, MapTransform } from '../../types';
 import { CDN_BASE } from '../../config/cdn';
-import { POPOVER_CENTER_OFFSET } from '../BuildingPopover/BuildingPopover';
+import { getCenterTransform, POPOVER_CENTER_OFFSET } from '../BuildingPopover/BuildingPopover';
 import './MapView.css';
 
 const MAP_SRC = `${CDN_BASE}/map/hand-drawn-map-v1.jpg`;
@@ -213,7 +213,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
             const cy = bld.hotspot.y + bld.hotspot.height / 2;
             const scale = transform.scale;
             window.dispatchEvent(new CustomEvent('map-navigate', {
-              detail: { scale, x: containerSize.w / 2 - cx * scale, y: containerSize.h / 2 - cy * scale + POPOVER_CENTER_OFFSET },
+              detail: getCenterTransform(containerSize.w, containerSize.h, cx, cy, scale, POPOVER_CENTER_OFFSET),
             }));
             // 用居中后的预期坐标，避免旧 transform 快照导致弹窗错位
             const sx = containerSize.w / 2 - bld.hotspot.width * scale / 2;

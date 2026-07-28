@@ -32,6 +32,8 @@ interface SpriteCache {
 const DOWNSAMPLE = 4;
 /** alpha 阈值：大于此值视为"有色" */
 const ALPHA_THRESHOLD = 30;
+/** 图片加载失败时的回退宽高比（用于包围盒命中检测，假设建筑图片约 4:3） */
+const FALLBACK_ASPECT_RATIO = 0.75;
 
 export function BuildingSpriteLayer({
   buildings,
@@ -48,6 +50,7 @@ export function BuildingSpriteLayer({
   const cacheRef = useRef<(SpriteCache | null)[]>([]);
   const rafRef = useRef<number>(0);
   const lastTouchRef = useRef(0);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
 
   /* disabled 时重置 hover 状态 */
@@ -92,7 +95,7 @@ export function BuildingSpriteLayer({
       };
       img.onerror = () => {
         // 图片 404 或网络错误，建占位缓存保证包围盒命中可用
-        cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: sprite.displayWidth, naturalH: sprite.displayWidth * 0.75, corsBlocked: true };
+        cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: sprite.displayWidth, naturalH: sprite.displayWidth * FALLBACK_ASPECT_RATIO, corsBlocked: true };
         loaded++;
         if (loaded >= total) onReady?.();
       };
@@ -213,11 +216,26 @@ export function BuildingSpriteLayer({
       doBuildingClick(activeIdxRef.current);
     };
 
-    el.addEventListener('click', onClick);
+    // 记录 touchstart 位置，用于 touchend 时判断是否为拖拽
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    };
+
     // 移动端：touch-action:none 可能阻止合成 click，用 touchend 兜底
     const onTouchEnd = (e: TouchEvent) => {
       const touch = e.changedTouches[0];
-      if (!touch) return;
+      if (!touch) { touchStartRef.current = null; return; }
+
+      // 拖动阈值判定：移动超过 10px 视为拖拽，不触发点击
+      const start = touchStartRef.current;
+      touchStartRef.current = null;
+      if (start) {
+        const dx = touch.clientX - start.x;
+        const dy = touch.clientY - start.y;
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) return;
+      }
+
       const pos = screenToMap(touch.clientX, touch.clientY);
       if (!pos) return;
       const hit = hitTest(pos.mx, pos.my);
@@ -228,10 +246,13 @@ export function BuildingSpriteLayer({
       setActiveIdx(hit);
       doBuildingClick(hit);
     };
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
     el.addEventListener('touchend', onTouchEnd, { passive: true });
+    el.addEventListener('click', onClick);
     return () => {
-      el.removeEventListener('click', onClick);
+      el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('click', onClick);
     };
   }, [containerRef, doBuildingClick, screenToMap, hitTest]);
 

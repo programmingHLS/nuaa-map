@@ -8,7 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import type { Building, BuildingClickData, MapTransform } from './types';
 import mockBuildings from './data/mock-buildings.json';
 import { CDN_BASE } from './config/cdn';
-import { POPOVER_CENTER_OFFSET } from './components/BuildingPopover/BuildingPopover';
+import { getCenterTransform, POPOVER_CENTER_OFFSET } from './components/BuildingPopover/BuildingPopover';
 import './App.css';
 
 const DEFAULT_MAP_STATE: MapViewState = {
@@ -34,7 +34,7 @@ function App() {
     const { scale } = transform;
     // 弹窗高 580px，建筑下移 300px 给弹窗留足够空间
     window.dispatchEvent(new CustomEvent('map-navigate', {
-      detail: { scale, x: containerWidth / 2 - cx * scale, y: containerHeight / 2 - cy * scale + POPOVER_CENTER_OFFSET },
+      detail: getCenterTransform(containerWidth, containerHeight, cx, cy, scale, POPOVER_CENTER_OFFSET),
     }));
   }, [mapState]);
 

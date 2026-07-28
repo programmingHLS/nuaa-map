@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import type { Building, ChatMessage } from '../../types';
+import type { Building, ChatMessage, MapTransform } from '../../types';
 import { CDN_BASE } from '../../config/cdn';
 import { buildingSprites } from '../../data/building-sprites';
 import './BuildingPopover.css';
@@ -37,6 +37,22 @@ const ARROW_H = 8;
 const GAP = 10;
 const TOPBAR_H = 60;
 export const POPOVER_CENTER_OFFSET = 300;
+
+/**
+ * 计算将地图坐标点居中到视口中心的 MapTransform。
+ * @param offsetY 可选的 Y 轴偏移（正=下移，给弹窗留空间），默认 0
+ */
+export function getCenterTransform(
+  containerW: number, containerH: number,
+  mapX: number, mapY: number,
+  scale: number, offsetY = 0,
+): MapTransform {
+  return {
+    scale,
+    x: containerW / 2 - mapX * scale,
+    y: containerH / 2 - mapY * scale + offsetY,
+  };
+}
 
 /* 判断建筑当前开放状态 */
 function getOpenStatus(openTime?: string): { open: boolean; label: string } | null {
