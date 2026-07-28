@@ -124,10 +124,13 @@ export function BuildingSpriteLayer({
         const dispW = sprite.displayWidth;
         const dispH = dispW * aspect;
 
-        // 包围盒检测
-        const left = sprite.centerX - dispW / 2;
-        const top = sprite.centerY - dispH / 2;
-        if (mx < left || mx > left + dispW || my < top || my > top + dispH) continue;
+        // 包围盒检测（CORS 回退时缩小 15% 避免误触相邻建筑）
+        const margin = cache.corsBlocked ? 0.15 : 0;
+        const left = sprite.centerX - dispW * (0.5 - margin);
+        const top = sprite.centerY - dispH * (0.5 - margin);
+        const right = sprite.centerX + dispW * (0.5 - margin);
+        const bottom = sprite.centerY + dispH * (0.5 - margin);
+        if (mx < left || mx > right || my < top || my > bottom) continue;
 
         // alpha 检测（CORS 不可用则包围盒命中即算，取最后一个命中者=最上层）
         if (!cache.corsBlocked) {
