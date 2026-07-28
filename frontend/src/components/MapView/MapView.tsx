@@ -208,6 +208,12 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
           buildings={buildings}
           onClose={() => onBuildingClick(null)}
           onNavigateToBuilding={(bld) => {
+            const cx = bld.hotspot.x + bld.hotspot.width / 2;
+            const cy = bld.hotspot.y + bld.hotspot.height / 2;
+            // 居中地图到新建筑，保持与点击一致的体验
+            window.dispatchEvent(new CustomEvent('map-navigate', {
+              detail: { scale: transform.scale, x: containerSize.w / 2 - cx * transform.scale, y: containerSize.h / 2 - cy * transform.scale + 300 },
+            }));
             const sx = transform.x + bld.hotspot.x * transform.scale;
             const sy = transform.y + bld.hotspot.y * transform.scale;
             const sw = bld.hotspot.width * transform.scale;
