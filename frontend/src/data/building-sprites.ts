@@ -196,8 +196,8 @@ export const buildingSprites = [
     image: `${CDN_BASE}/sprites/垃圾中转站开闭所.png`,
     buildingIds: ['building-035'],
     displayWidth: 500,
-    centerX: 2844,
-    centerY: 1425,
+    centerX: 2846,
+    centerY: 1422,
   },
   {
     image: `${CDN_BASE}/sprites/看台.png`,
