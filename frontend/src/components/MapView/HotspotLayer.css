@@ -2,118 +2,95 @@
 
 .hotspot {
   position:absolute; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:5px;
+  align-items:center; justify-content:center; gap:3px;
   pointer-events:auto; background:transparent; border:none;
-  cursor:pointer; transition:transform 0.3s var(--ease-spring);
+  cursor:pointer; transition:opacity 0.3s ease;
+  opacity:0.82;
   -webkit-tap-highlight-color: transparent;
 }
-.hotspot:hover { transform:scale(1.1); }
+.hotspot:hover { opacity:0.75; }
 
 .hotspot-marker {
-  position:relative; width:44px; height:44px;
+  position:relative; width:28px; height:28px;
   display:flex; align-items:center; justify-content:center;
 }
-/* 移动端 */
 @media (max-width:640px) {
-  .hotspot-marker { width:52px; height:52px; }
+  .hotspot-marker { width:36px; height:36px; }
 }
 
-/* ---- 默认态：按分类使用不同颜色 ---- */
+/* ---- 弱化默认态 ---- */
 .hotspot-marker-outer {
-  position:absolute; width:44px; height:44px; border-radius:50%;
-  border:3px solid var(--color-blue-500);
-  background:rgba(255,255,255,0.45); backdrop-filter:blur(4px);
-  -webkit-backdrop-filter:blur(4px);
-  box-shadow:0 0 16px rgba(37,99,235,0.25), var(--glass-highlight);
+  position:absolute; width:28px; height:28px; border-radius:50%;
+  border:2px solid var(--color-blue-500);
+  background:rgba(255,255,255,0.3); backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+  box-shadow:0 0 6px rgba(37,99,235,0.1);
   transition:all var(--transition-fast);
 }
 @media (max-width:640px) {
-  .hotspot-marker-outer { width:48px; height:48px; }
+  .hotspot-marker-outer { width:34px; height:34px; }
 }
 
 .hotspot-marker-inner {
-  position:absolute; width:16px; height:16px;
-  background:var(--color-blue-500); transform:rotate(45deg); border-radius:3px;
-  box-shadow:0 0 8px rgba(37,99,235,0.35);
+  position:absolute; width:10px; height:10px;
+  background:var(--color-blue-500); transform:rotate(45deg); border-radius:2px;
+  box-shadow:0 0 4px rgba(37,99,235,0.2);
   transition:all var(--transition-fast);
 }
 @media (max-width:640px) {
-  .hotspot-marker-inner { width:20px; height:20px; }
+  .hotspot-marker-inner { width:13px; height:13px; }
 }
 
-/* 分类色标：outer 边框 + inner 色块 + glow */
-.hotspot--cat-teaching  .hotspot-marker-outer { border-color:#475569; box-shadow:0 0 14px rgba(71,85,105,0.2), var(--glass-highlight); }
-.hotspot--cat-teaching  .hotspot-marker-inner { background:#475569; box-shadow:0 0 6px rgba(71,85,105,0.3); }
+/* 分类色标（弱化版） */
+.hotspot--cat-teaching  .hotspot-marker-outer { border-color:rgba(71,85,105,0.6); }
+.hotspot--cat-teaching  .hotspot-marker-inner { background:rgba(71,85,105,0.6); }
+.hotspot--cat-dormitory .hotspot-marker-outer { border-color:rgba(232,144,90,0.6); }
+.hotspot--cat-dormitory .hotspot-marker-inner { background:rgba(232,144,90,0.6); }
+.hotspot--cat-canteen   .hotspot-marker-outer { border-color:rgba(249,115,22,0.6); }
+.hotspot--cat-canteen   .hotspot-marker-inner { background:rgba(249,115,22,0.6); }
+.hotspot--cat-library   .hotspot-marker-outer { border-color:rgba(99,102,241,0.6); }
+.hotspot--cat-library   .hotspot-marker-inner { background:rgba(99,102,241,0.6); }
+.hotspot--cat-sports    .hotspot-marker-outer { border-color:rgba(16,185,129,0.6); }
+.hotspot--cat-sports    .hotspot-marker-inner { background:rgba(16,185,129,0.6); }
+.hotspot--cat-service   .hotspot-marker-outer { border-color:rgba(14,165,233,0.6); }
+.hotspot--cat-service   .hotspot-marker-inner { background:rgba(14,165,233,0.6); }
+.hotspot--cat-gate      .hotspot-marker-outer { border-color:rgba(120,113,108,0.5); }
+.hotspot--cat-gate      .hotspot-marker-inner { background:rgba(120,113,108,0.5); }
+.hotspot--cat-landscape .hotspot-marker-outer { border-color:rgba(20,184,166,0.6); }
+.hotspot--cat-landscape .hotspot-marker-inner { background:rgba(20,184,166,0.6); }
+.hotspot--cat-facility  .hotspot-marker-outer { border-color:rgba(148,163,184,0.5); }
+.hotspot--cat-facility  .hotspot-marker-inner { background:rgba(148,163,184,0.5); }
+.hotspot--cat-other     .hotspot-marker-outer { border-color:rgba(139,92,246,0.6); }
+.hotspot--cat-other     .hotspot-marker-inner { background:rgba(139,92,246,0.6); }
 
-.hotspot--cat-dormitory .hotspot-marker-outer { border-color:#E8905A; box-shadow:0 0 14px rgba(232,144,90,0.2), var(--glass-highlight); }
-.hotspot--cat-dormitory .hotspot-marker-inner { background:#E8905A; box-shadow:0 0 6px rgba(232,144,90,0.3); }
-
-.hotspot--cat-canteen   .hotspot-marker-outer { border-color:#F97316; box-shadow:0 0 14px rgba(249,115,22,0.2), var(--glass-highlight); }
-.hotspot--cat-canteen   .hotspot-marker-inner { background:#F97316; box-shadow:0 0 6px rgba(249,115,22,0.3); }
-
-.hotspot--cat-library   .hotspot-marker-outer { border-color:#6366F1; box-shadow:0 0 14px rgba(99,102,241,0.2), var(--glass-highlight); }
-.hotspot--cat-library   .hotspot-marker-inner { background:#6366F1; box-shadow:0 0 6px rgba(99,102,241,0.3); }
-
-.hotspot--cat-sports    .hotspot-marker-outer { border-color:#10B981; box-shadow:0 0 14px rgba(16,185,129,0.2), var(--glass-highlight); }
-.hotspot--cat-sports    .hotspot-marker-inner { background:#10B981; box-shadow:0 0 6px rgba(16,185,129,0.3); }
-
-.hotspot--cat-service   .hotspot-marker-outer { border-color:#0EA5E9; box-shadow:0 0 14px rgba(14,165,233,0.2), var(--glass-highlight); }
-.hotspot--cat-service   .hotspot-marker-inner { background:#0EA5E9; box-shadow:0 0 6px rgba(14,165,233,0.3); }
-
-.hotspot--cat-gate      .hotspot-marker-outer { border-color:#78716C; box-shadow:0 0 14px rgba(120,113,108,0.2), var(--glass-highlight); }
-.hotspot--cat-gate      .hotspot-marker-inner { background:#78716C; box-shadow:0 0 6px rgba(120,113,108,0.3); }
-
-.hotspot--cat-landscape .hotspot-marker-outer { border-color:#14B8A6; box-shadow:0 0 14px rgba(20,184,166,0.2), var(--glass-highlight); }
-.hotspot--cat-landscape .hotspot-marker-inner { background:#14B8A6; box-shadow:0 0 6px rgba(20,184,166,0.3); }
-
-.hotspot--cat-facility  .hotspot-marker-outer { border-color:#94A3B8; box-shadow:0 0 14px rgba(148,163,184,0.2), var(--glass-highlight); }
-.hotspot--cat-facility  .hotspot-marker-inner { background:#94A3B8; box-shadow:0 0 6px rgba(148,163,184,0.3); }
-
-.hotspot--cat-other     .hotspot-marker-outer { border-color:#8B5CF6; box-shadow:0 0 14px rgba(139,92,246,0.2), var(--glass-highlight); }
-.hotspot--cat-other     .hotspot-marker-inner { background:#8B5CF6; box-shadow:0 0 6px rgba(139,92,246,0.3); }
-
-/* hover / 选中态：统一为橙色高亮 */
+/* hover 弱化：不再脉冲，仅轻微提亮 */
 .hotspot:hover .hotspot-marker-outer,
 .hotspot--selected .hotspot-marker-outer {
-  border-color:var(--color-orange-500);
-  background:rgba(255,255,255,0.6);
-  box-shadow:0 0 24px rgba(249,115,22,0.4), 0 0 48px rgba(249,115,22,0.12), var(--glass-highlight);
-  animation:marker-pulse 2s ease-in-out infinite;
-}
-@keyframes marker-pulse {
-  0%,100% { box-shadow:0 0 24px rgba(249,115,22,0.4), 0 0 48px rgba(249,115,22,0.12), var(--glass-highlight); }
-  50%     { box-shadow:0 0 32px rgba(249,115,22,0.55), 0 0 60px rgba(249,115,22,0.18), var(--glass-highlight); }
-}
-.hotspot:hover .hotspot-marker-inner,
-.hotspot--selected .hotspot-marker-inner {
-  background:var(--color-orange-500); transform:rotate(45deg) scale(1.25);
-  box-shadow:0 0 14px rgba(249,115,22,0.4);
+  border-color:rgba(249,115,22,0.7);
+  background:rgba(255,255,255,0.5);
+  box-shadow:0 0 10px rgba(249,115,22,0.2);
 }
 
-/* 移动端：橙色高亮外圈放大 */
-@media (max-width:640px) {
-  .hotspot:hover .hotspot-marker-outer,
-  .hotspot--selected .hotspot-marker-outer {
-    border-width:4px;
-    box-shadow:0 0 48px rgba(249,115,22,0.5), 0 0 96px rgba(249,115,22,0.15), var(--glass-highlight);
-  }
+.hotspot:hover .hotspot-marker-inner,
+.hotspot--selected .hotspot-marker-inner {
+  background:rgba(249,115,22,0.7);
+  transform:rotate(45deg) scale(1.1);
 }
 
 .hotspot-label {
-  font-family:var(--font-display); font-size:14px; font-weight:700; color:var(--color-slate-800);
-  background:rgba(255,255,255,0.65); backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  padding:5px 14px; border-radius:var(--radius-sm); white-space:nowrap;
-  border:1px solid rgba(255,255,255,0.5);
-  box-shadow:var(--glass-highlight), 0 2px 6px rgba(0,0,0,0.06);
+  font-family:var(--font-display); font-size:11px; font-weight:600; color:var(--color-slate-600);
+  background:rgba(255,255,255,0.6); backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  padding:3px 10px; border-radius:var(--radius-sm); white-space:nowrap;
+  border:1px solid rgba(255,255,255,0.35);
+  box-shadow:none;
   transition:all var(--transition-fast);
   user-select:none; -webkit-user-select:none;
 }
 .hotspot:hover .hotspot-label,
-.hotspot--selected .hotspot-label { color:var(--color-orange-500); background:rgba(255,255,255,0.85); box-shadow:var(--shadow-card), var(--glass-highlight); }
+.hotspot--selected .hotspot-label { color:var(--color-slate-700); background:rgba(255,255,255,0.65); }
 
-/* 移动端：标签字号放大，间距增加 */
 @media (max-width:640px) {
-  .hotspot-label { font-size:16px; padding:7px 16px; }
-  .hotspot { gap:10px; }
+  .hotspot-label { font-size:12px; padding:4px 10px; }
+  .hotspot { gap:5px; }
 }
