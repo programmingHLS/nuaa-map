@@ -54,3 +54,5 @@ frontend/public/buildings/sprites/
 
 # Claude Code
 .claude/
+scripts/hand-drawn-map*.jpg
+scripts/sprite-cropper.html

@@ -6,6 +6,7 @@ import { BuildingPopover } from '../BuildingPopover/BuildingPopover';
 import { FreshmanWindow } from '../FreshmanWindow/FreshmanWindow';
 import type { Building, BuildingClickData, MapImageMeta, MapTransform } from '../../types';
 import { CDN_BASE } from '../../config/cdn';
+import { getCenterTransform, POPOVER_CENTER_OFFSET } from '../BuildingPopover/BuildingPopover';
 import './MapView.css';
 
 const MAP_SRC = `${CDN_BASE}/map/hand-drawn-map-v1.jpg`;
@@ -208,10 +209,17 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
           buildings={buildings}
           onClose={() => onBuildingClick(null)}
           onNavigateToBuilding={(bld) => {
-            const sx = transform.x + bld.hotspot.x * transform.scale;
-            const sy = transform.y + bld.hotspot.y * transform.scale;
-            const sw = bld.hotspot.width * transform.scale;
-            const sh = bld.hotspot.height * transform.scale;
+            const cx = bld.hotspot.x + bld.hotspot.width / 2;
+            const cy = bld.hotspot.y + bld.hotspot.height / 2;
+            const scale = transform.scale;
+            window.dispatchEvent(new CustomEvent('map-navigate', {
+              detail: getCenterTransform(containerSize.w, containerSize.h, cx, cy, scale, POPOVER_CENTER_OFFSET),
+            }));
+            // 用居中后的预期坐标，避免旧 transform 快照导致弹窗错位
+            const sx = containerSize.w / 2 - bld.hotspot.width * scale / 2;
+            const sy = containerSize.h / 2 + POPOVER_CENTER_OFFSET - bld.hotspot.height * scale / 2;
+            const sw = bld.hotspot.width * scale;
+            const sh = bld.hotspot.height * scale;
             onBuildingClick({ building: bld, screenX: sx, screenY: sy, screenWidth: sw, screenHeight: sh });
           }}
         />

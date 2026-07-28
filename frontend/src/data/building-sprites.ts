@@ -97,7 +97,7 @@ export const buildingSprites = [
   {
     image: `${CDN_BASE}/sprites/南山苑1号楼+2号楼.png`,
     buildingIds: ['building-018', 'building-019'],
-    displayWidth: 1063,
+    displayWidth: 1300,
     centerX: 3393,
     centerY: 1853,
   },
@@ -181,23 +181,23 @@ export const buildingSprites = [
   {
     image: `${CDN_BASE}/sprites/师生服务大厅+综合服务楼.png`,
     buildingIds: ['building-031', 'building-032'],
-    displayWidth: 389,
-    centerX: 2597,
-    centerY: 1678,
+    displayWidth: 600,
+    centerX: 2601,
+    centerY: 1675,
   },
   {
     image: `${CDN_BASE}/sprites/校医院.png`,
     buildingIds: ['building-033'],
-    displayWidth: 247,
-    centerX: 2705,
-    centerY: 1528,
+    displayWidth: 280,
+    centerX: 2702,
+    centerY: 1486,
   },
   {
     image: `${CDN_BASE}/sprites/垃圾中转站开闭所.png`,
     buildingIds: ['building-035'],
-    displayWidth: 393,
-    centerX: 2825,
-    centerY: 1441,
+    displayWidth: 500,
+    centerX: 2846,
+    centerY: 1422,
   },
   {
     image: `${CDN_BASE}/sprites/看台.png`,
@@ -205,7 +205,14 @@ export const buildingSprites = [
     displayWidth: 566,
     centerX: 1430,
     centerY: 1563,
-  }
+  },
+  {
+    image: `${CDN_BASE}/sprites/泗水湖.png`,
+    buildingIds: ['building-034'],
+    displayWidth: 1556,
+    centerX: 2764,
+    centerY: 2786,
+  },
 ];
 
 

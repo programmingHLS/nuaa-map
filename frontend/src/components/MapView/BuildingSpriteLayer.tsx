@@ -24,12 +24,16 @@ interface SpriteCache {
   /** 自然宽高 */
   naturalW: number;
   naturalH: number;
+  /** CORS 受限时 alpha 数据全为 0，回退到包围盒命中 */
+  corsBlocked: boolean;
 }
 
 /** 降采样因子（每 N 像素取一个样本，平衡精度与性能） */
 const DOWNSAMPLE = 4;
 /** alpha 阈值：大于此值视为"有色" */
 const ALPHA_THRESHOLD = 30;
+/** 图片加载失败时的回退宽高比（用于包围盒命中检测，假设建筑图片约 4:3） */
+const FALLBACK_ASPECT_RATIO = 0.75;
 
 export function BuildingSpriteLayer({
   buildings,
@@ -41,9 +45,16 @@ export function BuildingSpriteLayer({
   onReady,
 }: BuildingSpriteLayerProps) {
   const [activeIdx, setActiveIdx] = useState<number>(-1);
+  const activeIdxRef = useRef(activeIdx);
+  activeIdxRef.current = activeIdx;
   const cacheRef = useRef<(SpriteCache | null)[]>([]);
   const rafRef = useRef<number>(0);
+  const lastTouchRef = useRef(0);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
+
+  /* disabled 时重置 hover 状态 */
+  useEffect(() => { if (disabled) setActiveIdx(-1); }, [disabled]);
 
   /* 预加载所有精灵图到离屏 canvas */
   useEffect(() => {
@@ -74,15 +85,17 @@ export function BuildingSpriteLayer({
             alpha[i] = data[i * 4 + 3];
           }
 
-          cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh };
+          cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh, corsBlocked: false };
         } catch (e) {
-          console.error(`精灵图加载失败（可能是 CDN 跨域问题）：${sprite.image}`, e);
+          // CDN 跨域导致 getImageData 失败，回退到包围盒命中
+          cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: img.naturalWidth, naturalH: img.naturalHeight, corsBlocked: true };
         }
         loaded++;
         if (loaded >= total) onReady?.();
       };
       img.onerror = () => {
-        console.error(`精灵图加载失败：${sprite.image}`);
+        // 图片 404 或网络错误，建占位缓存保证包围盒命中可用
+        cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: sprite.displayWidth, naturalH: sprite.displayWidth * FALLBACK_ASPECT_RATIO, corsBlocked: true };
         loaded++;
         if (loaded >= total) onReady?.();
       };
@@ -105,10 +118,10 @@ export function BuildingSpriteLayer({
     [containerRef, transform],
   );
 
-  /* 检测地图坐标命中哪个精灵图 */
+  /* 检测地图坐标命中哪个精灵图（倒序遍历，返回最上层命中者） */
   const hitTest = useCallback(
     (mx: number, my: number): number => {
-      for (let i = 0; i < buildingSprites.length; i++) {
+      for (let i = buildingSprites.length - 1; i >= 0; i--) {
         const cache = cacheRef.current[i];
         if (!cache) continue;
 
@@ -117,23 +130,24 @@ export function BuildingSpriteLayer({
         const dispW = sprite.displayWidth;
         const dispH = dispW * aspect;
 
-        // 包围盒检测
-        const left = sprite.centerX - dispW / 2;
-        const top = sprite.centerY - dispH / 2;
-        if (mx < left || mx > left + dispW || my < top || my > top + dispH) continue;
+        // 包围盒检测（CORS 回退时缩小 15% 避免误触相邻建筑）
+        const margin = cache.corsBlocked ? 0.15 : 0;
+        const left = sprite.centerX - dispW * (0.5 - margin);
+        const top = sprite.centerY - dispH * (0.5 - margin);
+        const right = sprite.centerX + dispW * (0.5 - margin);
+        const bottom = sprite.centerY + dispH * (0.5 - margin);
+        if (mx < left || mx > right || my < top || my > bottom) continue;
 
-        // 转换到精灵图像素坐标（降采样空间）
-        const relX = (mx - left) / dispW; // 0-1
-        const relY = (my - top) / dispH; // 0-1
-        const px = Math.floor(relX * cache.sw);
-        const py = Math.floor(relY * cache.sh);
-
-        if (px < 0 || px >= cache.sw || py < 0 || py >= cache.sh) continue;
-
-        // 查询 alpha
-        if (cache.alpha[py * cache.sw + px] > ALPHA_THRESHOLD) {
-          return i;
+        // alpha 检测（CORS 不可用则包围盒命中即算；倒序遍历，首命中即最上层）
+        if (!cache.corsBlocked) {
+          const relX = (mx - left) / dispW;
+          const relY = (my - top) / dispH;
+          const px = Math.floor(relX * cache.sw);
+          const py = Math.floor(relY * cache.sh);
+          if (px < 0 || px >= cache.sw || py < 0 || py >= cache.sh) continue;
+          if (cache.alpha[py * cache.sw + px] <= ALPHA_THRESHOLD) continue;
         }
+        return i;
       }
       return -1;
     },
@@ -173,27 +187,74 @@ export function BuildingSpriteLayer({
     };
   }, [containerRef, screenToMap, hitTest, disabled]);
 
-  /* 点击处理（通过 container 的 click 事件触发） */
+  /* 触发建筑点击 */
+  const doBuildingClick = useCallback((spriteIdx: number) => {
+    if (disabled || spriteIdx < 0) return;
+    const sprite = buildingSprites[spriteIdx];
+    const ids = sprite.buildingIds;
+    let pickId = ids[0];
+    if (selectedBuildingId && ids.includes(selectedBuildingId)) {
+      const curIdx = ids.indexOf(selectedBuildingId);
+      pickId = ids[(curIdx + 1) % ids.length];
+    }
+    const targetBuilding = buildings.find((b) => b.id === pickId);
+    if (!targetBuilding) return;
+    const screenX = transform.x + targetBuilding.hotspot.x * transform.scale;
+    const screenY = transform.y + targetBuilding.hotspot.y * transform.scale;
+    const screenWidth = targetBuilding.hotspot.width * transform.scale;
+    const screenHeight = targetBuilding.hotspot.height * transform.scale;
+    onBuildingClick({ building: targetBuilding, screenX, screenY, screenWidth, screenHeight });
+  }, [disabled, selectedBuildingId, buildings, transform, onBuildingClick]);
+
+  /* 点击处理：多建筑精灵图点击时循环切换 */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const onClick = () => {
-      if (disabled || activeIdx < 0) return;
-      const sprite = buildingSprites[activeIdx];
-      const targetBuilding = buildings.find((b) => b.id === sprite.buildingIds[0]);
-      if (!targetBuilding) return;
-
-      const screenX = transform.x + targetBuilding.hotspot.x * transform.scale;
-      const screenY = transform.y + targetBuilding.hotspot.y * transform.scale;
-      const screenWidth = targetBuilding.hotspot.width * transform.scale;
-      const screenHeight = targetBuilding.hotspot.height * transform.scale;
-      onBuildingClick({ building: targetBuilding, screenX, screenY, screenWidth, screenHeight });
+      if (Date.now() - lastTouchRef.current < 500) return; // touchend 已处理
+      doBuildingClick(activeIdxRef.current);
     };
 
+    // 记录 touchstart 位置，用于 touchend 时判断是否为拖拽
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    };
+
+    // 移动端：touch-action:none 可能阻止合成 click，用 touchend 兜底
+    const onTouchEnd = (e: TouchEvent) => {
+      const touch = e.changedTouches[0];
+      if (!touch) { touchStartRef.current = null; return; }
+
+      // 拖动阈值判定：移动超过 10px 视为拖拽，不触发点击
+      const start = touchStartRef.current;
+      touchStartRef.current = null;
+      if (start) {
+        const dx = touch.clientX - start.x;
+        const dy = touch.clientY - start.y;
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) return;
+      }
+
+      const pos = screenToMap(touch.clientX, touch.clientY);
+      if (!pos) return;
+      const hit = hitTest(pos.mx, pos.my);
+      if (hit < 0) return;
+      // 同步更新 activeIdx 并触发 click，记录时间防双击
+      lastTouchRef.current = Date.now();
+      activeIdxRef.current = hit;
+      setActiveIdx(hit);
+      doBuildingClick(hit);
+    };
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
     el.addEventListener('click', onClick);
-    return () => el.removeEventListener('click', onClick);
-  }, [containerRef, activeIdx, buildings, transform, onBuildingClick, disabled]);
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('click', onClick);
+    };
+  }, [containerRef, doBuildingClick, screenToMap, hitTest]);
 
   return (
     <div
