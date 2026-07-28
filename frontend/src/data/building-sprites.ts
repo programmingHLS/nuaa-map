@@ -207,7 +207,7 @@ export const buildingSprites = [
     centerY: 1563,
   },
   {
-    image: '/buildings/sprites/泗水湖.png',
+    image: `${CDN_BASE}/sprites/泗水湖.png`,
     buildingIds: ['building-034'],
     displayWidth: 1556,
     centerX: 2764,

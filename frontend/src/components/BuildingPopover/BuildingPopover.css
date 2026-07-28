@@ -121,6 +121,7 @@
 .popover-switch-btn {
   width:28px; height:28px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
+  border:none; cursor:pointer;
   border-radius:50%; color:var(--color-slate-400);
   background:rgba(37,99,235,0.04);
   transition:all var(--transition-fast);

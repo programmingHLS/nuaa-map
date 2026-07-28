@@ -36,6 +36,7 @@ const POPOVER_MIN_H = 320;
 const ARROW_H = 8;
 const GAP = 10;
 const TOPBAR_H = 60;
+export const POPOVER_CENTER_OFFSET = 300;
 
 /* 判断建筑当前开放状态 */
 function getOpenStatus(openTime?: string): { open: boolean; label: string } | null {

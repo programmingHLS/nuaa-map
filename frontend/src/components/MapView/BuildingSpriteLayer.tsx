@@ -47,6 +47,7 @@ export function BuildingSpriteLayer({
   activeIdxRef.current = activeIdx;
   const cacheRef = useRef<(SpriteCache | null)[]>([]);
   const rafRef = useRef<number>(0);
+  const lastTouchRef = useRef(0);
   const layerRef = useRef<HTMLDivElement>(null);
 
   /* disabled 时重置 hover 状态 */
@@ -91,7 +92,7 @@ export function BuildingSpriteLayer({
       };
       img.onerror = () => {
         // 图片 404 或网络错误，建占位缓存保证包围盒命中可用
-        cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: sprite.displayWidth, naturalH: sprite.displayWidth, corsBlocked: true };
+        cacheRef.current[idx] = { sw: 1, sh: 1, alpha: new Uint8Array(1), naturalW: sprite.displayWidth, naturalH: sprite.displayWidth * 0.75, corsBlocked: true };
         loaded++;
         if (loaded >= total) onReady?.();
       };
@@ -114,10 +115,10 @@ export function BuildingSpriteLayer({
     [containerRef, transform],
   );
 
-  /* 检测地图坐标命中哪个精灵图 */
+  /* 检测地图坐标命中哪个精灵图（倒序遍历，返回最上层命中者） */
   const hitTest = useCallback(
     (mx: number, my: number): number => {
-      for (let i = 0; i < buildingSprites.length; i++) {
+      for (let i = buildingSprites.length - 1; i >= 0; i--) {
         const cache = cacheRef.current[i];
         if (!cache) continue;
 
@@ -134,7 +135,7 @@ export function BuildingSpriteLayer({
         const bottom = sprite.centerY + dispH * (0.5 - margin);
         if (mx < left || mx > right || my < top || my > bottom) continue;
 
-        // alpha 检测（CORS 不可用则包围盒命中即算，取最后一个命中者=最上层）
+        // alpha 检测（CORS 不可用则包围盒命中即算；倒序遍历，首命中即最上层）
         if (!cache.corsBlocked) {
           const relX = (mx - left) / dispW;
           const relY = (my - top) / dispH;
@@ -208,6 +209,7 @@ export function BuildingSpriteLayer({
     if (!el) return;
 
     const onClick = () => {
+      if (Date.now() - lastTouchRef.current < 500) return; // touchend 已处理
       doBuildingClick(activeIdxRef.current);
     };
 
@@ -220,7 +222,8 @@ export function BuildingSpriteLayer({
       if (!pos) return;
       const hit = hitTest(pos.mx, pos.my);
       if (hit < 0) return;
-      // 同步更新 activeIdx 并触发 click
+      // 同步更新 activeIdx 并触发 click，记录时间防双击
+      lastTouchRef.current = Date.now();
       activeIdxRef.current = hit;
       setActiveIdx(hit);
       doBuildingClick(hit);
