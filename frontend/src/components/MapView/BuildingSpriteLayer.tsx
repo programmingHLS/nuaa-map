@@ -24,6 +24,8 @@ interface SpriteCache {
   /** 自然宽高 */
   naturalW: number;
   naturalH: number;
+  /** CORS 受限时 alpha 数据全为 0，回退到包围盒命中 */
+  corsBlocked: boolean;
 }
 
 /** 降采样因子（每 N 像素取一个样本，平衡精度与性能） */
@@ -74,7 +76,8 @@ export function BuildingSpriteLayer({
             alpha[i] = data[i * 4 + 3];
           }
 
-          cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh };
+          const allZero = alpha.every(a => a === 0);
+        cacheRef.current[idx] = { sw, sh, alpha, naturalW: nw, naturalH: nh, corsBlocked: allZero };
         } catch (e) {
           console.error(`精灵图加载失败（可能是 CDN 跨域问题）：${sprite.image}`, e);
         }
@@ -122,18 +125,14 @@ export function BuildingSpriteLayer({
         const top = sprite.centerY - dispH / 2;
         if (mx < left || mx > left + dispW || my < top || my > top + dispH) continue;
 
-        // 转换到精灵图像素坐标（降采样空间）
-        const relX = (mx - left) / dispW; // 0-1
-        const relY = (my - top) / dispH; // 0-1
+        // alpha 检测（CORS 不可用则包围盒命中即算）
+        if (cache.corsBlocked) return i;
+        const relX = (mx - left) / dispW;
+        const relY = (my - top) / dispH;
         const px = Math.floor(relX * cache.sw);
         const py = Math.floor(relY * cache.sh);
-
         if (px < 0 || px >= cache.sw || py < 0 || py >= cache.sh) continue;
-
-        // 查询 alpha
-        if (cache.alpha[py * cache.sw + px] > ALPHA_THRESHOLD) {
-          return i;
-        }
+        if (cache.alpha[py * cache.sw + px] > ALPHA_THRESHOLD) return i;
       }
       return -1;
     },
