@@ -128,14 +128,16 @@ export function BuildingSpriteLayer({
         const top = sprite.centerY - dispH / 2;
         if (mx < left || mx > left + dispW || my < top || my > top + dispH) continue;
 
-        // alpha 检测（CORS 不可用则包围盒命中即算）
-        if (cache.corsBlocked) return i;
-        const relX = (mx - left) / dispW;
-        const relY = (my - top) / dispH;
-        const px = Math.floor(relX * cache.sw);
-        const py = Math.floor(relY * cache.sh);
-        if (px < 0 || px >= cache.sw || py < 0 || py >= cache.sh) continue;
-        if (cache.alpha[py * cache.sw + px] > ALPHA_THRESHOLD) return i;
+        // alpha 检测（CORS 不可用则包围盒命中即算，取最后一个命中者=最上层）
+        if (!cache.corsBlocked) {
+          const relX = (mx - left) / dispW;
+          const relY = (my - top) / dispH;
+          const px = Math.floor(relX * cache.sw);
+          const py = Math.floor(relY * cache.sh);
+          if (px < 0 || px >= cache.sw || py < 0 || py >= cache.sh) continue;
+          if (cache.alpha[py * cache.sw + px] <= ALPHA_THRESHOLD) continue;
+        }
+        return i;
       }
       return -1;
     },
