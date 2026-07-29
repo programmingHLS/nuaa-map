@@ -1,0 +1,29 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/chat",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/chat.js:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/qa",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/qa.js:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/qa",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/qa.js:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

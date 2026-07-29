@@ -1,0 +1,8 @@
+name = "nuaa-map"
+compatibility_date = "2024-12-01"
+pages_build_output_dir = "frontend/dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nuaa-map-db"
+database_id = "8b4c07ef-a8b3-4668-8cf8-a0a5ea44838c"

@@ -1,0 +1,593 @@
+[
+    {
+        "id": "building-001",
+        "name": "西北门",
+        "category": "gate",
+        "hotspot": {
+            "x": 3074,
+            "y": 1473,
+            "width": 80,
+            "height": 86
+        },
+        "description": "校园西北侧主要出入口。",
+        "openTime": "24小时",
+        "floors": 0
+    },
+    {
+        "id": "building-002",
+        "name": "东北门",
+        "category": "gate",
+        "hotspot": {
+            "x": 4911,
+            "y": 2113,
+            "width": 89,
+            "height": 92
+        },
+        "description": "校园东北侧出入口。",
+        "openTime": "24小时",
+        "floors": 0
+    },
+    {
+        "id": "building-003",
+        "name": "南门",
+        "category": "gate",
+        "hotspot": {
+            "x": 2509,
+            "y": 3378,
+            "width": 109,
+            "height": 100
+        },
+        "description": "校园南侧主出入口，通往主要道路。",
+        "openTime": "24小时",
+        "floors": 0
+    },
+    {
+        "id": "building-004",
+        "name": "西门",
+        "category": "gate",
+        "hotspot": {
+            "x": 801,
+            "y": 1915,
+            "width": 115,
+            "height": 106
+        },
+        "description": "校园西侧出入口，邻近风雨操场。",
+        "openTime": "24小时",
+        "floors": 0
+    },
+    {
+        "id": "building-005",
+        "name": "东门",
+        "category": "gate",
+        "hotspot": {
+            "x": 6048,
+            "y": 3611,
+            "width": 109,
+            "height": 103
+        },
+        "description": "校园东侧出入口。",
+        "openTime": "24小时",
+        "floors": 0
+    },
+    {
+        "id": "building-006",
+        "name": "巡天楼",
+        "category": "teaching",
+        "hotspot": {
+            "x": 3594,
+            "y": 2325,
+            "width": 112,
+            "height": 109
+        },
+        "description": "主教学楼之一，配备多媒体教室和智慧教室。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 6,
+        "images": [
+            "/buildings/xuntian/01.webp",
+            "/buildings/xuntian/02.webp"
+        ]
+    },
+    {
+        "id": "building-007",
+        "name": "牧星楼",
+        "category": "teaching",
+        "hotspot": {
+            "x": 4535,
+            "y": 2715,
+            "width": 92,
+            "height": 92
+        },
+        "description": "常用教学楼，与B5二楼有连廊。108和110为报告厅，常用于会议和讲座。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 5,
+        "images": [
+            "/buildings/muxing/01.webp",
+            "/buildings/muxing/02.webp"
+        ]
+    },
+    {
+        "id": "building-008",
+        "name": "笃行楼",
+        "category": "teaching",
+        "hotspot": {
+            "x": 2213,
+            "y": 1929,
+            "width": 109,
+            "height": 95
+        },
+        "description": "实验楼，含物理实验室、机房、飞行实验室。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 5,
+        "images": [
+            "/buildings/duxing/01.webp",
+            "/buildings/duxing/02.webp"
+        ]
+    },
+    {
+        "id": "building-009",
+        "name": "知行楼",
+        "category": "teaching",
+        "hotspot": {
+            "x": 1995,
+            "y": 2385,
+            "width": 129,
+            "height": 115
+        },
+        "description": "实验楼，常见作为考场使用。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 5,
+        "images": [
+            "/buildings/zhixing/01.webp",
+            "/buildings/zhixing/02.webp"
+        ]
+    },
+    {
+        "id": "building-010",
+        "name": "尚德楼",
+        "category": "teaching",
+        "hotspot": {
+            "x": 2632,
+            "y": 2951,
+            "width": 126,
+            "height": 118
+        },
+        "description": "通用航空与飞行学院主楼。1层档案室/教工之家，2层科研办公室/研讨室，3层会议室/航空机房/实验室，4层学院行政核心区。",
+        "openTime": "周一至周五 7:00-21:00",
+        "floors": 4,
+        "images": [
+            "/buildings/shangde/01.webp",
+            "/buildings/shangde/02.webp"
+        ]
+    },
+    {
+        "id": "building-011",
+        "name": "明慧楼A",
+        "category": "teaching",
+        "hotspot": {
+            "x": 4254,
+            "y": 3209,
+            "width": 98,
+            "height": 98
+        },
+        "description": "理工科实验教学楼A座，用于上课及学支活动。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 5,
+        "images": [
+            "/buildings/minghui/a-01.webp",
+            "/buildings/minghui/a-02.webp"
+        ]
+    },
+    {
+        "id": "building-012",
+        "name": "明慧楼B",
+        "category": "teaching",
+        "hotspot": {
+            "x": 4544,
+            "y": 3267,
+            "width": 112,
+            "height": 100
+        },
+        "description": "理工科实验教学楼B座，用于上课及学支活动。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 5,
+        "images": [
+            "/buildings/minghui/b-01.webp",
+            "/buildings/minghui/b-02.webp",
+            "/buildings/minghui/b-03.webp"
+        ]
+    },
+    {
+        "id": "building-013",
+        "name": "明慧楼C",
+        "category": "teaching",
+        "hotspot": {
+            "x": 5104,
+            "y": 2919,
+            "width": 103,
+            "height": 103
+        },
+        "description": "理工科实验教学楼C座，用于上课及学支活动。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 5,
+        "images": [
+            "/buildings/minghui/c-01.webp"
+        ]
+    },
+    {
+        "id": "building-014",
+        "name": "明慧楼D",
+        "category": "teaching",
+        "hotspot": {
+            "x": 4762,
+            "y": 2781,
+            "width": 92,
+            "height": 89
+        },
+        "description": "理工科实验教学楼D座，兼设教材发行处，用于上课及学支活动。",
+        "openTime": "周一至周五 7:00-21:30",
+        "floors": 5,
+        "images": [
+            "/buildings/minghui/d-01.webp",
+            "/buildings/minghui/d-02.webp"
+        ]
+    },
+    {
+        "id": "building-015",
+        "name": "问天图书馆",
+        "category": "library",
+        "hotspot": {
+            "x": 3714,
+            "y": 2667,
+            "width": 126,
+            "height": 115
+        },
+        "description": "南航三校区最大主馆，2026.5.19开馆。何镜堂院士团队设计，地下1层地上9层，总面积5.1万㎡，藏书容量200万册。泗水湖畔地标，楼顶直升机停机坪。",
+        "openTime": "周一至周日 8:00-22:00",
+        "floors": 9,
+        "images": [
+            "/buildings/tushuguan/01.webp"
+        ]
+    },
+    {
+        "id": "building-016",
+        "name": "南山苑餐厅",
+        "category": "canteen",
+        "hotspot": {
+            "x": 3904,
+            "y": 2075,
+            "width": 98,
+            "height": 100
+        },
+        "description": "航空文化主题食堂，三层。1层特色快餐+民族餐厅，2层200余种轮换菜品，3层教工餐厅。",
+        "openTime": "早餐 7:00-9:00 | 午餐 11:00-13:00 | 晚餐 17:00-18:45 | 夜宵 19:00-22:00(仅1层)",
+        "floors": 3,
+        "images": [
+            "/buildings/nanshan/01.webp",
+            "/buildings/nanshan/02.webp"
+        ]
+    },
+    {
+        "id": "building-017",
+        "name": "东篱苑餐厅",
+        "category": "canteen",
+        "hotspot": {
+            "x": 5333,
+            "y": 2543,
+            "width": 92,
+            "height": 86
+        },
+        "description": "三层食堂，主打平价餐食。1层大众自选餐区（免费酸梅汤），2层特色美食区（西式快餐/羊肉粉/炒浇面等），不定期美食节活动。",
+        "openTime": "早餐 7:00-9:00 | 午餐 11:00-13:00 | 晚餐 17:00-18:45",
+        "floors": 3,
+        "images": [
+            "/buildings/dongli/02.webp",
+            "/buildings/dongli/03.webp"
+        ]
+    },
+    {
+        "id": "building-018",
+        "name": "南山苑1号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 3000,
+            "y": 1742,
+            "width": 86,
+            "height": 89
+        },
+        "description": "本科生宿舍，四人间，上床下桌，独立卫浴。",
+        "floors": 7,
+        "images": [
+            "/buildings/nanshan-sushe/b1-01.webp",
+            "/buildings/nanshan-sushe/b1-02.webp",
+            "/buildings/nanshan-sushe/b1-03.webp"
+        ]
+    },
+    {
+        "id": "building-019",
+        "name": "南山苑2号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 3505,
+            "y": 1765,
+            "width": 78,
+            "height": 89
+        },
+        "description": "本科生宿舍，四人间，配备空调和热水器。",
+        "floors": 7,
+        "images": [
+            "/buildings/nanshan-sushe/b2-01.webp"
+        ]
+    },
+    {
+        "id": "building-020",
+        "name": "南山苑3号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 4274,
+            "y": 2190,
+            "width": 92,
+            "height": 83
+        },
+        "description": "本科生宿舍，四人间，独立卫浴。",
+        "floors": 7,
+        "images": [
+            "/buildings/nanshan-sushe/b3-01.webp"
+        ]
+    },
+    {
+        "id": "building-021",
+        "name": "南山苑4号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 4283,
+            "y": 1906,
+            "width": 100,
+            "height": 106
+        },
+        "description": "本科生宿舍，四人间，配备空调和热水器。",
+        "floors": 7,
+        "images": [
+            "/buildings/nanshan-sushe/b4-01.webp"
+        ]
+    },
+    {
+        "id": "building-022",
+        "name": "东篱苑5号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 4994,
+            "y": 2359,
+            "width": 106,
+            "height": 106
+        },
+        "description": "研究生宿舍，两人间，配备独立卫浴和空调。",
+        "floors": 11,
+        "images": [
+            "/buildings/dongli-sushe/01.webp",
+            "/buildings/dongli-sushe/02.webp"
+        ]
+    },
+    {
+        "id": "building-023",
+        "name": "东篱苑6号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 5689,
+            "y": 2710,
+            "width": 95,
+            "height": 98
+        },
+        "description": "学生宿舍楼，配备空调和热水器。",
+        "floors": 7
+    },
+    {
+        "id": "building-024",
+        "name": "东篱苑7号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 5930,
+            "y": 3189,
+            "width": 98,
+            "height": 103
+        },
+        "description": "学生宿舍楼，配备空调和独立卫浴。架空层设东篱苑自习室（6:30-24:00开放）。",
+        "floors": 7
+    },
+    {
+        "id": "building-025",
+        "name": "东篱苑8号楼",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 6125,
+            "y": 2885,
+            "width": 95,
+            "height": 98
+        },
+        "description": "学生宿舍楼，配备空调和热水器。",
+        "floors": 7
+    },
+    {
+        "id": "building-026",
+        "name": "职工公寓",
+        "category": "dormitory",
+        "hotspot": {
+            "x": 3267,
+            "y": 1559,
+            "width": 80,
+            "height": 92
+        },
+        "description": "教师公寓及培训中心，教职工周转住宿。",
+        "floors": 6,
+        "images": [
+            "/buildings/zhigong/01.webp",
+            "/buildings/zhigong/02.webp",
+            "/buildings/zhigong/03.webp"
+        ]
+    },
+    {
+        "id": "building-027",
+        "name": "体育馆游泳馆",
+        "category": "sports",
+        "hotspot": {
+            "x": 4093,
+            "y": 3628,
+            "width": 106,
+            "height": 98
+        },
+        "description": "健翔体育馆，含游泳馆、拳击馆、篮球馆等多功能体育场所。除体育课外常用于大型会议和晚会。",
+        "openTime": "周一至周日 9:00-21:00",
+        "floors": 2,
+        "images": [
+            "/buildings/jianxiang/01.webp"
+        ]
+    },
+    {
+        "id": "building-028",
+        "name": "西体育场",
+        "category": "sports",
+        "hotspot": {
+            "x": 1762,
+            "y": 1662,
+            "width": 98,
+            "height": 109
+        },
+        "description": "标准田径场及足球场，适合日常锻炼。",
+        "openTime": "全天开放",
+        "floors": 0,
+        "images": [
+            "/buildings/xicao/01.webp"
+        ]
+    },
+    {
+        "id": "building-029",
+        "name": "东体育场",
+        "category": "sports",
+        "hotspot": {
+            "x": 5035,
+            "y": 3915,
+            "width": 98,
+            "height": 95
+        },
+        "description": "户外运动场，含田径跑道、足球场及网球场。",
+        "openTime": "全天开放",
+        "floors": 0,
+        "images": [
+            "/buildings/dongcao/01.webp",
+            "/buildings/dongcao/02.webp"
+        ]
+    },
+    {
+        "id": "building-030",
+        "name": "风雨操场",
+        "category": "sports",
+        "hotspot": {
+            "x": 1208,
+            "y": 1912,
+            "width": 103,
+            "height": 95
+        },
+        "description": "含西操场、看台教室、羽毛球馆（APP预约）、两个舞蹈房、健身房（预约制）。",
+        "openTime": "健身房 周一至周四 12:30-13:30/18:00-21:00，周五 12:30-21:00，周末 9:00-21:00",
+        "floors": 1,
+        "images": [
+            "/buildings/fengyu/01.webp"
+        ]
+    },
+    {
+        "id": "building-031",
+        "name": "综合服务楼",
+        "category": "service",
+        "hotspot": {
+            "x": 2655,
+            "y": 1648,
+            "width": 83,
+            "height": 83
+        },
+        "description": "5层综合服务楼。1层保卫处/师生服务大厅，2层牧星学院办公区，4层校区管委会/学工/团委，5层后勤集团。",
+        "openTime": "周一至周日 8:00-20:00",
+        "floors": 5,
+        "images": [
+            "/buildings/zonghe/01.webp",
+            "/buildings/zonghe/02.webp"
+        ]
+    },
+    {
+        "id": "building-032",
+        "name": "师生服务大厅",
+        "category": "service",
+        "hotspot": {
+            "x": 2471,
+            "y": 1605,
+            "width": 83,
+            "height": 89
+        },
+        "description": "位于综合服务楼1层。办理学生证、缴纳学费、办理银行卡等一站式事务。",
+        "openTime": "周一至周五 8:00-12:00, 14:00-17:00",
+        "floors": 1,
+        "images": [
+            "/buildings/fuwu/01.webp",
+            "/buildings/fuwu/02.webp"
+        ]
+    },
+    {
+        "id": "building-033",
+        "name": "校医院",
+        "category": "service",
+        "hotspot": {
+            "x": 2655,
+            "y": 1447,
+            "width": 92,
+            "height": 78
+        },
+        "description": "4层。门诊8:30-12:15/14:00-17:45，急诊24小时。1层挂号/药房/输液/放射，2层B超/检验/妇科/耳鼻喉科，3层体检中心，4层行政办公。",
+        "openTime": "门诊 8:30-12:15, 14:00-17:45 | 急诊 24小时",
+        "floors": 4,
+        "images": [
+            "/buildings/xiaoyiyuan/01.webp",
+            "/buildings/xiaoyiyuan/02.webp"
+        ]
+    },
+    {
+        "id": "building-034",
+        "name": "泗水湖",
+        "category": "landscape",
+        "hotspot": {
+            "x": 3014,
+            "y": 2647,
+            "width": 118,
+            "height": 109
+        },
+        "description": "校园中心景观湖，环湖步道景色优美。",
+        "openTime": "全天开放",
+        "floors": 0,
+        "images": [
+            "/buildings/sishuihu.webp"
+        ]
+    },
+    {
+        "id": "building-035",
+        "name": "垃圾中转站开闭所",
+        "category": "facility",
+        "hotspot": {
+            "x": 2802,
+            "y": 1389,
+            "width": 89,
+            "height": 66
+        },
+        "description": "校园环卫设施。",
+        "floors": 1
+    },
+    {
+        "id": "building-036",
+        "name": "看台",
+        "category": "facility",
+        "hotspot": {
+            "x": 1389,
+            "y": 1504,
+            "width": 106,
+            "height": 115
+        },
+        "description": "西体育场配套看台，可观看田径及足球比赛。",
+        "floors": 1
+    }
+]

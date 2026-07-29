@@ -1,0 +1,16 @@
+{
+    "name": "nuaa-map-backend",
+    "version": "1.0.0",
+    "description": "南航天目湖校区地图 - RAG 问答后端服务",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "dev": "node --watch server.js",
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.21.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5"
+    }
+}
