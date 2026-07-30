@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Building, ChatMessage } from '../../types';
-import { matchBestAnswer, getRelatedQuestions } from '../../data/qa-matcher';
+import { getRelatedQuestions } from '../../data/qa-matcher';
 import type { QaEntry } from '../../data/qa-matcher';
 import { askRAG } from '../../services/rag';
 import './ChatWidget.css';
@@ -67,28 +67,19 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
-    const match = matchBestAnswer(text);
-    if (match) {
-      timerRef.current = setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: `a-${Date.now()}`, role: 'assistant',
-          content: match.entry.answer,
-          timestamp: Date.now(),
-        }]);
-        setSuggestions(getRelatedQuestions(text, 3));
-        setIsLoading(false);
-      }, 400);
-    } else {
-      askRAG(text).then(resp => {
-        setMessages(prev => [...prev, {
-          id: `a-${Date.now()}`, role: 'assistant',
-          content: resp.answer,
-          timestamp: Date.now(),
-        }]);
-        setSuggestions(getRelatedQuestions(text, 3));
-        setIsLoading(false);
-      });
-    }
+    askRAG(text, selectedBuilding ? {
+      buildingId: selectedBuilding.id,
+      buildingName: selectedBuilding.name,
+      buildingDescription: selectedBuilding.description,
+    } : undefined).then(resp => {
+      setMessages(prev => [...prev, {
+        id: `a-${Date.now()}`, role: 'assistant',
+        content: resp.answer,
+        timestamp: Date.now(),
+      }]);
+      setSuggestions(getRelatedQuestions(text, 3));
+      setIsLoading(false);
+    });
   }, [isLoading]);
 
   const sendMessage = useCallback(() => {
