@@ -1,3 +1,4 @@
+import { getAiReply } from "../../api/aiChat";
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Building, ChatMessage } from '../../types';
 import { matchBestAnswer, getRelatedQuestions } from '../../data/qa-matcher';
@@ -58,7 +59,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
     }
   }, [isOpen, suggestions.length]);
 
-  const handleSend = useCallback((text: string) => {
+  const handleSend = useCallback(async (text: string) => {
     if (!text || isLoading) return;
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(),
@@ -66,21 +67,59 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
-    // 优先尝试本地问答匹配
-    const match = matchBestAnswer(text);
-    const delay = match ? 400 : 1000;
-    timerRef.current = setTimeout(() => {
+    // 1. 优先匹配本地QA知识库
+    const localMatch = matchBestAnswer(text);
+    if (localMatch) {
+      timerRef.current = setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: `a-${Date.now()}`,
+          role: 'assistant',
+          content: localMatch.entry.answer,
+          timestamp: Date.now(),
+        }]);
+        setSuggestions(getRelatedQuestions(text, 3));
+        setIsLoading(false);
+      }, 400);
+      return;
+    }
+
+    // 2. 本地无匹配，调用DeepSeek AI接口
+    const history = messages.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+    // 构造系统提示词
+    let systemPrompt = "你是南航天目湖校区NUAAMap专属AI助手，只回答校区、本地图项目相关问题，回答简洁清晰，拒绝无关内容。";
+    if (selectedBuilding) {
+      systemPrompt += ` 当前用户正在查看【${selectedBuilding.name}】，优先回答该建筑相关内容。`;
+    }
+    const reqMessages = [
+      { role: "system", content: systemPrompt },
+      ...history,
+      { role: "user", content: text }
+    ];
+
+    try {
+      const aiAnswer = await getAiReply(reqMessages);
       setMessages(prev => [...prev, {
-        id: `a-${Date.now()}`, role: 'assistant',
-        content: match
-          ? match.entry.answer
-          : '感谢你的提问！\n\n智能问答系统正在建设中（⑤组 RAG 管道接入后即可使用）。',
+        id: `a-${Date.now()}`,
+        role: 'assistant',
+        content: aiAnswer,
         timestamp: Date.now(),
       }]);
-      if (match) setSuggestions(getRelatedQuestions(text, 3));
+      setSuggestions(getRelatedQuestions(text, 3));
+    } catch (err) {
+      console.error("AI接口请求失败：", err);
+      setMessages(prev => [...prev, {
+        id: `a-${Date.now()}`,
+        role: 'assistant',
+        content: "智能AI服务暂时无法连接，请稍后重试。",
+        timestamp: Date.now(),
+      }]);
+    } finally {
       setIsLoading(false);
-    }, delay);
-  }, [isLoading]);
+    }
+  }, [isLoading, messages, selectedBuilding]);
 
   const sendMessage = useCallback(() => {
     const text = input.trim();
@@ -95,7 +134,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
         <button className="chat-fab" onClick={() => setIsOpen(true)} aria-label="打开智能问答">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </button>
       ) : (
@@ -111,7 +150,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
             <button className="chat-close" onClick={() => setIsOpen(false)} aria-label="关闭">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18"/>
               </svg>
             </button>
           </div>
@@ -169,7 +208,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
             />
             <button className="chat-send" onClick={sendMessage}
               disabled={!input.trim() || isLoading} aria-label="发送">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+              <svg width="18" height="18" viewBox="0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
               </svg>

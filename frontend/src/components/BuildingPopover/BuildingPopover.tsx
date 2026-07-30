@@ -207,23 +207,37 @@ export function BuildingPopover({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const sendQuestion = useCallback(() => {
-    const text = chatInput.trim();
-    if (!text || chatLoading) return;
+const sendQuestion = useCallback(async () => {
+  const text = chatInput.trim();
+  if (!text || chatLoading) return;
+  setChatMsgs(prev => [...prev, {
+    id: `q-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(),
+  }]);
+  setChatInput('');
+  setChatLoading(true);
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: text }],
+        building_id: building.id,
+      }),
+    });
+    const data = await res.json();
     setChatMsgs(prev => [...prev, {
-      id: `q-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(),
+      id: `a-${Date.now()}`, role: 'assistant',
+      content: data.reply, timestamp: Date.now(),
     }]);
-    setChatInput(''); setChatLoading(true);
-    // TODO: 对接后端 /api/chat（带 building context）
-    setTimeout(() => {
-      setChatMsgs(prev => [...prev, {
-        id: `a-${Date.now()}`, role: 'assistant',
-        content: `关于「${building.name}」的"${text}"：\n\n⑤组 RAG 接入后将基于「${building.description}」的建筑上下文给出准确回答。`,
-        timestamp: Date.now(),
-      }]);
-      setChatLoading(false);
-    }, 1000);
-  }, [chatInput, chatLoading, building]);
+  } catch {
+    setChatMsgs(prev => [...prev, {
+      id: `a-${Date.now()}`, role: 'assistant',
+      content: 'AI 服务暂时不可用，请稍后重试。', timestamp: Date.now(),
+    }]);
+  } finally {
+    setChatLoading(false);
+  }
+}, [chatInput, chatLoading, building.id]);
 
   /* 定位：优先放上方，上方不够（含 TopBar 遮挡）则放下方 */
   const hotspotCX = screenX + screenWidth / 2;
