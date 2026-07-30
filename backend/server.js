@@ -5,53 +5,60 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-dotenv.config();
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '.env') });
 const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
- *  Êı¾İ¼ÓÔØ
- * ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T */
+/* =============================================================
+ *  æ•°æ®åŠ è½½
+ * ============================================================= */
 
 function loadJSON(filePath) {
     const raw = fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(raw);
 }
 
-const qaData = loadJSON(path.join(__dirname, 'data', 'qa-ĞÂÉúÎÊ´ğ.json'));
+const qaData = loadJSON(path.join(__dirname, 'data', 'qa-æ–°ç”Ÿé—®ç­”.json'));
 const qaEntries = qaData.questions || [];
 
 const buildings = loadJSON(path.join(__dirname, 'data', 'mock-buildings.json'));
 
 const CATEGORY_LABELS = {
-    teaching: '½ÌÑ§Â¥', dormitory: 'ËŞÉá', canteen: 'Ê³ÌÃ',
-    library: 'Í¼Êé¹İ', sports: 'ÌåÓıÉèÊ©', service: 'Éú»î·şÎñ',
-    gate: 'Ğ£ÃÅ', landscape: '¾°¹Û', facility: 'ÉèÊ©', other: 'ÆäËû',
+    teaching: 'æ•™å­¦æ¥¼', dormitory: 'å®¿èˆ', canteen: 'é£Ÿå ‚',
+    library: 'å›¾ä¹¦é¦†', sports: 'ä½“è‚²è®¾æ–½', service: 'ç”Ÿæ´»æœåŠ¡',
+    gate: 'æ ¡é—¨', landscape: 'æ™¯è§‚', facility: 'è®¾æ–½', other: 'å…¶ä»–',
 };
 
-/* ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
- *  ·Ö´Ê & ¼ìË÷
- * ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T */
+/* =============================================================
+ *  åˆ†è¯ & åŒ¹é…
+ * ============================================================= */
 
 const STOP_WORDS = new Set([
-    'µÄ', 'ÁË', 'ÔÚ', 'ÊÇ', 'ÎÒ', 'ÓĞ', 'ºÍ', '¾Í', '²»', 'ÈË',
-    '¶¼', 'Ò»', 'Ò»¸ö', 'ÉÏ', 'Ò²', 'ºÜ', 'µ½', 'Ëµ', 'Òª', 'È¥',
-    'Äã', '»á', '×Å', 'Ã»ÓĞ', '¿´', 'ºÃ', '×Ô¼º', 'Õâ', 'Ëû', 'Ëı',
-    'Ëü', 'ÃÇ', 'ÄÇ', 'Ğ©', 'Âğ', '°¡', 'ÄØ', '°É', 'àÅ', 'Å¶',
-    'ÔõÃ´', 'Ê²Ã´', 'ÈçºÎ', 'ÄÄÀï', 'ÄÄ¸ö', 'ÄÄĞ©', 'ºÎÊ±',
-    '¶àÉÙ', '¼¸', 'É¶', 'Õ¦', 'ÎªÉ¶', 'ÎªÊ²Ã´', 'ÇëÎÊ', 'Çë',
-    'Ôõ', 'Ã´', 'Ê²', 'Îª', 'ÄÄ', 'ºÎ', 'ÎÊ', 'Çë', 'É¶', 'Õ¦',
+    'çš„', 'äº†', 'åœ¨', 'æ˜¯', 'æˆ‘', 'æœ‰', 'å’Œ', 'å°±', 'ä¸',
+    'äºº', 'éƒ½', 'ä¸€', 'ä¸Š', 'ä¹Ÿ', 'å¾ˆ', 'åˆ°',
+    'è¯´', 'è¦', 'å»', 'ä½ ', 'ä¼š', 'ç€', 'æ²¡æœ‰', 'çœ‹',
+    'å¥½', 'è‡ªå·±', 'è¿™', 'ä»–', 'å¥¹', 'å®ƒ', 'ä»¬', 'é‚£',
+    'äº›', 'å—', 'å•Š', 'å‘¢', 'å§', 'å—¯', 'å“¦',
+    'æ€ä¹ˆ', 'ä»€ä¹ˆ', 'å¦‚ä½•', 'å“ªé‡Œ', 'å“ªä¸ª', 'å“ªäº›', 'ä½•æ—¶',
+    'å¤šå°‘', 'å‡ ', 'å•¥', 'å’‹', 'ä¸ºå•¥', 'ä¸ºä»€ä¹ˆ',
+    'è¯·é—®', 'è¯·',
+    'ä¸€', 'ä¸€ä¸‹', 'å¯', 'ä¹Ÿ', 'è¿˜', 'å¾—', 'è¯´', 'è¦', 'å»',
+    'å¾ˆ', 'è®©', 'æ²¡', 'æ²¡æœ‰', 'è¿‡', 'æ¬¡', 'è‡ªå·±', 'æ›´', 'æœ€',
+    'åˆ', 'å†', 'å…ˆ', 'å', 'å‰', 'æŠŠ', 'è¢«', 'å«', 'è®©',
+    'å°±', 'æ‰', 'åˆš', 'æ­£', 'æ€»', 'æ¯', 'å„', 'æŸ',
+    'ä½†', 'å´', 'åª', 'ä»…', 'äº›', 'ä»…', 'å—', 'å‘¢', 'å§', 'å•Š',
+    'å“¦', 'ä¹ˆ', 'ä»€', 'ä¸º', 'æ€', 'å—¯', 'å™¢', 'å“', 'å‘€',
+    'å•¥', 'å’‹',
 ]);
 
-const CJK_REGEX = /[\u4e00-\u9fff]/;
+const CJK_REGEX = /[ä¸€-é¿¿]/;
 
 function tokenize(text) {
-    const raw = text.toLowerCase().split(/[\s,£¬¡££¡£¿¡¢£»£º\u201c\u201d\u2018\u2019\uff08\uff09()¡¾¡¿¡¶¡·/\\|]+/);
+    const raw = text.toLowerCase().split(/[\s,.ã€‚ï¼Œï¼ï¼Ÿã€ï¼›ï¼šâ€œâ€â€˜â€™ï¼ˆï¼‰()ã€ã€‘ã€Šã€‹/\\|]+/);
     const tokens = [];
     for (const token of raw) {
         if (CJK_REGEX.test(token)) {
@@ -95,7 +102,7 @@ function scoreEntry(userTokens, questionText) {
 }
 
 /**
- * ´Ó QA ÖªÊ¶¿âÖĞ¼ìË÷×îÏà¹ØµÄ topN ÌõÄ¿
+ * ä» QA çŸ¥è¯†åº“ä¸­æ£€ç´¢æœ€ç›¸å…³çš„ topN æ¡ç›®
  */
 function retrieveQA(question, topN = 5) {
     const tokens = tokenize(question);
@@ -108,7 +115,7 @@ function retrieveQA(question, topN = 5) {
 }
 
 /**
- * ¼ìË÷½¨ÖşÏà¹ØĞÅÏ¢£¨°´¹Ø¼ü´ÊÆ¥Åä½¨ÖşÃû³Æ/ÃèÊö£©
+ * æ ¹æ®ç”¨æˆ·é—®é¢˜å’Œå»ºç­‘ä¿¡æ¯ï¼Œè¿›è¡Œå…³é”®è¯åŒ¹é…å»ºç­‘åç§°/æè¿°
  */
 function retrieveBuildingInfo(question, buildingId) {
     const tokens = tokenize(question);
@@ -133,68 +140,68 @@ function retrieveBuildingInfo(question, buildingId) {
     return results.slice(0, 3);
 }
 
-/* ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
- *  Prompt ¹¹½¨
- * ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T */
+/* =============================================================
+ *  Prompt æ„å»º
+ * ============================================================= */
 
 function buildSystemPrompt() {
-    return `ÄãÊÇÄÏ¾©º½¿Õº½Ìì´óÑ§Ğ£Ô°µØÍ¼µÄÖÇÄÜÎÊ´ğÖúÊÖ¡£
-ÄãµÄÈÎÎñÊÇ»ùÓÚÌá¹©µÄÖªÊ¶¿â£¨QA ÎÊ´ğ¡¢½¨ÖşĞÅÏ¢£©»Ø´ğÓÃ»§¹ØÓÚÄÏº½ÌìÄ¿ºşĞ£ÇøµÄÎÊÌâ¡£
-ÇëÑÏ¸ñ×ñÑ­ÒÔÏÂ¹æÔò£º
-1. ÓÅÏÈÊ¹ÓÃÌá¹©µÄÖªÊ¶¿âÄÚÈİ»Ø´ğ£¬²»Òª±àÔìĞÅÏ¢¡£
-2. Èç¹ûÖªÊ¶¿âÖĞÃ»ÓĞÏà¹ØĞÅÏ¢£¬Ì¹³Ï¸æÖªÓÃ»§"¸ÃÎÊÌâÔİÎ´ÊÕÂ¼£¬½¨Òé×ÉÑ¯Ñ§Ğ£Ïà¹Ø²¿ÃÅ"¡£
-3. »Ø´ğÒª¼ò½à¡¢×¼È·£¬·ûºÏÑ§ÉúµÄÓï¾³ºÍĞèÇó¡£
-4. »Ø´ğÖĞ¿ÉÒÔÊÊµ±Òıµ¼£¬±ÈÈç"Äã¿ÉÒÔÔÚÊ¦Éú·şÎñ´óÌüXºÅ´°¿Ú°ìÀí"¡£
-5. Éæ¼°¿ª·ÅÊ±¼ä¡¢µØµã¡¢°ìÀíÁ÷³ÌµÈĞÅÏ¢Ê±£¬Ö±½Ó¸ø³öÃ÷È·´ğ°¸¡£
-6. Ê¹ÓÃÖĞÎÄ»Ø´ğ¡£`;
+    return `ä½ æ˜¯å—äº¬èˆªç©ºèˆªå¤©å¤§å­¦æ ¡å›­åœ°å›¾æ™ºèƒ½é—®ç­”åŠ©æ‰‹ã€‚
+è¯·åŸºäºæä¾›çš„çŸ¥è¯†åº“ï¼ˆQA é—®ç­”ã€å»ºç­‘ä¿¡æ¯ï¼‰å›ç­”ç”¨æˆ·å…³äºå—èˆªå¤©ç›®æ¹–æ ¡åŒºçš„å„ç§é—®é¢˜ã€‚
+è¯·ä¸¥æ ¼éµå®ˆä»¥ä¸‹è§„åˆ™ï¼š
+1. ä¼˜å…ˆä½¿ç”¨æä¾›çš„çŸ¥è¯†åº“å†…å®¹å›ç­”ï¼Œä¸è¦ç¼–é€ ä¿¡æ¯ã€‚
+2. å¦‚æœçŸ¥è¯†åº“ä¸­æ²¡æœ‰ç›¸å…³ä¿¡æ¯ï¼Œå¦è¯šå‘ŠçŸ¥ç”¨æˆ·"è¯¥ä¿¡æ¯å°šæœªè®°å½•ï¼Œè¯·å’¨è¯¢å­¦æ ¡ç›¸å…³éƒ¨é—¨"ã€‚
+3. å›ç­”è¦ç®€æ´ã€å‡†ç¡®ï¼Œç¬¦åˆå­¦ç”ŸåŠ©æ‰‹è¯­å¢ƒã€‚
+4. å›ç­”ä¸­å¯ä»¥é€‚å½“å¼•å¯¼ç”¨æˆ·ï¼ˆå¦‚"å»ºè®®ä½ å’¨è¯¢å¸ˆç”ŸæœåŠ¡å¤§å…Xå·çª—å£åŠç†"ï¼‰ã€‚
+5. æ¶‰åŠæ—¶é—´ã€åœ°ç‚¹ã€åŠäº‹æµç¨‹çš„ä¿¡æ¯æ—¶ï¼Œç›´æ¥ç»™å‡ºæ˜ç¡®ç­”æ¡ˆã€‚
+6. ä½¿ç”¨ä¸­æ–‡å›ç­”`;
 }
 
 function buildUserPrompt(question, qaResults, buildingResults, contextText) {
     let contextSections = [];
 
     if (contextText && typeof contextText === 'string' && contextText.trim()) {
-        contextSections.push(`ÓÃ»§µ±Ç°ÕıÔÚ²é¿´µÄ½¨ÖşĞÅÏ¢£º\n${contextText.trim()}`);
+        contextSections.push(`ç”¨æˆ·å½“å‰æ­£åœ¨æŸ¥çœ‹çš„å»ºç­‘ä¿¡æ¯ï¼š\n${contextText.trim()}`);
     }
 
     if (qaResults.length > 0) {
         const qaText = qaResults.map((r, i) =>
-            `¡¾²Î¿¼ ${i + 1}¡¿ÎÊ£º${r.entry.question}\n´ğ£º${r.entry.answer}`
+            `å‚è€ƒ ${i + 1}ï¼šé—®ï¼š${r.entry.question}\nç­”ï¼š${r.entry.answer}`
         ).join('\n\n');
-        contextSections.push(`ÒÔÏÂÊÇ´ÓĞ£Ô°ÖªÊ¶¿âÖĞ¼ìË÷µ½µÄÏà¹ØÎÊ´ğ£º\n${qaText}`);
+        contextSections.push(`ä»¥ä¸‹æ˜¯ä»æ ¡å›­çŸ¥è¯†åº“ä¸­æ£€ç´¢åˆ°çš„ç›¸å…³é—®ç­”ï¼š\n${qaText}`);
     }
 
     if (buildingResults.length > 0) {
         const bText = buildingResults.map(r => {
             const b = r.building;
-            const parts = [`Ãû³Æ£º${b.name}£¨${CATEGORY_LABELS[b.category]}£©`];
-            if (b.description) parts.push(`ÃèÊö£º${b.description}`);
-            if (b.openTime) parts.push(`¿ª·ÅÊ±¼ä£º${b.openTime}`);
-            if (b.floors) parts.push(`Â¥²ã£º${b.floors}²ã`);
-            if (b.facilities && b.facilities.length > 0) parts.push(`ÉèÊ©£º${b.facilities.join('¡¢')}`);
-            return parts.join('£»');
+            const parts = [`åç§°ï¼š${b.name}ï¼ˆ${CATEGORY_LABELS[b.category]}ï¼‰`];
+            if (b.description) parts.push(`ç®€ä»‹ï¼š${b.description}`);
+            if (b.openTime) parts.push(`å¼€æ”¾æ—¶é—´ï¼š${b.openTime}`);
+            if (b.floors) parts.push(`æ¥¼å±‚ï¼š${b.floors}å±‚`);
+            if (b.facilities && b.facilities.length > 0) parts.push(`è®¾æ–½ï¼š${b.facilities.join('ã€')}`);
+            return parts.join('ï¼Œ');
         }).join('\n\n');
-        contextSections.push(`ÒÔÏÂÊÇÏà¹Ø½¨ÖşĞÅÏ¢£º\n${bText}`);
+        contextSections.push(`ä»¥ä¸‹æ˜¯ç›¸å…³å»ºç­‘ä¿¡æ¯ï¼š\n${bText}`);
     }
 
     const contextBlock = contextSections.length > 0
-        ? `\n\n--- Ïà¹ØÖªÊ¶¿âĞÅÏ¢ ---\n${contextSections.join('\n\n')}\n--- ½áÊø ---\n\n`
+        ? `\n\n--- å‚è€ƒçŸ¥è¯†åº“ä¿¡æ¯ ---\n${contextSections.join('\n\n')}\n--- ç»“æŸ ---\n\n`
         : '';
 
-    return `${contextBlock}ÓÃ»§ÎÊÌâ£º${question}\n\nÇë¸ù¾İÒÔÉÏĞÅÏ¢»Ø´ğÓÃ»§ÎÊÌâ¡£`;
+    return `${contextBlock}ç”¨æˆ·é—®é¢˜ï¼š${question}\n\nè¯·æ ¹æ®ä»¥ä¸Šä¿¡æ¯å›ç­”ç”¨æˆ·çš„é—®é¢˜ã€‚`;
 }
 
-/* ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
- *  LLM µ÷ÓÃ
- * ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T */
+/* =============================================================
+ *  LLM è°ƒç”¨
+ * ============================================================= */
 
-const LLM_API_URL = process.env.LLM_API_URL || 'https://token.nuaa.edu.cn/v1/chat/completions';
+const LLM_API_URL = process.env.LLM_API_URL || 'https://api.deepseek.com/v1/chat/completions';
 const LLM_API_KEY = process.env.LLM_API_KEY || '';
 const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-v4-pro';
 
 async function callLLM(systemPrompt, userPrompt) {
     if (!LLM_API_KEY) {
         return {
-            content: '·şÎñ¶ËÎ´ÅäÖÃ LLM_API_KEY£¬ÇëÁªÏµ¹ÜÀíÔ±ÅäÖÃ¡£',
+            content: 'æœåŠ¡ç«¯æœªé…ç½® LLM_API_KEYï¼Œè¯·è”ç³»ç®¡ç†å‘˜è®¾ç½®ã€‚',
             error: 'LLM_API_KEY missing',
         };
     }
@@ -224,20 +231,20 @@ async function callLLM(systemPrompt, userPrompt) {
 
         const data = await resp.json();
         return {
-            content: data.choices?.[0]?.message?.content ?? '£¨ÎŞ»Ø¸´£©',
+            content: data.choices?.[0]?.message?.content ?? 'æš‚æ— å›å¤ã€‚',
             usage: data.usage,
         };
     } catch (err) {
         return {
-            content: '±§Ç¸£¬AI ·şÎñÔİÊ±²»¿ÉÓÃ£¬ÇëÉÔºóÖØÊÔ¡£',
+            content: 'æŠ±æ­‰ï¼ŒAI æœåŠ¡æš‚æ—¶ä¸å¯ç”¨ï¼Œè¯·ç¨åå†è¯•ã€‚',
             error: err.message,
         };
     }
 }
 
-/* ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
- *  Â·ÓÉ
- * ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T */
+/* =============================================================
+ *  è·¯ç”±
+ * ============================================================= */
 
 app.get('/health', (req, res) => {
     res.json({
@@ -261,7 +268,7 @@ app.post('/api/freshman-questions', async (req, res) => {
     const { question } = req.body || {};
 
     if (!question || typeof question !== 'string' || !question.trim()) {
-        return res.status(400).json({ error: 'question ²»ÄÜÎª¿Õ' });
+        return res.status(400).json({ error: 'question ä¸èƒ½ä¸ºç©º' });
     }
 
     const trimmed = question.trim();
@@ -285,7 +292,7 @@ app.post('/api/chat', async (req, res) => {
     const { question, buildingId, context } = req.body || {};
 
     if (!question || typeof question !== 'string' || !question.trim()) {
-        return res.status(400).json({ error: 'question ²»ÄÜÎª¿Õ' });
+        return res.status(400).json({ error: 'question ä¸èƒ½ä¸ºç©º' });
     }
 
     const trimmed = question.trim();
