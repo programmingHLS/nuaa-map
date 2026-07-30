@@ -6,6 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = path.resolve(__dirname, '..');
+const FRONTEND_DATA = path.join(PROJECT_ROOT, 'frontend', 'src', 'data');
+
 dotenv.config({ path: path.join(__dirname, '.env') });
 const PORT = process.env.PORT || 3000;
 
@@ -22,10 +25,10 @@ function loadJSON(filePath) {
     return JSON.parse(raw);
 }
 
-const qaData = loadJSON(path.join(__dirname, 'data', 'qa-新生问答.json'));
+const qaData = loadJSON(path.join(FRONTEND_DATA, 'qa-新生问答.json'));
 const qaEntries = qaData.questions || [];
 
-const buildings = loadJSON(path.join(__dirname, 'data', 'mock-buildings.json'));
+const buildings = loadJSON(path.join(FRONTEND_DATA, 'mock-buildings.json'));
 
 const CATEGORY_LABELS = {
     teaching: '教学楼', dormitory: '宿舍', canteen: '食堂',
