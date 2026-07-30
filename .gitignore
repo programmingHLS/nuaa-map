@@ -54,5 +54,8 @@ frontend/public/buildings/sprites/
 
 # Claude Code
 .claude/
+
+# Wrangler
+.wrangler/
 scripts/hand-drawn-map*.jpg
 scripts/sprite-cropper.html

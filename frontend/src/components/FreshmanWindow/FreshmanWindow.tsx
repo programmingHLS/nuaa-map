@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { highlightMatch } from '../../utils/highlight';
+import { matchBestAnswer } from '../../data/qa-matcher';
 import './FreshmanWindow.css';
 
 type FreshmanEntry = {
@@ -10,25 +11,19 @@ type FreshmanEntry = {
   status?: 'resolved' | 'pending';
 };
 
-type FreshmanPayload = {
-  question: string;
-  answer?: string;
-};
-
 type PanelPhase = 'hidden' | 'entering' | 'visible' | 'exiting';
 
 const STORAGE_KEY = 'nuaa-map-freshman-qa';
-const STORAGE_VERSION = 2; // 递增以清除旧缓存，防止旧 mock 数据覆盖真实 QA
-const API_URL = '/api/freshman-questions';
+const STORAGE_VERSION = 5;
+const QA_API_URL = '/api/qa';
 
-// 从 QA 知识库加载预设问答
 import qaData from '../../data/qa-新生问答.json';
 
 const DEFAULT_FAQS: FreshmanEntry[] = qaData.questions.map((q, i) => ({
   id: `qa-freshman-${i + 1}`,
   question: q.question,
   answer: q.answer,
-  createdAt: '④组 QA 知识库',
+  createdAt: '\u2460\u7ec4 QA \u77e5\u8bc6\u5e93',
 }));
 
 function readLocalEntries(): FreshmanEntry[] {
@@ -36,7 +31,6 @@ function readLocalEntries(): FreshmanEntry[] {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (!saved) return [];
     const parsed = JSON.parse(saved);
-    // 版本不匹配时抛弃旧缓存
     if (parsed._v !== STORAGE_VERSION) {
       window.localStorage.removeItem(STORAGE_KEY);
       return [];
@@ -52,31 +46,6 @@ function writeLocalEntries(entries: FreshmanEntry[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ _v: STORAGE_VERSION, _entries: entries }));
 }
 
-function normalizeEntries(value: unknown): FreshmanEntry[] {
-  if (!Array.isArray(value)) return [];
-
-  const getAnswer = (item: Record<string, unknown>) => {
-    const answerKeys = ['answer', 'response', 'content', 'reply', 'description', 'detail', 'text'];
-    for (const key of answerKeys) {
-      const candidate = item[key];
-      if (typeof candidate === 'string' && candidate.trim()) {
-        return candidate.trim();
-      }
-    }
-    return undefined;
-  };
-
-  return value
-    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
-    .map((item) => ({
-      id: String(item.id ?? `${Date.now()}-${Math.random()}`),
-      question: String(item.question ?? ''),
-      answer: getAnswer(item),
-      createdAt: typeof item.createdAt === 'string' ? item.createdAt : String(item.createdAt ?? ''),
-    }))
-    .filter((item) => item.question);
-}
-
 export function FreshmanWindow() {
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -86,10 +55,11 @@ export function FreshmanWindow() {
   const [expanded, setExpanded] = useState(false);
   const [panelPhase, setPanelPhase] = useState<PanelPhase>('hidden');
   const [submitting, setSubmitting] = useState(false);
-  const [statusText, setStatusText] = useState('正在同步问答数据...');
+  const [statusText, setStatusText] = useState('\u77e5\u8bc6\u5e93\u5df2\u5c31\u7eea');
   const [askResult, setAskResult] = useState<{ question: string; answer: string } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
 
-  /* ── 面板动画阶段管理 ── */
   const openPanel = () => {
     setExpanded(true);
     setPanelPhase('entering');
@@ -110,6 +80,26 @@ export function FreshmanWindow() {
 
   useEffect(() => {
     const loadEntries = async () => {
+      try {
+        const resp = await fetch(QA_API_URL);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.entries && data.entries.length > 0) {
+            const mapped: FreshmanEntry[] = data.entries.map((e: Record<string, unknown>) => ({
+              id: String(e.id ?? ''),
+              question: String(e.question ?? ''),
+              answer: e.answer ? String(e.answer) : undefined,
+              createdAt: String(e.createdAt ?? e.created_at ?? ''),
+              status: (e.status as FreshmanEntry['status']) || undefined,
+            }));
+            setEntries(mapped);
+            writeLocalEntries(mapped);
+            setStatusText('\u77e5\u8bc6\u5e93\u5df2\u5c31\u7eea');
+            return;
+          }
+        }
+      } catch { }
+
       const localEntries = readLocalEntries();
       if (localEntries.length) {
         setEntries(localEntries);
@@ -117,36 +107,37 @@ export function FreshmanWindow() {
         setEntries(DEFAULT_FAQS);
         writeLocalEntries(DEFAULT_FAQS);
       }
-
-      try {
-        const response = await fetch(API_URL, { method: 'GET' });
-        if (!response.ok) throw new Error('fetch failed');
-        const data = await response.json();
-        const serverEntries = normalizeEntries(data);
-        if (serverEntries.length) {
-          setEntries(serverEntries);
-          writeLocalEntries(serverEntries);
-          setStatusText('已连接后端问答接口');
-        } else {
-          setStatusText('后端返回为空，已使用本地预设内容');
-        }
-      } catch {
-        setStatusText('未检测到后端接口，使用本地数据');
-      }
+      setStatusText('\u77e5\u8bc6\u5e93\u5df2\u5c31\u7eea');
     };
 
-    void loadEntries();
+    loadEntries();
   }, []);
 
   const saveEntry = (entry: FreshmanEntry) => {
     setEntries((prevEntries) => {
+      const existing = prevEntries.find(
+        (item) => item.question === entry.question && item.answer && item.answer.trim() !== ''
+      );
+      if (existing) {
+        return prevEntries;
+      }
       const nextEntries = [entry, ...prevEntries.filter((item) => item.id !== entry.id)];
       writeLocalEntries(nextEntries);
       return nextEntries;
     });
+
+    fetch(QA_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: entry.question,
+        answer: entry.answer || null,
+        status: entry.status || 'pending',
+      }),
+    }).catch(() => { });
   };
 
-  const submitQuestion = async (rawQuestion: string) => {
+  const submitQuestion = (rawQuestion: string) => {
     const trimmedQuestion = rawQuestion.trim();
     if (!trimmedQuestion) return;
 
@@ -154,29 +145,15 @@ export function FreshmanWindow() {
     setSubmitting(true);
     if (!expanded) openPanel();
     setAskResult(null);
-    setStatusText('正在等待后端回复...');
 
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: trimmedQuestion } as FreshmanPayload),
-      });
-
-      if (!response.ok) throw new Error('post failed');
-      const data = await response.json();
-      const serverEntry = normalizeEntries([data])[0];
-      const answerText = serverEntry?.answer?.trim() || '暂时没有收到回复，请稍后再试。';
-      setAskResult({ question: trimmedQuestion, answer: answerText });
-      setSearchTerm(trimmedQuestion);
-      setStatusText('已找到可参考答案，您可以继续查看常见问题并标记结果');
-    } catch {
-      setAskResult({ question: trimmedQuestion, answer: '暂时没有收到回复，已保存为待处理问题。' });
-      setSearchTerm(trimmedQuestion);
-      setStatusText('已保存到本地，等待后端接入');
-    } finally {
-      setSubmitting(false);
-    }
+    const match = matchBestAnswer(trimmedQuestion);
+    const answerText = match
+      ? match.entry.answer
+      : '\u6682\u65f6\u6ca1\u6709\u627e\u5230\u7b54\u6848\uff0c\u5df2\u4fdd\u5b58\u4e3a\u5f85\u5904\u7406\u95ee\u9898\u3002';
+    setAskResult({ question: trimmedQuestion, answer: answerText });
+    setSearchTerm(trimmedQuestion);
+    setStatusText(match ? '\u5df2\u627e\u5230\u53c2\u8003\u7b54\u6848\uff0c\u60a8\u53ef\u4ee5\u7ee7\u7eed\u67e5\u770b\u5e38\u89c1\u95ee\u9898\u5e76\u6807\u8bb0\u7ed3\u679c' : '\u5df2\u4fdd\u5b58\u5230\u672c\u5730');
+    setSubmitting(false);
   };
 
   const persistQuestion = (questionText: string, answerText: string, status: FreshmanEntry['status']) => {
@@ -191,16 +168,47 @@ export function FreshmanWindow() {
 
   const handleMarkResolved = () => {
     if (!askResult) return;
-    persistQuestion(askResult.question, askResult.answer, 'resolved');
     setAskResult(null);
-    setStatusText('问题已记录到常见问题');
+    setStatusText('\u77e5\u8bc6\u5e93\u5df2\u5c31\u7eea');
   };
 
   const handleMarkPending = () => {
     if (!askResult) return;
-    persistQuestion(askResult.question, '等待人工回复', 'pending');
+    persistQuestion(askResult.question, '\u7b49\u5f85\u4eba\u5de5\u56de\u590d', 'pending');
     setAskResult(null);
-    setStatusText('问题已记录为待人工回复');
+    setStatusText('\u95ee\u9898\u5df2\u8bb0\u5f55\u4e3a\u5f85\u4eba\u5de5\u56de\u590d');
+  };
+
+  const handleSubmitReply = (entryId: string) => {
+    const trimmed = replyText.trim();
+    if (!trimmed) return;
+    const entry = entries.find(e => e.id === entryId);
+    if (!entry) return;
+
+    setEntries((prevEntries) => {
+      const nextEntries = prevEntries.map((item) => {
+        if (item.id === entryId) {
+          return { ...item, answer: trimmed, status: 'resolved' as const };
+        }
+        return item;
+      });
+      writeLocalEntries(nextEntries);
+      return nextEntries;
+    });
+
+    fetch(QA_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: entry.question,
+        answer: trimmed,
+        status: 'resolved',
+      }),
+    }).catch(() => { });
+
+    setReplyingTo(null);
+    setReplyText('');
+    setStatusText('\u56de\u590d\u5df2\u4fdd\u5b58');
   };
 
   useEffect(() => {
@@ -272,7 +280,7 @@ export function FreshmanWindow() {
         onMouseMove={(event) => event.stopPropagation()}
         onMouseUp={(event) => event.stopPropagation()}
         aria-expanded={expanded}
-        aria-label={expanded ? '关闭新生问答' : '打开新生问答'}
+        aria-label={expanded ? '\u5173\u95ed\u65b0\u751f\u95ee\u7b54' : '\u6253\u5f00\u65b0\u751f\u95ee\u7b54'}
       >
         <span className="freshman-window__icon">✦</span>
         <span>新生问答</span>
@@ -282,11 +290,10 @@ export function FreshmanWindow() {
       {panelPhase !== 'hidden' && (
         <div
           ref={panelRef}
-          className={`freshman-window__panel ${
-            panelPhase === 'entering' ? 'freshman-window__panel--entering' :
+          className={`freshman-window__panel ${panelPhase === 'entering' ? 'freshman-window__panel--entering' :
             panelPhase === 'exiting' ? 'freshman-window__panel--exiting' :
-            ''
-          }`}
+              ''
+            }`}
           onAnimationEnd={handlePanelAnimEnd}
           onMouseDown={(event) => event.stopPropagation()}
           onMouseMove={(event) => event.stopPropagation()}
@@ -371,7 +378,40 @@ export function FreshmanWindow() {
                       <div className="freshman-window__item-meta">
                         <time className="freshman-window__item-time">{item.createdAt}</time>
                         {item.status === 'pending' && <span className="freshman-window__chip">待人工回复</span>}
+                        {item.status === 'pending' && (
+                          <button
+                            className="freshman-window__submit freshman-window__submit--secondary"
+                            type="button"
+                            style={{ fontSize: '12px', padding: '2px 8px', marginLeft: 'auto' }}
+                            onClick={() => {
+                              setReplyingTo(replyingTo === item.id ? null : item.id);
+                              setReplyText('');
+                            }}
+                          >
+                            {replyingTo === item.id ? '\u53d6\u6d88' : '\u8865\u5145\u56de\u590d'}
+                          </button>
+                        )}
                       </div>
+                      {item.status === 'pending' && replyingTo === item.id && (
+                        <div style={{ marginTop: '8px' }}>
+                          <textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder={'\u8f93\u5165\u56de\u590d\u5185\u5bb9...'}
+                            rows={2}
+                            style={{ width: '100%', resize: 'vertical', fontSize: '13px', padding: '6px 8px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                          />
+                          <button
+                            className="freshman-window__submit"
+                            type="button"
+                            style={{ marginTop: '4px', fontSize: '12px', padding: '4px 12px' }}
+                            disabled={!replyText.trim()}
+                            onClick={() => handleSubmitReply(item.id)}
+                          >
+                            {'\u63d0\u4ea4\u56de\u590d'}
+                          </button>
+                        </div>
+                      )}
                     </article>
                   ))
                 )}

@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { Building, ChatMessage, MapTransform } from '../../types';
 import { CDN_BASE } from '../../config/cdn';
 import { buildingSprites } from '../../data/building-sprites';
+import { askRAG } from '../../services/rag';
+import { Markdown } from '../Markdown';
 import './BuildingPopover.css';
 
 const resolveImageUrl = (path: string) => `${CDN_BASE}${path}`;
@@ -131,11 +133,13 @@ export function BuildingPopover({
     ? building.images.map(resolveImageUrl)
     : building.imageUrl ? [resolveImageUrl(building.imageUrl)] : [];
 
-  /* 切换建筑时重置轮播索引 + 损坏图片状态 + 滚动到顶部 */
+  /* 切换建筑时重置轮播索引 + 损坏图片状态 + 滚动到顶部 + 清空聊天 */
   useEffect(() => {
     setCarouselIdx(0);
     setBrokenImgs(new Set());
-    // 强制弹窗正文回到顶部，让用户首先看到建筑核心信息
+    setChatMsgs([]);
+    setChatInput('');
+    setChatLoading(false);
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
   }, [building.id]);
 
@@ -213,16 +217,34 @@ export function BuildingPopover({
     setChatMsgs(prev => [...prev, {
       id: `q-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(),
     }]);
-    setChatInput(''); setChatLoading(true);
-    // TODO: 对接后端 /api/chat（带 building context）
-    setTimeout(() => {
-      setChatMsgs(prev => [...prev, {
-        id: `a-${Date.now()}`, role: 'assistant',
-        content: `关于「${building.name}」的"${text}"：\n\n⑤组 RAG 接入后将基于「${building.description}」的建筑上下文给出准确回答。`,
-        timestamp: Date.now(),
-      }]);
-      setChatLoading(false);
-    }, 1000);
+    setChatInput('');
+
+    const doAsk = async () => {
+      try {
+        const resp = await askRAG(text, {
+          buildingId: building.id,
+          buildingName: building.name,
+          buildingDescription: building.description,
+        });
+        setChatMsgs(prev => [...prev, {
+          id: `a-${Date.now()}`, role: 'assistant',
+          content: resp.answer,
+          timestamp: Date.now(),
+        }]);
+      } catch {
+        setChatMsgs(prev => [...prev, {
+          id: `a-${Date.now()}`, role: 'assistant',
+          content: '\u62b1\u6b49\uff0c\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002',
+          timestamp: Date.now(),
+        }]);
+      } finally {
+        setChatLoading(false);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
+    };
+
+    setChatLoading(true);
+    doAsk();
   }, [chatInput, chatLoading, building]);
 
   /* 定位：优先放上方，上方不够（含 TopBar 遮挡）则放下方 */
@@ -307,34 +329,34 @@ export function BuildingPopover({
               {/* 全部图片预加载，opacity 切换，切换无白闪 */}
               {imageList.map((src, i) => (
                 brokenImgs.has(i) ? null : (
-                <img
-                  key={i}
-                  className={`popover-hero-img ${i === carouselIdx ? 'popover-hero-img--active' : ''}`}
-                  src={src}
-                  alt={`${building.name} 照片 ${i + 1}`}
-                  onError={() => {
-                    setBrokenImgs(prev => new Set(prev).add(i));
-                    // 如果当前展示的就是损坏的图，跳到下一张
-                    if (i === carouselIdx) {
-                      setCarouselIdx(prev => (prev + 1) % imageList.length);
-                    }
-                  }}
-                />
-              )))}
+                  <img
+                    key={i}
+                    className={`popover-hero-img ${i === carouselIdx ? 'popover-hero-img--active' : ''}`}
+                    src={src}
+                    alt={`${building.name} 照片 ${i + 1}`}
+                    onError={() => {
+                      setBrokenImgs(prev => new Set(prev).add(i));
+                      // 如果当前展示的就是损坏的图，跳到下一张
+                      if (i === carouselIdx) {
+                        setCarouselIdx(prev => (prev + 1) % imageList.length);
+                      }
+                    }}
+                  />
+                )))}
               {imageList.length > 1 && (
                 <>
                   <button className="popover-carousel-btn popover-carousel-btn--prev"
                     onClick={goPrev} aria-label="上一张">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <polyline points="15 18 9 12 15 6"/>
+                      <polyline points="15 18 9 12 15 6" />
                     </svg>
                   </button>
                   <button className="popover-carousel-btn popover-carousel-btn--next"
                     onClick={goNext} aria-label="下一张">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <polyline points="9 18 15 12 9 6"/>
+                      <polyline points="9 18 15 12 9 6" />
                     </svg>
                   </button>
                   <div className="popover-carousel-dots">
@@ -367,7 +389,7 @@ export function BuildingPopover({
                     const prev = spriteSiblings[(idx - 1 + spriteSiblings.length) % spriteSiblings.length];
                     onNavigateToBuilding(prev);
                   }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
                 </button>
                 <div>
                   <span className="popover-category" style={{ color: catColor }}>{CATEGORY_LABELS[building.category]}</span>
@@ -379,7 +401,7 @@ export function BuildingPopover({
                     const next = spriteSiblings[(idx + 1) % spriteSiblings.length];
                     onNavigateToBuilding(next);
                   }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
                 </button>
               </div>
             )}
@@ -392,7 +414,7 @@ export function BuildingPopover({
             <button className="popover-close" onClick={onClose} aria-label="关闭">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
@@ -447,7 +469,7 @@ export function BuildingPopover({
               <div className="popover-chat-label">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
                 关于{building.name}想问什么？
               </div>
@@ -456,7 +478,7 @@ export function BuildingPopover({
                 <div className="popover-chat-msgs">
                   {chatMsgs.map(m => (
                     <div key={m.id} className={`popover-chat-msg ${m.role === 'user' ? 'popover-chat-msg--user' : ''}`}>
-                      {m.content}
+                      {m.role === 'assistant' ? <Markdown content={m.content} /> : m.content}
                     </div>
                   ))}
                   {chatLoading && <div className="popover-chat-msg popover-chat-typing">思考中…</div>}
@@ -468,7 +490,7 @@ export function BuildingPopover({
                 <input ref={inputRef} className="popover-chat-input" type="text"
                   placeholder={`问问关于${building.name}的问题…`}
                   value={chatInput} onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuestion(); }}}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuestion(); } }}
                   onFocus={() => { inputBlurGuard.current = false; }}
                   onBlur={() => { inputBlurGuard.current = true; setTimeout(() => { inputBlurGuard.current = false; }, 300); }}
                   disabled={chatLoading} />
@@ -476,7 +498,7 @@ export function BuildingPopover({
                   disabled={!chatInput.trim() || chatLoading} aria-label="发送">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
                 </button>
               </div>

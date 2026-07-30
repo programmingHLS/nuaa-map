@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Building, ChatMessage } from '../../types';
-import { matchBestAnswer, getRelatedQuestions } from '../../data/qa-matcher';
+import { getRelatedQuestions } from '../../data/qa-matcher';
 import type { QaEntry } from '../../data/qa-matcher';
+import { askRAG } from '../../services/rag';
+import { Markdown } from '../Markdown';
 import './ChatWidget.css';
 
 interface ChatWidgetProps {
@@ -66,20 +68,19 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
-    // 优先尝试本地问答匹配
-    const match = matchBestAnswer(text);
-    const delay = match ? 400 : 1000;
-    timerRef.current = setTimeout(() => {
+    askRAG(text, selectedBuilding ? {
+      buildingId: selectedBuilding.id,
+      buildingName: selectedBuilding.name,
+      buildingDescription: selectedBuilding.description,
+    } : undefined).then(resp => {
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`, role: 'assistant',
-        content: match
-          ? match.entry.answer
-          : '感谢你的提问！\n\n智能问答系统正在建设中（⑤组 RAG 管道接入后即可使用）。',
+        content: resp.answer,
         timestamp: Date.now(),
       }]);
-      if (match) setSuggestions(getRelatedQuestions(text, 3));
+      setSuggestions(getRelatedQuestions(text, 3));
       setIsLoading(false);
-    }, delay);
+    });
   }, [isLoading]);
 
   const sendMessage = useCallback(() => {
@@ -95,7 +96,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
         <button className="chat-fab" onClick={() => setIsOpen(true)} aria-label="打开智能问答">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         </button>
       ) : (
@@ -111,7 +112,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
             <button className="chat-close" onClick={() => setIsOpen(false)} aria-label="关闭">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
@@ -149,12 +150,12 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
           <div className="chat-messages">
             {messages.map(msg => (
               <div key={msg.id} className={`chat-msg ${msg.role === 'user' ? 'chat-msg--user' : ''}`}>
-                <div className="chat-msg-bubble">{msg.content}</div>
+                <div className="chat-msg-bubble"><Markdown content={msg.content} /></div>
               </div>
             ))}
             {isLoading && (
               <div className="chat-msg">
-                <div className="chat-msg-bubble chat-msg-typing"><span/><span/><span/></div>
+                <div className="chat-msg-bubble chat-msg-typing"><span /><span /><span /></div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -164,14 +165,14 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
             <input ref={inputRef} className="chat-input" type="text"
               placeholder="输入问题…" value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
               disabled={isLoading}
             />
             <button className="chat-send" onClick={sendMessage}
               disabled={!input.trim() || isLoading} aria-label="发送">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
             </button>
           </div>

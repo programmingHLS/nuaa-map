@@ -55,7 +55,7 @@ npm run dev
 > [!WARNING]
 > **常见问题**：如果直接执行 `npm run dev` 提示 `'vite' 不是内部或外部命令`，说明还没有安装依赖——请先运行 `npm install`（即上述第 3 步），再执行第 4 步。`node_modules/` 目录不会纳入 Git 版本控制，因此每次在新环境中 clone 仓库后都需要重新安装。
 
-> 目前前端已搭建完成，包含天目湖校区真实卫星地图底图（Zoom 3 瓦片拼接）+ 36 栋真实建筑坐标 + 地图交互（缩放/拖拽边界约束、宽度适配）+ AI 聊天界面 + 新生问答窗口 + 建筑搜索 + 缩略图导航。后端和 AI 智能体模块尚未开发。
+> 前端已完成：手绘地图底图 + 36 栋建筑精灵图热区 + 地图交互（缩放/拖拽）+ AI 聊天 + 新生问答 + 建筑搜索 + 缩略图导航。后端 RAG 服务已就绪（Express + 本地分词匹配 + DeepSeek LLM），同时支持 Cloudflare Pages Functions + D1 数据库部署。
 
 ## 技术栈
 
@@ -65,8 +65,9 @@ npm run dev
 | 构建工具 | Vite 8 | 极速 HMR 开发体验 |
 | 样式方案 | CSS Custom Properties | 设计令牌体系，全局主题切换 |
 | 地图方案 | 手绘扫描图 + CSS Transform | 不依赖 GIS 库，像素坐标热区叠加 |
-| 后端 API | Python FastAPI / Node.js Express（待开发）| RESTful API，流式输出支持 |
-| AI/智能体 | LangChain + RAG（待开发）| 检索增强生成，知识库基于④组 QA 数据 |
+| 后端 API | Node.js Express | RESTful API，RAG 检索增强生成 |
+| AI/智能体 | DeepSeek API + 本地分词匹配 | QA 知识库检索 + LLM 流式回复 |
+| 边缘函数 | Cloudflare Pages Functions + D1 | 线上部署方案的 Chat/QA API |
 | 数据格式 | JSON | 建筑信息 + QA 知识库，统一 JSON Schema |
 
 ## 前端架构
@@ -106,6 +107,8 @@ frontend/src/
 
 ## 常用命令
 
+### 前端
+
 ```bash
 cd frontend
 
@@ -113,6 +116,23 @@ npm run dev      # 启动开发服务器（热更新）
 npm run build    # 生产构建
 npm run preview  # 预览生产构建
 ```
+
+### 后端（RAG 问答服务）
+
+```bash
+cd backend
+
+cp .env.example .env    # 创建环境配置（首次运行）
+# 编辑 .env，填入 LLM_API_KEY
+
+npm install             # 安装依赖（首次运行）
+npm run dev             # 启动后端（端口 3000，文件变更自动重启）
+```
+
+> [!NOTE]
+> 后端依赖 `backend/data/` 下的 QA 知识库和建筑数据，与前端共享同一数据源。
+> 如果不配置 `LLM_API_KEY`，后端仍可启动，但 AI 问答会降级为本地关键词匹配。
+> 前端开发时设置 `VITE_RAG_API_URL=http://localhost:3000`（`frontend/.env.local`）即可对接本地后端。
 
 ## 部署
 
