@@ -3,6 +3,7 @@ import type { Building, ChatMessage, MapTransform } from '../../types';
 import { CDN_BASE } from '../../config/cdn';
 import { buildingSprites } from '../../data/building-sprites';
 import { askRAG } from '../../services/rag';
+import { Markdown } from '../Markdown';
 import './BuildingPopover.css';
 
 const resolveImageUrl = (path: string) => `${CDN_BASE}${path}`;
@@ -477,7 +478,7 @@ export function BuildingPopover({
                 <div className="popover-chat-msgs">
                   {chatMsgs.map(m => (
                     <div key={m.id} className={`popover-chat-msg ${m.role === 'user' ? 'popover-chat-msg--user' : ''}`}>
-                      {m.content}
+                      {m.role === 'assistant' ? <Markdown content={m.content} /> : m.content}
                     </div>
                   ))}
                   {chatLoading && <div className="popover-chat-msg popover-chat-typing">思考中…</div>}

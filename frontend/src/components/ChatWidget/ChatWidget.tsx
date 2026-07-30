@@ -3,6 +3,7 @@ import type { Building, ChatMessage } from '../../types';
 import { getRelatedQuestions } from '../../data/qa-matcher';
 import type { QaEntry } from '../../data/qa-matcher';
 import { askRAG } from '../../services/rag';
+import { Markdown } from '../Markdown';
 import './ChatWidget.css';
 
 interface ChatWidgetProps {
@@ -149,7 +150,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
           <div className="chat-messages">
             {messages.map(msg => (
               <div key={msg.id} className={`chat-msg ${msg.role === 'user' ? 'chat-msg--user' : ''}`}>
-                <div className="chat-msg-bubble">{msg.content}</div>
+                <div className="chat-msg-bubble"><Markdown content={msg.content} /></div>
               </div>
             ))}
             {isLoading && (

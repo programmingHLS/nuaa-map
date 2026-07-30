@@ -156,7 +156,10 @@ function buildSystemPrompt() {
 3. 回答要简洁、准确，符合学生助手语境。
 4. 回答中可以适当引导用户（如"建议你咨询师生服务大厅X号窗口办理"）。
 5. 涉及时间、地点、办事流程的信息时，直接给出明确答案。
-6. 使用中文回答`;
+6. 使用中文回答。
+7. 可以适当使用 Markdown 格式提升可读性：用 **粗体** 强调关键信息，
+   用有序/无序列表展示办事流程或多个选项，
+   用 > 引用块标注注意事项。但不要使用标题（#）或图片。`;
 }
 
 function buildUserPrompt(question, qaResults, buildingResults, contextText) {
