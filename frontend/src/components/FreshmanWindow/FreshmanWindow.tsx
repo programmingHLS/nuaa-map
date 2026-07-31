@@ -15,7 +15,7 @@ type PanelPhase = 'hidden' | 'entering' | 'visible' | 'exiting';
 
 const STORAGE_KEY = 'nuaa-map-freshman-qa';
 const STORAGE_VERSION = 5;
-const QA_API_URL = '/api/freshman-questions';
+const QA_API_URL = '/api/qa';
 
 import qaData from '../../data/qa-新生问答.json';
 
@@ -84,19 +84,14 @@ export function FreshmanWindow() {
         const resp = await fetch(QA_API_URL);
         if (resp.ok) {
           const data = await resp.json();
-          // 后端返回数组；兼容 { entries: [] } 结构
-          const list: unknown[] = Array.isArray(data) ? data : ((data as { entries?: unknown[] })?.entries ?? []);
-          if (list.length > 0) {
-            const mapped: FreshmanEntry[] = list.map((e: unknown) => {
-              const rec = e as Record<string, unknown>;
-              return {
-                id: String(rec.id ?? ''),
-                question: String(rec.question ?? ''),
-                answer: rec.answer ? String(rec.answer) : undefined,
-                createdAt: String(rec.createdAt ?? rec.created_at ?? ''),
-                status: (rec.status as FreshmanEntry['status']) || undefined,
-              };
-            });
+          if (data.entries && data.entries.length > 0) {
+            const mapped: FreshmanEntry[] = data.entries.map((e: Record<string, unknown>) => ({
+              id: String(e.id ?? ''),
+              question: String(e.question ?? ''),
+              answer: e.answer ? String(e.answer) : undefined,
+              createdAt: String(e.createdAt ?? e.created_at ?? ''),
+              status: (e.status as FreshmanEntry['status']) || undefined,
+            }));
             setEntries(mapped);
             writeLocalEntries(mapped);
             setStatusText('\u77e5\u8bc6\u5e93\u5df2\u5c31\u7eea');
