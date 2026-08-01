@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to Server
 
 on:
   push:
@@ -6,34 +6,6 @@ on:
       - main
 
 jobs:
-  deploy-cloudflare:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm ci
-          npm run build
-
-      - name: Prepare deployment directory
-        run: |
-          cp -r functions frontend/dist/functions
-
-      - name: Deploy to Cloudflare Pages (with functions)
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy frontend/dist --project-name=nuaa-map
-
   deploy-server:
     runs-on: ubuntu-latest
     steps:
