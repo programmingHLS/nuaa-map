@@ -50,7 +50,9 @@ export function BuildingSpriteLayer({
   const cacheRef = useRef<(SpriteCache | null)[]>([]);
   const rafRef = useRef<number>(0);
   const lastTouchRef = useRef(0);
+  const lastZoomRef = useRef(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const mouseDownPos = useRef({ x: 0, y: 0 });
   const layerRef = useRef<HTMLDivElement>(null);
 
   /* disabled 时重置 hover 状态 */
@@ -178,18 +180,32 @@ export function BuildingSpriteLayer({
       if (el) el.style.cursor = '';
     };
 
+    const onDown = (e: MouseEvent) => { mouseDownPos.current = { x: e.clientX, y: e.clientY }; };
+    const onWheel = () => { lastZoomRef.current = Date.now(); };
     el.addEventListener('mousemove', onMove);
     el.addEventListener('mouseleave', onLeave);
+    el.addEventListener('mousedown', onDown);
+    el.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       el.removeEventListener('mousemove', onMove);
       el.removeEventListener('mouseleave', onLeave);
+      el.removeEventListener('mousedown', onDown);
+      el.removeEventListener('wheel', onWheel);
       cancelAnimationFrame(rafRef.current);
     };
   }, [containerRef, screenToMap, hitTest, disabled]);
 
-  /* 触发建筑点击 */
-  const doBuildingClick = useCallback((spriteIdx: number) => {
+  /* 触发建筑点击（跳过拖拽/缩放后的误触） */
+  const doBuildingClick = useCallback((spriteIdx: number, clientX?: number, clientY?: number) => {
     if (disabled || spriteIdx < 0) return;
+    // 缩放后300ms内不触发点击
+    if (Date.now() - lastZoomRef.current < 300) return;
+    // 检查是否拖拽过：鼠标移动超过 3px 视为拖拽/缩放，不触发点击
+    if (clientX !== undefined && clientY !== undefined) {
+      const dx = clientX - mouseDownPos.current.x;
+      const dy = clientY - mouseDownPos.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) return;
+    }
     const sprite = buildingSprites[spriteIdx];
     const ids = sprite.buildingIds;
     let pickId = ids[0];
@@ -211,18 +227,19 @@ export function BuildingSpriteLayer({
     const el = containerRef.current;
     if (!el) return;
 
-    const onClick = () => {
-      if (Date.now() - lastTouchRef.current < 500) return; // touchend 已处理
-      doBuildingClick(activeIdxRef.current);
+    const onClick = (e: MouseEvent) => {
+      if (Date.now() - lastTouchRef.current < 500) return;
+      doBuildingClick(activeIdxRef.current, e.clientX, e.clientY);
     };
 
     // 记录 touchstart 位置，用于 touchend 时判断是否为拖拽
     const onTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      if (touch) touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+      if (touch) {
+        touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+        mouseDownPos.current = { x: touch.clientX, y: touch.clientY };
+      }
     };
-
-    // 移动端：touch-action:none 可能阻止合成 click，用 touchend 兜底
     const onTouchEnd = (e: TouchEvent) => {
       const touch = e.changedTouches[0];
       if (!touch) { touchStartRef.current = null; return; }
@@ -240,17 +257,21 @@ export function BuildingSpriteLayer({
       if (!pos) return;
       const hit = hitTest(pos.mx, pos.my);
       if (hit < 0) return;
-      // 同步更新 activeIdx 并触发 click，记录时间防双击
       lastTouchRef.current = Date.now();
       activeIdxRef.current = hit;
       setActiveIdx(hit);
-      doBuildingClick(hit);
+      doBuildingClick(hit, touch.clientX, touch.clientY);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length >= 2) lastZoomRef.current = Date.now();
     };
     el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
     el.addEventListener('touchend', onTouchEnd, { passive: true });
     el.addEventListener('click', onClick);
     return () => {
       el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('touchend', onTouchEnd);
       el.removeEventListener('click', onClick);
     };
