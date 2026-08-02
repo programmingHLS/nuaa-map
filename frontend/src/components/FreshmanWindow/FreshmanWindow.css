@@ -16,6 +16,9 @@
   gap: 10px;
   pointer-events: none;
 }
+.freshman-window--expanded {
+  pointer-events: auto;
+}
 .freshman-window > * {
   pointer-events: auto;
 }

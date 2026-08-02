@@ -107,8 +107,8 @@
 /* 旧 spinner 已废弃，保留 keyframes 避免报错 */
 .map-loading-spinner { display: none; }
 
-.map-layer { position:absolute; top:0; left:0; transition:opacity 0.4s ease, transform 0.15s ease-out; }
-.map-container--dragging .map-layer { transition:opacity 0.4s ease, transform 0s; }
+.map-layer { position:absolute; top:0; left:0; transition:opacity 0.4s ease; }
+.map-container--dragging .map-layer { transition:opacity 0.4s ease; }
 .map-image { display:block; max-width:none; user-select:none; -webkit-user-drag:none; }
 
 .map-controls { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:10; }

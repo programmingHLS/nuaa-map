@@ -227,15 +227,30 @@ export function FreshmanWindow() {
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [expanded]);
 
+  /* 原生事件拦截：阻止所有鼠标/触摸/滚轮事件穿透到地图 */
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
-    const stopTouch = (e: TouchEvent) => { e.stopPropagation(); };
-    el.addEventListener('touchstart', stopTouch, { passive: true });
-    el.addEventListener('touchmove', stopTouch, { passive: true });
+    const block = (e: Event) => { e.stopPropagation(); };
+    el.addEventListener('mousedown', block);
+    el.addEventListener('mousemove', block);
+    el.addEventListener('mouseup', block);
+    el.addEventListener('touchstart', block, { passive: true });
+    el.addEventListener('touchmove', block, { passive: true });
+    el.addEventListener('touchend', block);
+    el.addEventListener('wheel', block, { passive: false });
+    el.addEventListener('pointerdown', block);
+    el.addEventListener('pointermove', block);
     return () => {
-      el.removeEventListener('touchstart', stopTouch);
-      el.removeEventListener('touchmove', stopTouch);
+      el.removeEventListener('mousedown', block);
+      el.removeEventListener('mousemove', block);
+      el.removeEventListener('mouseup', block);
+      el.removeEventListener('touchstart', block);
+      el.removeEventListener('touchmove', block);
+      el.removeEventListener('touchend', block);
+      el.removeEventListener('wheel', block);
+      el.removeEventListener('pointerdown', block);
+      el.removeEventListener('pointermove', block);
     };
   }, [panelPhase]);
 
@@ -295,12 +310,6 @@ export function FreshmanWindow() {
               ''
             }`}
           onAnimationEnd={handlePanelAnimEnd}
-          onMouseDown={(event) => event.stopPropagation()}
-          onMouseMove={(event) => event.stopPropagation()}
-          onMouseUp={(event) => event.stopPropagation()}
-          onTouchStart={(event) => event.stopPropagation()}
-          onTouchMove={(event) => event.stopPropagation()}
-          onWheelCapture={(event) => event.stopPropagation()}
         >
           <div className="freshman-window__main">
             <div className="freshman-window__ask-card">
