@@ -229,13 +229,10 @@ export function BuildingSpriteLayer({
     // 记录 touchstart 位置，用于 touchend 时判断是否为拖拽
     const onTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      if (touch) touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-    };
-
-    // 移动端：touch-action:none 可能阻止合成 click，用 touchend 兜底
-    const onTouchStart = (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (t) mouseDownPos.current = { x: t.clientX, y: t.clientY };
+      if (touch) {
+        touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+        mouseDownPos.current = { x: touch.clientX, y: touch.clientY };
+      }
     };
     const onTouchEnd = (e: TouchEvent) => {
       const touch = e.changedTouches[0];
@@ -263,10 +260,6 @@ export function BuildingSpriteLayer({
     el.addEventListener('touchend', onTouchEnd, { passive: true });
     el.addEventListener('click', onClick);
     return () => {
-<<<<<<< HEAD
-=======
-      el.removeEventListener('click', onClick);
->>>>>>> 61f997b (fix(interact): 3项修复——FreshmanWindow穿透/缩放误触/频闪)
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchend', onTouchEnd);
       el.removeEventListener('click', onClick);
