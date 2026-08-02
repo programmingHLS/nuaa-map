@@ -19,6 +19,7 @@ const DEFAULT_MAP_STATE: MapViewState = {
 
 function App() {
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [freshmanExpanded, setFreshmanExpanded] = useState(false);
   const [mapState, setMapState] = useState<MapViewState>(DEFAULT_MAP_STATE);
   const buildings = mockBuildings as Building[];
 
@@ -72,10 +73,11 @@ function App() {
             selectedBuilding={selectedBuilding}
             onBuildingClick={handleBuildingClick}
             onMapStateChange={setMapState}
+            onFreshmanExpand={setFreshmanExpanded}
           />
         </ErrorBoundary>
       </main>
-      {!selectedBuilding && (
+      {!selectedBuilding && !freshmanExpanded && (
         <Minimap
           imageSrc={mapState.imageSrc || `${CDN_BASE}/map/placeholder-map.svg`}
           imageWidth={mapState.imageWidth}
@@ -86,7 +88,7 @@ function App() {
           onNavigate={handleMinimapNavigate}
         />
       )}
-      {!selectedBuilding && (
+      {!selectedBuilding && !freshmanExpanded && (
         <ErrorBoundary name="AI 聊天">
           <ChatWidget
             selectedBuilding={selectedBuilding}

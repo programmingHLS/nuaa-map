@@ -25,9 +25,10 @@ interface MapViewProps {
   selectedBuilding: Building | null;
   onBuildingClick: (data: BuildingClickData | null) => void;
   onMapStateChange?: (state: MapViewState) => void;
+  onFreshmanExpand?: (expanded: boolean) => void;
 }
 
-export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapStateChange }: MapViewProps) {
+export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapStateChange, onFreshmanExpand }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [imageMeta, setImageMeta] = useState<MapImageMeta>({ width: 0, height: 0, loaded: false });
@@ -225,7 +226,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
         />
       )}
 
-      {!selectedBuilding && <FreshmanWindow />}
+      {!selectedBuilding && <FreshmanWindow onExpandedChange={onFreshmanExpand} />}
 
       {/* 缩放控件 */}
       <div className="map-controls">

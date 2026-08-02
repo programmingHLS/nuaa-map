@@ -46,7 +46,7 @@ function writeLocalEntries(entries: FreshmanEntry[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ _v: STORAGE_VERSION, _entries: entries }));
 }
 
-export function FreshmanWindow() {
+export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expanded: boolean) => void }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const [entries, setEntries] = useState<FreshmanEntry[]>([]);
@@ -226,6 +226,8 @@ export function FreshmanWindow() {
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [expanded]);
+
+  useEffect(() => { onExpandedChange?.(expanded); }, [expanded, onExpandedChange]);
 
   /* 原生事件拦截：阻止所有鼠标/触摸/滚轮事件穿透到地图 */
   useEffect(() => {
