@@ -50,6 +50,7 @@ export function BuildingSpriteLayer({
   const cacheRef = useRef<(SpriteCache | null)[]>([]);
   const rafRef = useRef<number>(0);
   const lastTouchRef = useRef(0);
+  const lastZoomRef = useRef(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const mouseDownPos = useRef({ x: 0, y: 0 });
   const layerRef = useRef<HTMLDivElement>(null);
@@ -180,13 +181,16 @@ export function BuildingSpriteLayer({
     };
 
     const onDown = (e: MouseEvent) => { mouseDownPos.current = { x: e.clientX, y: e.clientY }; };
+    const onWheel = () => { lastZoomRef.current = Date.now(); };
     el.addEventListener('mousemove', onMove);
     el.addEventListener('mouseleave', onLeave);
     el.addEventListener('mousedown', onDown);
+    el.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       el.removeEventListener('mousemove', onMove);
       el.removeEventListener('mouseleave', onLeave);
       el.removeEventListener('mousedown', onDown);
+      el.removeEventListener('wheel', onWheel);
       cancelAnimationFrame(rafRef.current);
     };
   }, [containerRef, screenToMap, hitTest, disabled]);
@@ -194,6 +198,8 @@ export function BuildingSpriteLayer({
   /* 触发建筑点击（跳过拖拽/缩放后的误触） */
   const doBuildingClick = useCallback((spriteIdx: number, clientX?: number, clientY?: number) => {
     if (disabled || spriteIdx < 0) return;
+    // 缩放后300ms内不触发点击
+    if (Date.now() - lastZoomRef.current < 300) return;
     // 检查是否拖拽过：鼠标移动超过 3px 视为拖拽/缩放，不触发点击
     if (clientX !== undefined && clientY !== undefined) {
       const dx = clientX - mouseDownPos.current.x;
@@ -256,11 +262,16 @@ export function BuildingSpriteLayer({
       setActiveIdx(hit);
       doBuildingClick(hit, touch.clientX, touch.clientY);
     };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length >= 2) lastZoomRef.current = Date.now();
+    };
     el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
     el.addEventListener('touchend', onTouchEnd, { passive: true });
     el.addEventListener('click', onClick);
     return () => {
       el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('touchend', onTouchEnd);
       el.removeEventListener('click', onClick);
     };
