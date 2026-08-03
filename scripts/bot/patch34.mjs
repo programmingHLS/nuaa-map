@@ -26,7 +26,7 @@ async function analyze(item) {
   const ctx = ['类型:'+(isPR?'PR':'Issue'),'编号:#'+item.number,'标题:'+(item.title||''),'作者:@'+(item.user?.login||'?'),'内容:'+(item.body||'').slice(0,3000)];
   if(isPR) ctx.push('分支:'+(item.head?.ref||'?')+'->'+(item.base?.ref||'?'),'文件:'+(item.changed_files||'?')+' +'+(item.additions||'?')+' -'+(item.deletions||'?'));
 
-  const reqBody = JSON.stringify({model:'deepseek-v4-pro',messages:[{role:'system',content:SYSTEM_PROMPT},{role:'user',content:ctx.join('
+  const reqBody = JSON.stringify({model:'qwen3.8-max',messages:[{role:'system',content:SYSTEM_PROMPT},{role:'user',content:ctx.join('
 
 ---
 
