@@ -84,4 +84,4 @@ NUAAMap 项目的标签体系模仿 [OpenClaw ClawSweeper](https://github.com/op
 
 ---
 
-<sub>🤖 标签由 [ClawSweeper](https://github.com/programmingWTF/nuaa-map/blob/main/scripts/bot/sweep.mjs) 自动管理 · 有疑问请 @nuaamap-bot</sub>
+<sub>🦞 标签由 [ClawSweeper](https://github.com/programmingWTF/nuaa-map/blob/main/scripts/bot/sweep.mjs) 自动管理 · 有疑问请 @nuaamap-bot</sub>
