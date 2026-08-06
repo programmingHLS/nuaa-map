@@ -6,7 +6,7 @@ import { askRAG } from '../../services/rag';
 import { Markdown } from '../Markdown';
 import './BuildingPopover.css';
 
-const resolveImageUrl = (path: string) => `${CDN_BASE}${path}`;
+const resolveImageUrl = (path: string) => import.meta.env.DEV ? path : `${CDN_BASE}${path}`;
 
 interface BuildingPopoverProps {
   building: Building;
