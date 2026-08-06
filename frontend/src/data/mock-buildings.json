@@ -617,5 +617,18 @@
     "description": "英国宇航公司四发短程喷气式支线客机，南航上海校友会捐赠（C919总设计师、南航77级校友吴光辉院士牵头推动）。标准载客量100人，主打短跑道起降性能。",
     "floors": 0,
     "images": ["/buildings/bae146/01.webp"]
+  },
+  {
+    "id": "building-039",
+    "name": "书院办公室",
+    "category": "service",
+    "hotspot": {
+      "x": 5080,
+      "y": 2212,
+      "width": 133,
+      "height": 132
+    },
+    "description": "天目湖校区书院办公服务场所。",
+    "floors": 1
   }
 ]
