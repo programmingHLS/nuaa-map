@@ -9,8 +9,8 @@
       "width": 80,
       "height": 86
     },
-    "description": "校园西北侧主要出入口。",
-    "openTime": "24小时",
+    "description": "校园西北侧主要出入口，24小时全天开放，人车均可通行。不管几点返校、晚归都走这里。",
+    "openTime": "24小时全天开放 | 人车通行",
     "floors": 0
   },
   {
@@ -23,8 +23,8 @@
       "width": 89,
       "height": 92
     },
-    "description": "校园东北侧出入口。",
-    "openTime": "24小时",
+    "description": "靠近学生公寓片区，06:30-23:00开放，23点之后关门无法进出。",
+    "openTime": "06:30 — 23:00",
     "floors": 0
   },
   {
@@ -37,8 +37,8 @@
       "width": 109,
       "height": 100
     },
-    "description": "校园南侧主出入口，通往主要道路。",
-    "openTime": "24小时",
+    "description": "校园南侧主出入口，学生日常通勤使用，22:00关闭。",
+    "openTime": "07:00 — 22:00",
     "floors": 0
   },
   {
@@ -51,8 +51,8 @@
       "width": 115,
       "height": 106
     },
-    "description": "校园西侧出入口，邻近风雨操场。",
-    "openTime": "24小时",
+    "description": "校园西侧出入口，邻近风雨操场。学生日常通勤使用，22:00关闭。",
+    "openTime": "07:00 — 22:00",
     "floors": 0
   },
   {
@@ -65,8 +65,8 @@
       "width": 109,
       "height": 103
     },
-    "description": "校园东侧出入口。",
-    "openTime": "24小时",
+    "description": "校园东侧出入口。学生日常通勤使用，22:00关闭。",
+    "openTime": "07:00 — 22:00",
     "floors": 0
   },
   {
