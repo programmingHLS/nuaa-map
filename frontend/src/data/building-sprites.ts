@@ -214,14 +214,14 @@ export const buildingSprites = [
     centerY: 2786,
   },
   {
-    image: '/buildings/sprites/B737-500.png',
+    image: `${CDN_BASE}/sprites/B737-500.png`,
     buildingIds: ['building-037'],
     displayWidth: 350,
     centerX: 1923,
     centerY: 1155,
   },
   {
-    image: '/buildings/sprites/BAe146-300.png',
+    image: `${CDN_BASE}/sprites/BAe146-300.png`,
     buildingIds: ['building-038'],
     displayWidth: 300,
     centerX: 1855,
