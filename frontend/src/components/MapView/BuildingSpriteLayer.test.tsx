@@ -50,10 +50,10 @@ function setup(overrides?: Partial<React.ComponentProps<typeof BuildingSpriteLay
 }
 
 describe('BuildingSpriteLayer', () => {
-  it('渲染全部精灵图（27 张配置）', () => {
+  it('渲染全部精灵图（29 张配置）', () => {
     stubImage();
     setup();
-    expect(document.querySelectorAll('.building-sprite').length).toBe(27);
+    expect(document.querySelectorAll('.building-sprite').length).toBe(29);
   });
 
   it('精灵图带建筑名 alt（多建筑精灵图拼接名称）', () => {

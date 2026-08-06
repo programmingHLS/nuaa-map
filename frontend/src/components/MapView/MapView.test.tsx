@@ -4,8 +4,8 @@ import { MapView } from './MapView';
 import type { Building, BuildingClickData } from '../../types';
 
 const buildings: Building[] = [
-  { id: 'building-006', name: '巡天楼', category: 'teaching', hotspot: { x: 100, y: 200, width: 50, height: 40 }, description: '教学楼' },
-  { id: 'building-017', name: '东篱苑餐厅', category: 'canteen', hotspot: { x: 300, y: 400, width: 60, height: 50 }, description: '食堂' },
+  { id: 'building-001', name: '西北门', category: 'gate', hotspot: { x: 100, y: 200, width: 50, height: 40 }, description: '校门' },
+  { id: 'building-039', name: '书院办公室', category: 'service', hotspot: { x: 300, y: 400, width: 60, height: 50 }, description: '办公服务' },
 ];
 
 /** 让离屏精灵图预加载立即完成 */
@@ -75,17 +75,17 @@ describe('MapView', () => {
   it('底图加载完成后显示热区与提示', async () => {
     stubImage();
     await setup();
-    expect(screen.getByLabelText('查看 巡天楼 详情')).toBeInTheDocument();
-    expect(screen.getByLabelText('查看 东篱苑餐厅 详情')).toBeInTheDocument();
+    expect(screen.getByLabelText('查看 西北门 详情')).toBeInTheDocument();
+    expect(screen.getByLabelText('查看 书院办公室 详情')).toBeInTheDocument();
     expect(screen.getByText('滚轮缩放 · 拖拽平移 · 点击建筑查看详情')).toBeInTheDocument();
   });
 
   it('点击热区回调携带建筑与屏幕坐标', async () => {
     stubImage();
     const { onBuildingClick } = await setup();
-    fireEvent.click(screen.getByLabelText('查看 巡天楼 详情'));
+    fireEvent.click(screen.getByLabelText('查看 西北门 详情'));
     const data = onBuildingClick.mock.calls[0][0] as BuildingClickData;
-    expect(data.building.id).toBe('building-006');
+    expect(data.building.id).toBe('building-001');
     expect(data.screenX).toBe(100); // transform.x(0) + x(100) * scale(1)
     expect(data.screenY).toBe(200);
   });
@@ -115,7 +115,7 @@ describe('MapView', () => {
   it('选中建筑时渲染 BuildingPopover', async () => {
     stubImage();
     await setup({ selectedBuilding: buildings[0] });
-    expect(screen.getByRole('dialog', { name: '巡天楼 详情' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: '西北门 详情' })).toBeInTheDocument();
   });
 
   it('点击「放大」按钮触发缩放（滚轮事件）', async () => {

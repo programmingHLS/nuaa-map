@@ -9,8 +9,8 @@
       "width": 80,
       "height": 86
     },
-    "description": "校园西北侧主要出入口。",
-    "openTime": "24小时",
+    "description": "校园西北侧主要出入口，24小时全天开放，人车均可通行。不管几点返校、晚归都走这里。",
+    "openTime": "24小时全天开放 | 人车通行",
     "floors": 0
   },
   {
@@ -23,8 +23,8 @@
       "width": 89,
       "height": 92
     },
-    "description": "校园东北侧出入口。",
-    "openTime": "24小时",
+    "description": "靠近学生公寓片区，06:30-23:00开放，23点之后关门无法进出。",
+    "openTime": "06:30 — 23:00",
     "floors": 0
   },
   {
@@ -37,8 +37,8 @@
       "width": 109,
       "height": 100
     },
-    "description": "校园南侧主出入口，通往主要道路。",
-    "openTime": "24小时",
+    "description": "校园南侧主出入口，学生日常通勤使用，22:00关闭。",
+    "openTime": "07:00 — 22:00",
     "floors": 0
   },
   {
@@ -51,8 +51,8 @@
       "width": 115,
       "height": 106
     },
-    "description": "校园西侧出入口，邻近风雨操场。",
-    "openTime": "24小时",
+    "description": "校园西侧出入口，邻近风雨操场。学生日常通勤使用，22:00关闭。",
+    "openTime": "07:00 — 22:00",
     "floors": 0
   },
   {
@@ -65,8 +65,8 @@
       "width": 109,
       "height": 103
     },
-    "description": "校园东侧出入口。",
-    "openTime": "24小时",
+    "description": "校园东侧出入口。学生日常通勤使用，22:00关闭。",
+    "openTime": "07:00 — 22:00",
     "floors": 0
   },
   {
@@ -498,10 +498,10 @@
     "name": "综合服务楼",
     "category": "service",
     "hotspot": {
-      "x": 2655,
-      "y": 1648,
-      "width": 83,
-      "height": 83
+      "x": 2670,
+      "y": 1658,
+      "width": 30,
+      "height": 25
     },
     "description": "5层综合服务楼。1层保卫处/师生服务大厅，2层牧星学院办公区，4层校区管委会/学工/团委，5层后勤集团。",
     "openTime": "周一至周日 8:00-20:00",
@@ -516,10 +516,10 @@
     "name": "师生服务大厅",
     "category": "service",
     "hotspot": {
-      "x": 2471,
-      "y": 1605,
-      "width": 83,
-      "height": 89
+      "x": 2485,
+      "y": 1615,
+      "width": 30,
+      "height": 25
     },
     "description": "位于综合服务楼1层。办理学生证、缴纳学费、办理银行卡等一站式事务。",
     "openTime": "周一至周五 8:00-12:00, 14:00-17:00",
@@ -536,8 +536,8 @@
     "hotspot": {
       "x": 2655,
       "y": 1447,
-      "width": 92,
-      "height": 78
+      "width": 100,
+      "height": 90
     },
     "description": "4层。门诊8:30-12:15/14:00-17:45，急诊24小时。1层挂号/药房/输液/放射，2层B超/检验/妇科/耳鼻喉科，3层体检中心，4层行政办公。",
     "openTime": "门诊 8:30-12:15, 14:00-17:45 | 急诊 24小时",
@@ -569,10 +569,10 @@
     "name": "垃圾中转站开闭所",
     "category": "facility",
     "hotspot": {
-      "x": 2802,
-      "y": 1389,
-      "width": 89,
-      "height": 66
+      "x": 2820,
+      "y": 1400,
+      "width": 30,
+      "height": 25
     },
     "description": "校园环卫设施。",
     "floors": 1
@@ -588,6 +588,51 @@
       "height": 115
     },
     "description": "西体育场配套看台，可观看田径及足球比赛。",
+    "floors": 1
+  },
+  {
+    "id": "building-037",
+    "name": "波音B737-500",
+    "category": "facility",
+    "hotspot": {
+      "x": 1881,
+      "y": 1115,
+      "width": 84,
+      "height": 80
+    },
+    "description": "波音公司双发中短程运输机，学校自主采购。南航第一台用于民航专业实验教学的主流民用机型，使南航成为工信部高校中首架拥有适航教学飞机的高校。",
+    "floors": 0,
+    "images": [
+      "https://nuaamap-1378966268.cos.ap-nanjing.myqcloud.com/buildings/b737/01.webp"
+    ]
+  },
+  {
+    "id": "building-038",
+    "name": "BAe146-300",
+    "category": "facility",
+    "hotspot": {
+      "x": 1817,
+      "y": 1295,
+      "width": 76,
+      "height": 76
+    },
+    "description": "英国宇航公司四发短程喷气式支线客机，南航上海校友会捐赠（C919总设计师、南航77级校友吴光辉院士牵头推动）。标准载客量100人，主打短跑道起降性能。",
+    "floors": 0,
+    "images": [
+      "https://nuaamap-1378966268.cos.ap-nanjing.myqcloud.com/buildings/bae146/01.webp"
+    ]
+  },
+  {
+    "id": "building-039",
+    "name": "书院办公室",
+    "category": "service",
+    "hotspot": {
+      "x": 5080,
+      "y": 2212,
+      "width": 133,
+      "height": 132
+    },
+    "description": "天目湖校区书院办公服务场所。",
     "floors": 1
   }
 ]
