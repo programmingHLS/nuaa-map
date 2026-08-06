@@ -288,7 +288,7 @@ export function BuildingSpriteLayer({
 
         return (
           <div
-            key={sprite.image}
+            key={`${sprite.image}#${idx}`}
             className={[
               'building-sprite',
               isActive ? 'building-sprite--active' : '',

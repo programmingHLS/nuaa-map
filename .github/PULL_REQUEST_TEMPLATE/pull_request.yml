@@ -1,0 +1,81 @@
+---
+name: Pull Request
+description: 提交代码变更，请完整填写此表单
+title: "<type>(<scope>): <简短描述>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!NOTE]
+        > 提交前请阅读 [CONTRIBUTING.md](../../CONTRIBUTING.md) 与 [CLAUDE.md](../../CLAUDE.md)（AI 协作规范）。
+        > 标题格式示例：`fix(interact): 修复点击建筑热区弹出错位的问题`
+  - type: textarea
+    id: summary
+    attributes:
+      label: 变更摘要
+      description: 简要说明这个 PR 做了什么、解决了什么问题
+      placeholder: |
+        修复了...
+        新增了...
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: 变更类型（type）
+      description: 遵循 Conventional Commits
+      options:
+        - feat（新功能）
+        - fix（Bug 修复）
+        - docs（文档更新）
+        - style（样式 / UI）
+        - refactor（重构）
+        - test（测试）
+        - chore（构建 / 配置）
+        - data（数据更新）
+        - asset（素材资源）
+      default: 1
+    validations:
+      required: true
+  - type: input
+    id: scope
+    attributes:
+      label: 变更范围（scope）
+      description: map / interact / platform / data / ai / convert / docs / backend
+      placeholder: 例如 interact
+    validations:
+      required: true
+  - type: textarea
+    id: related
+    attributes:
+      label: 关联 Issue
+      description: 使用关键词在合并后自动关闭关联 Issue，例如 Closes #58、Fixes #59
+      placeholder: "Closes #58"
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: 测试验证
+      description: 请勾选已完成的项目
+      options:
+        - label: 本地构建通过（`cd frontend && npm run build`）
+        - label: 桌面端浏览器手动验证
+        - label: 移动端适配验证
+        - label: CI / 部署流程已检查（如需）
+  - type: dropdown
+    id: group
+    attributes:
+      label: 涉及小组
+      description: 用于 PR 标签与责任归属
+      options:
+        - 全组通用
+        - ① 地图美工
+        - ② 交互功能
+        - ③ 平台搭建
+        - ④ 数据收集
+        - ⑤ 智能体
+        - ⑥ 数据转换
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图（可选）
+      description: 有 UI 变更时请拖入改动前后对比截图
