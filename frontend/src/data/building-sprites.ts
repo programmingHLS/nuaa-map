@@ -217,15 +217,15 @@ export const buildingSprites = [
     image: `${CDN_BASE}/sprites/B737-500.png`,
     buildingIds: ['building-037'],
     displayWidth: 450,
-    centerX: 2230,
-    centerY: 1545,
+    centerX: 2090,
+    centerY: 1580,
   },
   {
     image: `${CDN_BASE}/sprites/BAe146-300.png`,
     buildingIds: ['building-038'],
     displayWidth: 450,
-    centerX: 2230,
-    centerY: 1705,
+    centerX: 2090,
+    centerY: 1730,
   },
 ];
 

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>精灵图抠图工具</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:system-ui,sans-serif; background:#1a1a2e; color:#eee; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+.topbar { padding:10px 20px; background:#0f3460; display:flex; align-items:center; gap:12px; flex-shrink:0; flex-wrap:wrap; }
+.topbar h2 { font-size:15px; }
+.topbar .mode-btn { padding:6px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); background:transparent; color:#fff; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; }
+.topbar .mode-btn.active { background:#4ecca3; color:#1a1a2e; border-color:#4ecca3; }
+.topbar .mode-btn:hover { background:rgba(255,255,255,0.1); }
+.topbar .mode-btn.active:hover { background:#3db88f; }
+.topbar .action-btn { padding:6px 14px; border-radius:6px; border:none; cursor:pointer; font-size:12px; font-weight:600; }
+.btn-finish { background:#4ecca3; color:#1a1a2e; }
+.btn-finish:hover { background:#3db88f; }
+.btn-clear { background:#e94560; color:#fff; }
+.btn-clear:hover { background:#c73a52; }
+.btn-undo { background:#555; color:#fff; }
+.btn-undo:hover { background:#777; }
+.map-area { flex:1; overflow:hidden; position:relative; background:#0a0a15; }
+.map-img { position:absolute; top:0; left:0; transform-origin:0 0; }
+.map-img img { display:block; max-width:none; }
+canvas.poly-canvas { position:absolute; top:0; left:0; pointer-events:none; }
+.info { position:absolute; bottom:10px; left:10px; right:10px; padding:8px 14px; background:rgba(0,0,0,0.8); border-radius:6px; font-size:11px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.info b { color:#4ecca3; }
+.toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); padding:10px 20px; background:#4ecca3; color:#1a1a2e; border-radius:6px; font-weight:600; font-size:13px; z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.on { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h2>✂️ 精灵图抠图</h2>
+  <button class="mode-btn active" id="btnPoly" onclick="setMode('poly')">🔷 多边形（不规律）</button>
+  <button class="mode-btn" id="btnRect" onclick="setMode('rect')">⬜ 矩形</button>
+  <button class="action-btn btn-undo" onclick="undoPoint()">↩ 撤销点</button>
+  <button class="action-btn btn-finish" onclick="finishPoly()">✅ 完成抠图</button>
+  <button class="action-btn btn-clear" onclick="clearPoly()">🗑 清除</button>
+  <span style="font-size:11px;color:#889">多边形：点击加点 | 矩形：拖拽框选 | 滚轮缩放 | 右键拖动</span>
+</div>
+
+<div class="map-area" id="wrap">
+  <div class="map-img" id="layer">
+    <img id="img" src="hand-drawn-map-small.jpg" alt="手绘地图">
+    <canvas class="poly-canvas" id="polyCanvas"></canvas>
+  </div>
+  <div class="info">
+    <span>坐标: <b id="pos">-</b></span>
+    <span>多边形: <b id="polyInfo">0 个顶点</b></span>
+    <span>缩放: <b id="zoom">100%</b></span>
+    <span>模式: <b id="modeInfo">多边形</b></span>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const RATIO = 7176 / 2500;
+
+let scale = 1, px = 0, py = 0;
+let panning = false, pax = 0, pay = 0, ppx = 0, ppy = 0;
+// 矩形模式
+let drawing = false, sx = 0, sy = 0;
+// 多边形模式
+let mode = 'poly';
+let points = []; // [{x, y}] 缩略图坐标
+
+const wrap = document.getElementById('wrap');
+const layer = document.getElementById('layer');
+const img = document.getElementById('img');
+const polyCanvas = document.getElementById('polyCanvas');
+
+img.onload = () => {
+  const cw = wrap.clientWidth, ch = wrap.clientHeight;
+  scale = Math.min(cw/img.naturalWidth, ch/img.naturalHeight, 1);
+  px = (cw - img.naturalWidth*scale)/2;
+  py = (ch - img.naturalHeight*scale)/2;
+  polyCanvas.width = img.naturalWidth;
+  polyCanvas.height = img.naturalHeight;
+  applyTx();
+};
+
+function applyTx() {
+  layer.style.transform = `translate(${px}px,${py}px) scale(${scale})`;
+  document.getElementById('zoom').textContent = Math.round(scale*100)+'%';
+}
+
+function scr2img(ex, ey) {
+  const r = wrap.getBoundingClientRect();
+  return { x: Math.round((ex-r.left-px)/scale), y: Math.round((ey-r.top-py)/scale) };
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnPoly').classList.toggle('active', m==='poly');
+  document.getElementById('btnRect').classList.toggle('active', m==='rect');
+  document.getElementById('modeInfo').textContent = m==='poly'?'多边形':'矩形';
+  clearPoly();
+}
+
+// ============ 多边形模式 ============
+function addPoint(p) {
+  points.push(p);
+  drawPoly();
+  document.getElementById('polyInfo').textContent = `${points.length} 个顶点`;
+}
+
+function undoPoint() {
+  points.pop();
+  drawPoly();
+  document.getElementById('polyInfo').textContent = `${points.length} 个顶点`;
+}
+
+function clearPoly() {
+  points = [];
+  const ctx = polyCanvas.getContext('2d');
+  ctx.clearRect(0, 0, polyCanvas.width, polyCanvas.height);
+  document.getElementById('polyInfo').textContent = '0 个顶点';
+}
+
+function drawPoly() {
+  const ctx = polyCanvas.getContext('2d');
+  ctx.clearRect(0, 0, polyCanvas.width, polyCanvas.height);
+  if (points.length === 0) return;
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  if (points.length > 2) ctx.closePath();
+  ctx.strokeStyle = '#4ecca3';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([8, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 填充预览
+  if (points.length > 2) {
+    ctx.fillStyle = 'rgba(78,204,163,0.2)';
+    ctx.fill();
+  }
+  // 画顶点
+  points.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+    ctx.fillStyle = i===0 ? '#4ecca3' : '#fff';
+    ctx.fill();
+    ctx.strokeStyle = '#4ecca3';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function finishPoly() {
+  if (points.length < 3) { toastMsg('至少需要 3 个顶点'); return; }
+  cropPoly();
+}
+
+function cropPoly() {
+  const FEATHER = 4; // 羽化像素数
+
+  const xs = points.map(p => Math.round(p.x * RATIO));
+  const ys = points.map(p => Math.round(p.y * RATIO));
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const pad = FEATHER + 2;
+  const ox = minX - pad, oy = minY - pad;
+  const w = maxX - minX + pad*2, h = maxY - minY + pad*2;
+
+  // 先建 mask canvas（仅 alpha）
+  const maskCvs = document.createElement('canvas');
+  maskCvs.width = w; maskCvs.height = h;
+  const maskCtx = maskCvs.getContext('2d')!;
+  // 画多边形
+  maskCtx.beginPath();
+  maskCtx.moveTo(xs[0]-ox, ys[0]-oy);
+  for (let i = 1; i < xs.length; i++) maskCtx.lineTo(xs[i]-ox, ys[i]-oy);
+  maskCtx.closePath();
+  maskCtx.fillStyle = '#fff';
+  maskCtx.fill();
+
+  // 白边描边（1.5px 半透白描边）
+  maskCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+  maskCtx.lineWidth = 3;
+  maskCtx.lineJoin = 'round';
+  maskCtx.stroke();
+
+  // 高斯模糊 mask（羽化边缘）
+  blurCanvas(maskCvs, FEATHER);
+
+  const fullImg = new Image();
+  fullImg.onload = () => {
+    const cvs = document.createElement('canvas');
+    cvs.width = w; cvs.height = h;
+    const ctx = cvs.getContext('2d')!;
+    // 画原图
+    ctx.drawImage(fullImg, ox, oy, w, h, 0, 0, w, h);
+    // 用 mask 的 alpha 替换图片 alpha
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const maskData = maskCtx.getImageData(0, 0, w, h);
+    for (let i = 0; i < w*h; i++) {
+      imgData.data[i*4+3] = maskData.data[i*4]; // mask R通道 = alpha
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    const dataURL = cvs.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = `sprite_poly_${minX}_${minY}_${w}x${h}.png`;
+    a.click();
+    toastMsg(`✅ 已下载羽化抠图 ${w}×${h}（羽化${FEATHER}px）`);
+  };
+  fullImg.src = 'hand-drawn-map.jpg';
+}
+
+// 简易高斯模糊（3×3 核，对 alpha 做 blur）
+function blurCanvas(cvs, radius) {
+  const ctx = cvs.getContext('2d')!;
+  for (let r = 0; r < radius; r++) {
+    const data = ctx.getImageData(0, 0, cvs.width, cvs.height);
+    const out = ctx.createImageData(cvs.width, cvs.height);
+    const w = cvs.width, h = cvs.height;
+    for (let y = 1; y < h-1; y++) {
+      for (let x = 1; x < w-1; x++) {
+        let sum = 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++)
+            sum += data.data[((y+dy)*w + (x+dx))*4];
+        const v = sum / 9;
+        const i = (y*w + x)*4;
+        out.data[i] = v; out.data[i+1] = v; out.data[i+2] = v; out.data[i+3] = 255;
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+  }
+}
+
+function pointInPoly(px, py, xs, ys) {
+  let inside = false;
+  for (let i = 0, j = xs.length-1; i < xs.length; j = i++) {
+    if (((ys[i] > py) !== (ys[j] > py)) &&
+        (px < (xs[j]-xs[i])*(py-ys[i])/(ys[j]-ys[i]) + xs[i])) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+// ============ 矩形模式 ============
+let selDiv = null;
+function drawRect(l, t, w, h) {
+  if (!selDiv) {
+    selDiv = document.createElement('div');
+    selDiv.style.cssText = 'position:absolute;border:2px dashed #4ecca3;background:rgba(78,204,163,0.15);pointer-events:none;';
+    layer.appendChild(selDiv);
+  }
+  selDiv.style.display = 'block';
+  selDiv.style.left = l+'px'; selDiv.style.top = t+'px';
+  selDiv.style.width = w+'px'; selDiv.style.height = h+'px';
+}
+function hideRect() { if (selDiv) selDiv.style.display = 'none'; }
+
+function cropRect(l, t, w, h) {
+  const ol = Math.round(l*RATIO), ot = Math.round(t*RATIO);
+  const ow = Math.round(w*RATIO), oh = Math.round(h*RATIO);
+  const cvs = document.createElement('canvas');
+  cvs.width = ow; cvs.height = oh;
+  const ctx = cvs.getContext('2d');
+  const fullImg = new Image();
+  fullImg.onload = () => {
+    ctx.drawImage(fullImg, ol, ot, ow, oh, 0, 0, ow, oh);
+    const dataURL = cvs.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = `sprite_rect_${ol}_${ot}_${ow}x${oh}.png`;
+    a.click();
+    toastMsg(`✅ 已下载矩形抠图 ${ow}×${oh}`);
+  };
+  fullImg.src = 'hand-drawn-map.jpg';
+}
+
+// ============ 事件 ============
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = wrap.getBoundingClientRect();
+  const mx = e.clientX-r.left-px, my = e.clientY-r.top-py;
+  const old = scale;
+  scale *= e.deltaY<0 ? 1.15 : 0.87;
+  scale = Math.max(0.08, Math.min(6, scale));
+  px -= mx*(scale-old); py -= my*(scale-old);
+  applyTx();
+}, {passive:false});
+
+wrap.addEventListener('mousedown', e => {
+  if (e.button===1 || e.button===2 || (e.button===0 && e.shiftKey)) {
+    panning=true; pax=e.clientX; pay=e.clientY; ppx=px; ppy=py;
+    return;
+  }
+  if (e.button===0) {
+    const p = scr2img(e.clientX, e.clientY);
+    if (mode==='poly') {
+      addPoint(p);
+    } else {
+      drawing=true; sx=p.x; sy=p.y;
+      drawRect(sx, sy, 0, 0);
+    }
+  }
+});
+
+window.addEventListener('mousemove', e => {
+  const p = scr2img(e.clientX, e.clientY);
+  document.getElementById('pos').textContent = `${p.x},${p.y}`;
+  if (panning) { px=ppx+(e.clientX-pax); py=ppy+(e.clientY-pay); applyTx(); }
+  if (drawing) {
+    const l=Math.min(sx,p.x), t=Math.min(sy,p.y);
+    const w=Math.abs(p.x-sx), h=Math.abs(p.y-sy);
+    drawRect(l, t, w, h);
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  if (drawing) {
+    const l=Math.min(sx, parseInt(selDiv?.style.left||0)), t=Math.min(sy, parseInt(selDiv?.style.top||0));
+    const w=parseInt(selDiv?.style.width||0), h=parseInt(selDiv?.style.height||0);
+    if (w>10 && h>10) cropRect(l, t, w, h);
+    drawing=false; hideRect();
+  }
+  panning=false;
+});
+
+window.addEventListener('keydown', e => {
+  if (e.key==='Enter') { if (mode==='poly') finishPoly(); }
+  if (e.key==='Escape') clearPoly();
+  if (e.ctrlKey && e.key==='z') { e.preventDefault(); undoPoint(); }
+});
+
+wrap.addEventListener('contextmenu', e => e.preventDefault());
+
+function toastMsg(m) {
+  const t = document.getElementById('toast');
+  t.textContent=m; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('on'), 2000);
+}
+</script>
+</body>
+</html>
