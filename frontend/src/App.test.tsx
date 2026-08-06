@@ -78,11 +78,12 @@ describe('App 集成', () => {
     expect(screen.getByRole('button', { name: /新生问答/ })).toBeInTheDocument();
   });
 
-  it('加载完成后为全部 36 栋建筑渲染热区', async () => {
+  it('加载完成后为无精灵图建筑渲染热区', async () => {
     await renderApp();
     const hotspots = document.querySelectorAll('.hotspot');
-    expect(hotspots.length).toBe(buildings.length);
-    expect(buildings.length).toBe(36);
+    // PR 后热区仅渲染无精灵图建筑（有精灵图建筑走精灵图交互）
+    expect(hotspots.length).toBe(6);
+    expect(buildings.length).toBe(39);
   });
 
   it('点击建筑热区 → 弹出详情、缩略图与聊天隐藏', async () => {
