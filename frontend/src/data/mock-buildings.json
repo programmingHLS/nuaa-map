@@ -498,10 +498,10 @@
     "name": "综合服务楼",
     "category": "service",
     "hotspot": {
-      "x": 2655,
-      "y": 1648,
-      "width": 83,
-      "height": 83
+      "x": 2670,
+      "y": 1658,
+      "width": 50,
+      "height": 45
     },
     "description": "5层综合服务楼。1层保卫处/师生服务大厅，2层牧星学院办公区，4层校区管委会/学工/团委，5层后勤集团。",
     "openTime": "周一至周日 8:00-20:00",
@@ -516,10 +516,10 @@
     "name": "师生服务大厅",
     "category": "service",
     "hotspot": {
-      "x": 2471,
-      "y": 1605,
-      "width": 83,
-      "height": 89
+      "x": 2485,
+      "y": 1615,
+      "width": 50,
+      "height": 45
     },
     "description": "位于综合服务楼1层。办理学生证、缴纳学费、办理银行卡等一站式事务。",
     "openTime": "周一至周五 8:00-12:00, 14:00-17:00",
@@ -569,10 +569,10 @@
     "name": "垃圾中转站开闭所",
     "category": "facility",
     "hotspot": {
-      "x": 2802,
-      "y": 1389,
-      "width": 89,
-      "height": 66
+      "x": 2820,
+      "y": 1400,
+      "width": 50,
+      "height": 40
     },
     "description": "校园环卫设施。",
     "floors": 1
@@ -602,7 +602,9 @@
     },
     "description": "波音公司双发中短程运输机，学校自主采购。南航第一台用于民航专业实验教学的主流民用机型，使南航成为工信部高校中首架拥有适航教学飞机的高校。",
     "floors": 0,
-    "images": ["/buildings/b737/01.webp"]
+    "images": [
+      "/buildings/b737/01.webp"
+    ]
   },
   {
     "id": "building-038",
@@ -616,7 +618,9 @@
     },
     "description": "英国宇航公司四发短程喷气式支线客机，南航上海校友会捐赠（C919总设计师、南航77级校友吴光辉院士牵头推动）。标准载客量100人，主打短跑道起降性能。",
     "floors": 0,
-    "images": ["/buildings/bae146/01.webp"]
+    "images": [
+      "/buildings/bae146/01.webp"
+    ]
   },
   {
     "id": "building-039",

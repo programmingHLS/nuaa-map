@@ -181,7 +181,7 @@ export const buildingSprites = [
   {
     image: `${CDN_BASE}/sprites/师生服务大厅+综合服务楼.png`,
     buildingIds: ['building-031', 'building-032'],
-    displayWidth: 400,
+    displayWidth: 600,
     centerX: 2601,
     centerY: 1675,
   },
@@ -195,7 +195,7 @@ export const buildingSprites = [
   {
     image: `${CDN_BASE}/sprites/垃圾中转站开闭所.png`,
     buildingIds: ['building-035'],
-    displayWidth: 300,
+    displayWidth: 500,
     centerX: 2846,
     centerY: 1422,
   },
