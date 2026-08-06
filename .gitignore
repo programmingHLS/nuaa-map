@@ -60,3 +60,5 @@ frontend/public/buildings/sprites/
 scripts/hand-drawn-map*.jpg
 scripts/sprite-cropper.htmlscripts/hand-drawn-map*.jpg
 scripts/airplane*
+frontend/public/buildings/b737/
+frontend/public/buildings/bae146/
