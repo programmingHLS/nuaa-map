@@ -602,7 +602,7 @@
     },
     "description": "波音公司双发中短程运输机，学校自主采购。南航第一台用于民航专业实验教学的主流民用机型，使南航成为工信部高校中首架拥有适航教学飞机的高校。",
     "floors": 0,
-    "images": ["/buildings/sprites/B737-500.png"]
+    "images": ["/buildings/b737/01.webp"]
   },
   {
     "id": "building-038",
@@ -616,6 +616,6 @@
     },
     "description": "英国宇航公司四发短程喷气式支线客机，南航上海校友会捐赠（C919总设计师、南航77级校友吴光辉院士牵头推动）。标准载客量100人，主打短跑道起降性能。",
     "floors": 0,
-    "images": ["/buildings/sprites/BAe146-300.png"]
+    "images": ["/buildings/bae146/01.webp"]
   }
 ]
