@@ -216,16 +216,16 @@ export const buildingSprites = [
   {
     image: `${CDN_BASE}/sprites/B737-500.png`,
     buildingIds: ['building-037'],
-    displayWidth: 450,
-    centerX: 2090,
-    centerY: 1580,
+    displayWidth: 350,
+    centerX: 1923,
+    centerY: 1155,
   },
   {
     image: `${CDN_BASE}/sprites/BAe146-300.png`,
     buildingIds: ['building-038'],
-    displayWidth: 450,
-    centerX: 2090,
-    centerY: 1730,
+    displayWidth: 300,
+    centerX: 1855,
+    centerY: 1333,
   },
 ];
 
