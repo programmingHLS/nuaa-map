@@ -55,14 +55,14 @@ describe('tokenize', () => {
 
 describe('matchBestAnswer', () => {
   it('输入与问题完全相同 → 返回精确匹配（score 200）', () => {
-    const result = matchBestAnswer('怎么用知网下载文献？');
+    const result = matchBestAnswer('请问南航校园网怎么登知网并免费下载论文？');
     expect(result).not.toBeNull();
     expect(result!.score).toBe(200);
-    expect(result!.entry.question).toBe('怎么用知网下载文献？');
+    expect(result!.entry.question).toBe('请问南航校园网怎么登知网并免费下载论文？');
   });
 
   it('大小写/空格不影响精确匹配', () => {
-    const result = matchBestAnswer('  怎么用知网下载文献？  ');
+    const result = matchBestAnswer('  请问南航校园网怎么登知网并免费下载论文？  ');
     expect(result).not.toBeNull();
     expect(result!.score).toBe(200);
   });

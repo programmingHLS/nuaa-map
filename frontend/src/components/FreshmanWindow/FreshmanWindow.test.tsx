@@ -28,8 +28,8 @@ describe('FreshmanWindow', () => {
     setup();
     const toggle = screen.getByRole('button', { name: /新生问答/ });
     expect(toggle).toBeInTheDocument();
-    // 等待数据加载完成
-    await waitFor(() => expect(toggle.textContent).toContain('108'));
+    // 等待数据加载完成（FAQ 条数随数据扩充变化，不断言固定值）
+    await waitFor(() => expect(toggle.textContent).toMatch(/新生问答\d+/));
   });
 
   it('点击展开面板，显示提问表单与常见问题列表', async () => {
@@ -47,11 +47,11 @@ describe('FreshmanWindow', () => {
     setup();
     await user.click(screen.getByRole('button', { name: /新生问答/ }));
     const textarea = screen.getByPlaceholderText('例如：图书馆几点关门？');
-    await user.type(textarea, '怎么用知网下载文献');
+    await user.type(textarea, '请问南航校园网怎么登知网并免费下载论文？');
     await user.click(screen.getByRole('button', { name: '提交问题' }));
     expect(await screen.findByText('参考答案')).toBeInTheDocument();
     // 参考答案区域包含答案（列表中也存在同一条目，故用区域元素断言）
-    expect(document.querySelector('.freshman-window__reply-text')?.textContent).toContain('手机知网APP');
+    expect(document.querySelector('.freshman-window__reply-text')?.textContent).toContain('下载论文');
   });
 
   it('提交问题：知识库未命中时显示待处理文案', async () => {
@@ -73,9 +73,9 @@ describe('FreshmanWindow', () => {
     await waitFor(() => {
       expect(screen.getByText(/共 \d+ 条记录/).textContent).toContain('已过滤');
     });
-    // 高亮会拆分文本，改用 textContent 断言
+    // 高亮会拆分文本，改用 textContent 断言（命中的条目 question 含「知网」）
     const article = document.querySelector('.freshman-window__item');
-    expect(article?.textContent).toContain('怎么用知网下载文献');
+    expect(article?.textContent).toContain('知网');
     // 命中词被 <mark> 包裹
     const marks = Array.from(document.querySelectorAll('mark')).map(m => m.textContent);
     expect(marks.some(t => t === '知网')).toBe(true);
@@ -124,9 +124,9 @@ describe('FreshmanWindow', () => {
   it('服务端加载失败时回退到内置 FAQ', async () => {
     setup();
     const toggle = screen.getByRole('button', { name: /新生问答/ });
-    await waitFor(() => expect(toggle.textContent).toContain('108'));
+    await waitFor(() => expect(toggle.textContent).toMatch(/新生问答\d+/));
     await userEvent.click(toggle);
-    expect(screen.getByText(/怎么用知网下载文献/)).toBeInTheDocument();
+    expect(screen.getByText(/南航校园网怎么登知网并免费下载论文/)).toBeInTheDocument();
   });
 
   it('展开状态变化通知 onExpandedChange', async () => {
