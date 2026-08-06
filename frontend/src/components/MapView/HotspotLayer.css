@@ -94,3 +94,12 @@
   .hotspot-label { font-size:12px; padding:4px 10px; }
   .hotspot { gap:5px; }
 }
+
+/* 书院办公室 —— 字体加大加深 */
+.hotspot[data-building-id="building-039"] .hotspot-label {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e293b;
+  background: rgba(255,255,255,0.8);
+  padding: 6px 16px;
+}

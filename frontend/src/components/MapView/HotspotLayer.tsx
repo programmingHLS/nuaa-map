@@ -43,6 +43,7 @@ export function HotspotLayer({
             onClick={handleClick}
             onMouseEnter={() => onBuildingHover?.(b.id)}
             onMouseLeave={() => onBuildingHover?.(null)}
+            data-building-id={b.id}
             aria-label={`查看 ${b.name} 详情`}
           >
             <span className="hotspot-marker" style={{ transform: `scale(${invScale})`, transformOrigin: 'center center' }}>
