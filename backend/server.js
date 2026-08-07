@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..');
@@ -413,9 +413,17 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`[RAG Server] http://localhost:${PORT}`);
-    console.log(`  QA entries: ${qaEntries.length}`);
-    console.log(`  Buildings:  ${buildings.length}`);
-    console.log(`  LLM:        ${LLM_API_KEY ? 'configured' : 'NOT configured (set LLM_API_KEY)'}`);
-});
+// 仅当直接运行时监听端口（被测试 import 时不监听，测试用 supertest 驱动 app）
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
+    app.listen(PORT, () => {
+        console.log(`[RAG Server] http://localhost:${PORT}`);
+        console.log(`  QA entries: ${qaEntries.length}`);
+        console.log(`  Buildings:  ${buildings.length}`);
+        console.log(`  LLM:        ${LLM_API_KEY ? 'configured' : 'NOT configured (set LLM_API_KEY)'}`);
+    });
+}
+
+// 导出 app 供测试（supertest）使用
+export { app };
+export { tokenize, scoreEntry, retrieveQA, retrieveBuildingInfo, buildSystemPrompt, buildUserPrompt };

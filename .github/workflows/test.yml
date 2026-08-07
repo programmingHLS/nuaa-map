@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  frontend:
     name: 前端测试与构建
     runs-on: ubuntu-latest
     defaults:
@@ -31,8 +31,32 @@ jobs:
       - name: 代码规范检查（oxlint）
         run: npm run lint
 
-      - name: 运行单元测试（Vitest）
-        run: npm test
+      - name: 运行单元测试并检查覆盖率（Vitest）
+        run: npm run test:coverage
 
       - name: 生产构建
         run: npm run build
+
+  backend:
+    name: 后端 RAG 服务测试
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 安装依赖（含 supertest 等 devDependencies）
+        run: npm install --no-audit --no-fund
+
+      - name: 运行后端测试
+        run: npm test
