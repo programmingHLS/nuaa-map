@@ -9,6 +9,12 @@
   animation:fab-breath 3s ease-in-out infinite;
   position:relative;
 }
+.chat-fab-img {
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+  border-radius:inherit;
+}
 .chat-fab::after {
   content:''; position:absolute; inset:-5px; border-radius:50%;
   background:var(--gradient-rainbow); opacity:0.6;

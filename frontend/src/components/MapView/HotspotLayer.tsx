@@ -37,11 +37,12 @@ export function HotspotLayer({
         const invScale = Math.min(1 / transform.scale, 2.5);
 
         const isDecorative = disabledBuildingIds?.has(b.id) ?? false;
+        const isLeader = b.id === 'building-039'; // 致元书院办公室：圆点+引线+外部标签
 
         return (
           <button
             key={b.id}
-            className={`hotspot hotspot--cat-${b.category} ${isSelected ? 'hotspot--selected' : ''}`}
+            className={`hotspot hotspot--cat-${b.category} ${isSelected ? 'hotspot--selected' : ''} ${isLeader ? 'hotspot--leader' : ''}`}
             style={{ left: x, top: y, width, height, ...(isDecorative ? { pointerEvents: 'none' } : {}) }}
             onClick={handleClick}
             onMouseEnter={() => onBuildingHover?.(b.id)}
@@ -49,11 +50,21 @@ export function HotspotLayer({
             data-building-id={b.id}
             aria-label={`查看 ${b.name} 详情`}
           >
-            <span className="hotspot-marker" style={{ transform: `scale(${invScale})`, transformOrigin: 'center center' }}>
-              <span className="hotspot-marker-outer" />
-              <span className="hotspot-marker-inner" />
-            </span>
-            <span className="hotspot-label" style={{ transform: `scale(${invScale})`, transformOrigin: 'center top' }}>{b.name}</span>
+            {isLeader ? (
+              <span className="hotspot-leader" style={{ transform: `scale(${invScale})`, transformOrigin: '0 0' }}>
+                <span className="hotspot-leader-dot" />
+                <span className="hotspot-leader-line" />
+                <span className="hotspot-leader-label">{b.name}</span>
+              </span>
+            ) : (
+              <>
+                <span className="hotspot-marker" style={{ transform: `scale(${invScale})`, transformOrigin: 'center center' }}>
+                  <span className="hotspot-marker-outer" />
+                  <span className="hotspot-marker-inner" />
+                </span>
+                <span className="hotspot-label" style={{ transform: `scale(${invScale})`, transformOrigin: 'center top' }}>{b.name}</span>
+              </>
+            )}
           </button>
         );
       })}

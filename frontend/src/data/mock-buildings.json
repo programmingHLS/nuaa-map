@@ -295,7 +295,7 @@
       "height": 89
     },
     "description": "本科生宿舍，四人间，上床下桌，独立卫浴。",
-    "floors": 7,
+    "floors": 6,
     "images": [
       "/buildings/nanshan-sushe/b1-01.webp",
       "/buildings/nanshan-sushe/b1-02.webp",
@@ -313,7 +313,7 @@
       "height": 89
     },
     "description": "本科生宿舍，四人间，配备空调和热水器。",
-    "floors": 7,
+    "floors": 6,
     "images": [
       "/buildings/nanshan-sushe/b2-01.webp"
     ]
@@ -329,7 +329,7 @@
       "height": 83
     },
     "description": "本科生宿舍，四人间，独立卫浴。",
-    "floors": 7,
+    "floors": 6,
     "images": [
       "/buildings/nanshan-sushe/b3-01.webp"
     ]
@@ -345,7 +345,7 @@
       "height": 106
     },
     "description": "本科生宿舍，四人间，配备空调和热水器。",
-    "floors": 7,
+    "floors": 6,
     "images": [
       "/buildings/nanshan-sushe/b4-01.webp"
     ]
@@ -361,7 +361,7 @@
       "height": 106
     },
     "description": "研究生宿舍，两人间，配备独立卫浴和空调。",
-    "floors": 11,
+    "floors": 6,
     "images": [
       "/buildings/dongli-sushe/01.webp",
       "/buildings/dongli-sushe/02.webp"
@@ -378,7 +378,7 @@
       "height": 98
     },
     "description": "学生宿舍楼，配备空调和热水器。",
-    "floors": 7
+    "floors": 6
   },
   {
     "id": "building-024",
@@ -391,7 +391,7 @@
       "height": 103
     },
     "description": "学生宿舍楼，配备空调和独立卫浴。架空层设东篱苑自习室（6:30-24:00开放）。",
-    "floors": 7
+    "floors": 6
   },
   {
     "id": "building-025",
@@ -404,7 +404,7 @@
       "height": 98
     },
     "description": "学生宿舍楼，配备空调和热水器。",
-    "floors": 7
+    "floors": 6
   },
   {
     "id": "building-026",
@@ -624,7 +624,7 @@
   },
   {
     "id": "building-039",
-    "name": "书院办公室",
+    "name": "致元书院办公室",
     "category": "service",
     "hotspot": {
       "x": 5080,
