@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { highlightMatch } from '../../utils/highlight';
 import { matchBestAnswer } from '../../data/qa-matcher';
+import { askRAG } from '../../services/rag';
 import './FreshmanWindow.css';
 
 type FreshmanEntry = {
@@ -46,7 +47,7 @@ function writeLocalEntries(entries: FreshmanEntry[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ _v: STORAGE_VERSION, _entries: entries }));
 }
 
-export function FreshmanWindow() {
+export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expanded: boolean) => void }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const [entries, setEntries] = useState<FreshmanEntry[]>([]);
@@ -137,7 +138,7 @@ export function FreshmanWindow() {
     }).catch(() => { });
   };
 
-  const submitQuestion = (rawQuestion: string) => {
+  const submitQuestion = async (rawQuestion: string) => {
     const trimmedQuestion = rawQuestion.trim();
     if (!trimmedQuestion) return;
 
@@ -147,12 +148,32 @@ export function FreshmanWindow() {
     setAskResult(null);
 
     const match = matchBestAnswer(trimmedQuestion);
-    const answerText = match
-      ? match.entry.answer
-      : '\u6682\u65f6\u6ca1\u6709\u627e\u5230\u7b54\u6848\uff0c\u5df2\u4fdd\u5b58\u4e3a\u5f85\u5904\u7406\u95ee\u9898\u3002';
+
+    let answerText = '';
+    let statusText = '';
+
+    if (match) {
+      answerText = match.entry.answer;
+      statusText = '已找到参考答案，您可以继续查看常见问题并标记结果';
+    } else {
+      statusText = '本地知识库未命中，正在调用 AI 回答...';
+      const resp = await askRAG(trimmedQuestion);
+      if (resp.fromRemote) {
+        answerText = resp.answer;
+        statusText = '已通过 AI 生成回答';
+      } else if (resp.answer && resp.answer.includes('思考中')) {
+        // 超时与不可用区分：透传 askRAG 的超时提示，避免误报「找不到答案」
+        answerText = resp.answer;
+        statusText = 'AI 响应超时，请稍后重试';
+      } else {
+        answerText = '暂时没有找到答案，可标记为待处理问题。';
+        statusText = 'AI 服务暂不可用，可点击「未解决」保存问题';
+      }
+    }
+
     setAskResult({ question: trimmedQuestion, answer: answerText });
     setSearchTerm(trimmedQuestion);
-    setStatusText(match ? '\u5df2\u627e\u5230\u53c2\u8003\u7b54\u6848\uff0c\u60a8\u53ef\u4ee5\u7ee7\u7eed\u67e5\u770b\u5e38\u89c1\u95ee\u9898\u5e76\u6807\u8bb0\u7ed3\u679c' : '\u5df2\u4fdd\u5b58\u5230\u672c\u5730');
+    setStatusText(statusText);
     setSubmitting(false);
   };
 
@@ -227,15 +248,32 @@ export function FreshmanWindow() {
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [expanded]);
 
+  useEffect(() => { onExpandedChange?.(expanded); }, [expanded, onExpandedChange]);
+
+  /* 原生事件拦截：阻止所有鼠标/触摸/滚轮事件穿透到地图 */
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
-    const stopTouch = (e: TouchEvent) => { e.stopPropagation(); };
-    el.addEventListener('touchstart', stopTouch, { passive: true });
-    el.addEventListener('touchmove', stopTouch, { passive: true });
+    const block = (e: Event) => { e.stopPropagation(); };
+    el.addEventListener('mousedown', block);
+    el.addEventListener('mousemove', block);
+    el.addEventListener('mouseup', block);
+    el.addEventListener('touchstart', block, { passive: true });
+    el.addEventListener('touchmove', block, { passive: true });
+    el.addEventListener('touchend', block);
+    el.addEventListener('wheel', block, { passive: false });
+    el.addEventListener('pointerdown', block);
+    el.addEventListener('pointermove', block);
     return () => {
-      el.removeEventListener('touchstart', stopTouch);
-      el.removeEventListener('touchmove', stopTouch);
+      el.removeEventListener('mousedown', block);
+      el.removeEventListener('mousemove', block);
+      el.removeEventListener('mouseup', block);
+      el.removeEventListener('touchstart', block);
+      el.removeEventListener('touchmove', block);
+      el.removeEventListener('touchend', block);
+      el.removeEventListener('wheel', block);
+      el.removeEventListener('pointerdown', block);
+      el.removeEventListener('pointermove', block);
     };
   }, [panelPhase]);
 
@@ -295,12 +333,6 @@ export function FreshmanWindow() {
               ''
             }`}
           onAnimationEnd={handlePanelAnimEnd}
-          onMouseDown={(event) => event.stopPropagation()}
-          onMouseMove={(event) => event.stopPropagation()}
-          onMouseUp={(event) => event.stopPropagation()}
-          onTouchStart={(event) => event.stopPropagation()}
-          onTouchMove={(event) => event.stopPropagation()}
-          onWheelCapture={(event) => event.stopPropagation()}
         >
           <div className="freshman-window__main">
             <div className="freshman-window__ask-card">

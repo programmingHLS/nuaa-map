@@ -59,3 +59,6 @@ frontend/public/buildings/sprites/
 .wrangler/
 scripts/hand-drawn-map*.jpg
 scripts/sprite-cropper.html
+scripts/airplane*
+frontend/public/buildings/b737/
+frontend/public/buildings/bae146/

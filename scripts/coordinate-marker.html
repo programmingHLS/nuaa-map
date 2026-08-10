@@ -1,320 +1,191 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
 <meta charset="UTF-8">
 <title>坐标标注工具</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Segoe UI',system-ui,sans-serif; background:#1a1a2e; color:#eee; display:flex; height:100vh; overflow:hidden; }
-.sidebar { width:320px; min-width:320px; background:#16213e; display:flex; flex-direction:column; border-right:1px solid #0f3460; }
-.sidebar h2 { padding:16px; background:#0f3460; font-size:15px; }
-.sidebar .hint { padding:0 16px 8px; font-size:11px; color:#889; }
-.list { flex:1; overflow-y:auto; padding:6px; }
-.item {
-  padding:8px 10px; margin:2px 0; border-radius:6px; cursor:pointer;
-  background:#1a1a3e; font-size:13px; display:flex; justify-content:space-between; align-items:center;
-  border-left:3px solid transparent;
-}
-.item:hover { background:#1f2f50; }
-.item.sel { background:#0f3460; border-left-color:#e94560; }
-.item.done { border-left-color:#4ecca3; }
-.item .cat { font-size:9px; padding:2px 5px; border-radius:3px; background:#0f3460; color:#889; }
-.foot { padding:12px; background:#0f3460; display:flex; gap:6px; }
-.foot button { flex:1; padding:10px; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
-.btn-save { background:#4ecca3; color:#1a1a2e; }
-.btn-copy { background:#e94560; color:#fff; }
-.btn-clear { background:#333; color:#aaa; }
-.map-wrap { flex:1; position:relative; overflow:hidden; background:#0a0a15; cursor:crosshair; }
-.map-wrap.panning { cursor:grabbing; }
-.map-img { position:absolute; top:0; left:0; transform-origin:0 0; }
-.map-img img { display:block; max-width:none; }
-.hotspot { position:absolute; border:2px solid #e94560; background:rgba(233,69,96,0.15); }
-.hotspot.sel { border-color:#4ecca3; border-width:3px; background:rgba(78,204,163,0.2); }
-.hotspot .lbl { position:absolute; top:-18px; left:0; font-size:9px; background:rgba(0,0,0,0.85); color:#fff; padding:1px 5px; border-radius:3px; white-space:nowrap; }
-.info { position:absolute; bottom:10px; left:10px; right:10px; padding:8px 14px; background:rgba(0,0,0,0.75); border-radius:6px; font-size:11px; display:flex; justify-content:space-between; }
-.toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); padding:10px 20px; background:#4ecca3; color:#1a1a2e; border-radius:6px; font-weight:600; font-size:13px; z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
-.toast.on { opacity:1; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui;background:#1a1a2e;color:#eee;height:100vh;display:flex;overflow:hidden}
+.sidebar{width:280px;min-width:280px;background:#16213e;display:flex;flex-direction:column;border-right:1px solid #0f3460}
+.sidebar h2{padding:12px 14px;background:#0f3460;font-size:14px}
+.hint{padding:4px 14px 8px;font-size:10px;color:#889}
+.list{flex:1;overflow-y:auto;padding:4px}
+.item{padding:7px 10px;margin:2px 0;border-radius:5px;cursor:pointer;font-size:12px;display:flex;justify-content:space-between;align-items:center;background:#1a1a3e;border-left:3px solid transparent}
+.item:hover{background:#1f2f50}
+.item.sel{background:#0f3460;border-left-color:#e94560}
+.item.done{border-left-color:#4ecca3}
+.item .cat{font-size:9px;padding:2px 5px;border-radius:3px;background:#0f3460;color:#889}
+.foot{padding:10px;background:#0f3460;display:flex;gap:6px}
+.foot button{flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
+.b-save{background:#4ecca3;color:#1a1a2e}.b-copy{background:#e94560;color:#fff}.b-clear{background:#333;color:#aaa}
+.map-area{flex:1;position:relative;overflow:hidden;background:#0a0a15}
+.map-layer{position:absolute;top:0;left:0;transform-origin:0 0}
+.map-layer img{display:block;max-width:none;user-select:none;-webkit-user-drag:none}
+.hs{position:absolute;border:2px solid #e94560;background:rgba(233,69,96,0.15)}
+.hs.sel{border-color:#4ecca3;background:rgba(78,204,163,0.2);border-width:3px}
+.hs .lbl{position:absolute;top:-17px;left:0;font-size:9px;background:rgba(0,0,0,0.85);color:#fff;padding:1px 5px;border-radius:3px;white-space:nowrap}
+.info{position:absolute;bottom:8px;left:8px;right:8px;padding:6px 12px;background:rgba(0,0,0,0.8);border-radius:6px;font-size:10px;display:flex;justify-content:space-between}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#4ecca3;color:#1a1a2e;border-radius:6px;font-weight:600;font-size:12px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast.on{opacity:1}
 </style>
 </head>
 <body>
-
 <div class="sidebar">
   <h2>📍 坐标标注</h2>
-  <div class="hint">1. 点左侧选建筑 2. 地图上拖拽框选 3. 滚轮缩放 右键拖动平移</div>
+  <div class="hint">1.点左侧选建筑 2.地图上拖拽框选 3.滚轮缩放 右键平移</div>
   <div class="list" id="list"></div>
   <div class="foot">
-    <button class="btn-save" onclick="exportJSON()">📥 导出</button>
-    <button class="btn-copy" onclick="copyJSON()">📋 复制</button>
-    <button class="btn-clear" onclick="clearSel()">🗑 清除</button>
+    <button class="b-save" onclick="doExport()">📥 导出</button>
+    <button class="b-copy" onclick="doCopy()">📋 复制</button>
+    <button class="b-clear" onclick="doClear()">🗑 清除</button>
   </div>
 </div>
-
-<div class="map-wrap" id="wrap">
-  <div class="map-img" id="layer">
-    <img id="img" src="hand-drawn-map-small.jpg" alt="手绘地图">
+<div class="map-area" id="wrap">
+  <div class="map-layer" id="ml">
+    <img id="img" src="hand-drawn-map.jpg" alt="手绘地图" draggable="false">
   </div>
   <div class="info">
     <span>坐标: <b id="pos">-</b></span>
     <span>缩放: <b id="zoom">100%</b></span>
-    <span>已标: <b id="cnt">0</b>/36</span>
+    <span>已标: <b id="cnt">0</b>/39</span>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-// === 数据 ===
-const RATIO = 7176 / 2500; // 缩略图→原图缩放比
-
-const BUILDINGS = [
-  {id:"building-001",name:"西北门",cat:"gate"},
-  {id:"building-002",name:"东北门",cat:"gate"},
-  {id:"building-003",name:"南门",cat:"gate"},
-  {id:"building-004",name:"西门",cat:"gate"},
-  {id:"building-005",name:"东门",cat:"gate"},
-  {id:"building-006",name:"巡天楼",cat:"teaching"},
-  {id:"building-007",name:"牧星楼",cat:"teaching"},
-  {id:"building-008",name:"笃行楼",cat:"teaching"},
-  {id:"building-009",name:"知行楼",cat:"teaching"},
-  {id:"building-010",name:"尚德楼",cat:"teaching"},
-  {id:"building-011",name:"明慧楼A",cat:"teaching"},
-  {id:"building-012",name:"明慧楼B",cat:"teaching"},
-  {id:"building-013",name:"明慧楼C",cat:"teaching"},
-  {id:"building-014",name:"明慧楼D",cat:"teaching"},
-  {id:"building-015",name:"问天图书馆",cat:"library"},
-  {id:"building-016",name:"南山苑餐厅",cat:"canteen"},
-  {id:"building-017",name:"东篱苑餐厅",cat:"canteen"},
-  {id:"building-018",name:"南山苑1号楼",cat:"dormitory"},
-  {id:"building-019",name:"南山苑2号楼",cat:"dormitory"},
-  {id:"building-020",name:"南山苑3号楼",cat:"dormitory"},
-  {id:"building-021",name:"南山苑4号楼",cat:"dormitory"},
-  {id:"building-022",name:"东篱苑5号楼",cat:"dormitory"},
-  {id:"building-023",name:"东篱苑6号楼",cat:"dormitory"},
-  {id:"building-024",name:"东篱苑7号楼",cat:"dormitory"},
-  {id:"building-025",name:"东篱苑8号楼",cat:"dormitory"},
-  {id:"building-026",name:"职工公寓",cat:"dormitory"},
-  {id:"building-027",name:"体育馆游泳馆",cat:"sports"},
-  {id:"building-028",name:"西体育场",cat:"sports"},
-  {id:"building-029",name:"东体育场",cat:"sports"},
-  {id:"building-030",name:"风雨操场",cat:"sports"},
-  {id:"building-031",name:"综合服务楼",cat:"service"},
-  {id:"building-032",name:"师生服务大厅",cat:"service"},
-  {id:"building-033",name:"校医院",cat:"service"},
-  {id:"building-034",name:"泗水湖",cat:"landscape"},
-  {id:"building-035",name:"垃圾中转站开闭所",cat:"facility"},
-  {id:"building-036",name:"看台",cat:"facility"}
+const BUILDINGS=[
+  {id:"building-001",name:"西北门",cat:"gate"},{id:"building-002",name:"东北门",cat:"gate"},
+  {id:"building-003",name:"南门",cat:"gate"},{id:"building-004",name:"西门",cat:"gate"},
+  {id:"building-005",name:"东门",cat:"gate"},{id:"building-006",name:"巡天楼",cat:"teaching"},
+  {id:"building-007",name:"牧星楼",cat:"teaching"},{id:"building-008",name:"笃行楼",cat:"teaching"},
+  {id:"building-009",name:"知行楼",cat:"teaching"},{id:"building-010",name:"尚德楼",cat:"teaching"},
+  {id:"building-011",name:"明慧楼A",cat:"teaching"},{id:"building-012",name:"明慧楼B",cat:"teaching"},
+  {id:"building-013",name:"明慧楼C",cat:"teaching"},{id:"building-014",name:"明慧楼D",cat:"teaching"},
+  {id:"building-015",name:"问天图书馆",cat:"library"},{id:"building-016",name:"南山苑餐厅",cat:"canteen"},
+  {id:"building-017",name:"东篱苑餐厅",cat:"canteen"},{id:"building-018",name:"南山苑1号楼",cat:"dormitory"},
+  {id:"building-019",name:"南山苑2号楼",cat:"dormitory"},{id:"building-020",name:"南山苑3号楼",cat:"dormitory"},
+  {id:"building-021",name:"南山苑4号楼",cat:"dormitory"},{id:"building-022",name:"东篱苑5号楼",cat:"dormitory"},
+  {id:"building-023",name:"东篱苑6号楼",cat:"dormitory"},{id:"building-024",name:"东篱苑7号楼",cat:"dormitory"},
+  {id:"building-025",name:"东篱苑8号楼",cat:"dormitory"},{id:"building-026",name:"职工公寓",cat:"dormitory"},
+  {id:"building-027",name:"体育馆游泳馆",cat:"sports"},{id:"building-028",name:"西体育场",cat:"sports"},
+  {id:"building-029",name:"东体育场",cat:"sports"},{id:"building-030",name:"风雨操场",cat:"sports"},
+  {id:"building-031",name:"综合服务楼",cat:"service"},{id:"building-032",name:"师生服务大厅",cat:"service"},
+  {id:"building-033",name:"校医院",cat:"service"},{id:"building-034",name:"泗水湖",cat:"landscape"},
+  {id:"building-035",name:"垃圾中转站开闭所",cat:"facility"},{id:"building-036",name:"看台",cat:"facility"},
+  {id:"building-037",name:"波音B737-500",cat:"facility"},{id:"building-038",name:"BAe146-300",cat:"facility"},
+  {id:"building-039",name:"书院办公室",cat:"service"}
 ];
 
-// === 状态 ===
-let hs = {}; // {buildingId: {x,y,w,h}}  // 缩略图坐标系
-let cur = null; // 当前选中建筑
-let scale = 1, px = 0, py = 0;
-let drawing = false, dsx = 0, dsy = 0;
-let panning = false, pax = 0, pay = 0, ppx = 0, ppy = 0;
+let hs={}, cur=null, scale=1, px=0, py=0, drawing=false, dsx=0, dsy=0, panning=false, pnx=0, pny=0, ppx=0, ppy=0;
+try{const s=localStorage.getItem('nuaa-coords-v2');if(s)hs=JSON.parse(s)}catch(e){}
 
-// 恢复
-try { const s = localStorage.getItem('nuaa-coords'); if (s) hs = JSON.parse(s); } catch(e) {}
+const wrap=document.getElementById('wrap'), ml=document.getElementById('ml'), img=document.getElementById('img');
+const list=document.getElementById('list'), toast=document.getElementById('toast');
 
-const wrap = document.getElementById('wrap');
-const layer = document.getElementById('layer');
-const img = document.getElementById('img');
-const list = document.getElementById('list');
-const toast = document.getElementById('toast');
+img.onload=()=>{
+  const cw=wrap.clientWidth, ch=wrap.clientHeight;
+  scale=Math.min(cw/img.naturalWidth, ch/img.naturalHeight, 1);
+  ml.style.width=img.naturalWidth+'px'; ml.style.height=img.naturalHeight+'px';
+  px=(cw-img.naturalWidth*scale)/2; py=(ch-img.naturalHeight*scale)/2;
+  applyTx(); renderList(); renderHS();
+};
+if(img.complete)img.onload();
 
-// === 图片就绪 ===
-function init() {
-  const iw = img.naturalWidth, ih = img.naturalHeight;
-  const cw = wrap.clientWidth, ch = wrap.clientHeight;
-  scale = Math.min(cw/iw, ch/ih, 1);
-  layer.style.width = iw + 'px';
-  layer.style.height = ih + 'px';
-  px = (cw - iw*scale) / 2;
-  py = (ch - ih*scale) / 2;
-  applyTx();
-  renderList();
-  renderHS();
-  document.getElementById('cnt').textContent = Object.keys(hs).length;
-}
+function applyTx(){ml.style.transform=`translate(${px}px,${py}px) scale(${scale})`;document.getElementById('zoom').textContent=Math.round(scale*100)+'%'}
+function s2i(ex,ey){const r=wrap.getBoundingClientRect();return{x:Math.round((ex-r.left-px)/scale),y:Math.round((ey-r.top-py)/scale)}}
+function getname(id){const b=BUILDINGS.find(b=>b.id===id);return b?b.name:id}
 
-img.onload = init;
-if (img.complete) init();
-
-function applyTx() {
-  layer.style.transform = `translate(${px}px,${py}px) scale(${scale})`;
-  document.getElementById('zoom').textContent = Math.round(scale*100)+'%';
-}
-
-// === 坐标转换：屏幕→图片 ===
-function scr2img(ex, ey) {
-  const r = wrap.getBoundingClientRect();
-  return { x: Math.round((ex - r.left - px) / scale), y: Math.round((ey - r.top - py) / scale) };
-}
-
-// === 鼠标事件 ===
-wrap.addEventListener('wheel', e => {
+// 滚轮缩放
+wrap.addEventListener('wheel',e=>{
   e.preventDefault();
-  const r = wrap.getBoundingClientRect();
-  const mx = e.clientX - r.left - px;
-  const my = e.clientY - r.top - py;
-  const old = scale;
-  scale *= e.deltaY < 0 ? 1.15 : 0.87;
-  scale = Math.max(0.08, Math.min(6, scale));
-  px -= mx * (scale - old);
-  py -= my * (scale - old);
-  applyTx();
-  renderHS();
-}, {passive:false});
+  const r=wrap.getBoundingClientRect(), mx=e.clientX-r.left-px, my=e.clientY-r.top-py;
+  const old=scale; scale*=e.deltaY<0?1.15:0.87; scale=Math.max(0.08,Math.min(6,scale));
+  px-=mx*(scale-old); py-=my*(scale-old); applyTx(); renderHS();
+},{passive:false});
 
-wrap.addEventListener('mousedown', e => {
-  if (e.button === 1 || e.button === 2 || (e.button === 0 && e.shiftKey)) {
-    e.preventDefault();
-    panning = true; pax = e.clientX; pay = e.clientY; ppx = px; ppy = py;
-    wrap.classList.add('panning');
-    return;
-  }
-  if (e.button === 0 && cur) {
-    const p = scr2img(e.clientX, e.clientY);
-    // 点中已有热区？
-    const hit = hitTest(p.x, p.y);
-    if (hit) { select(hit); return; }
-    // 开始绘制
-    drawing = true; dsx = p.x; dsy = p.y;
+// 鼠标
+wrap.addEventListener('mousedown',e=>{
+  if(e.button===1||e.button===2||e.shiftKey){panning=true;pnx=e.clientX;pny=e.clientY;ppx=px;ppy=py;wrap.style.cursor='grabbing';return}
+  if(e.button===0&&cur){
+    const p=s2i(e.clientX,e.clientY);
+    if(hitTest(p.x,p.y))return;
+    drawing=true;dsx=p.x;dsy=p.y;
   }
 });
 
-window.addEventListener('mousemove', e => {
-  const p = scr2img(e.clientX, e.clientY);
-  document.getElementById('pos').textContent = `${p.x},${p.y}`;
-
-  if (panning) { px = ppx + (e.clientX - pax); py = ppy + (e.clientY - pay); applyTx(); renderHS(); }
-  if (drawing) { drawTmp(dsx, dsy, p.x, p.y); }
+window.addEventListener('mousemove',e=>{
+  const p=s2i(e.clientX,e.clientY);document.getElementById('pos').textContent=`${p.x},${p.y}`;
+  if(panning){px=ppx+(e.clientX-pnx);py=ppy+(e.clientY-pny);applyTx();renderHS()}
+  if(drawing)drawTmp(dsx,dsy,p.x,p.y);
 });
 
-window.addEventListener('mouseup', e => {
-  if (drawing && cur) {
-    const p = scr2img(e.clientX, e.clientY);
-    const x = Math.min(dsx, p.x), y = Math.min(dsy, p.y);
-    const w = Math.abs(p.x - dsx), h = Math.abs(p.y - dsy);
-    if (w > 4 && h > 4) {
-      hs[cur] = {x, y, w, h};
-      save(); renderHS(); renderList();
-      toastMsg(`✅ ${getname(cur)} 已标注`);
-    }
+window.addEventListener('mouseup',e=>{
+  if(drawing&&cur){
+    const p=s2i(e.clientX,e.clientY);
+    const x=Math.min(dsx,p.x),y=Math.min(dsy,p.y),w=Math.abs(p.x-dsx),h=Math.abs(p.y-dsy);
+    if(w>4&&h>4){hs[cur]={x,y,w,h};save();renderHS();renderList();t(`${getname(cur)} ✅`)}
   }
-  drawing = false; clearTmp();
-  panning = false; wrap.classList.remove('panning');
+  drawing=false;clearTmp();panning=false;wrap.style.cursor='';
 });
 
-wrap.addEventListener('contextmenu', e => {
+wrap.addEventListener('contextmenu',e=>{
   e.preventDefault();
-  const p = scr2img(e.clientX, e.clientY);
-  const hit = hitTest(p.x, p.y);
-  if (hit) { delete hs[hit]; save(); renderHS(); renderList(); toastMsg(`🗑 ${getname(hit)} 已删除`); }
+  const p=s2i(e.clientX,e.clientY),hit=hitTest(p.x,p.y);
+  if(hit){delete hs[hit];save();renderHS();renderList();t(`${getname(hit)} 🗑`)}
 });
 
-// === 临时矩形 ===
-let tmp = null;
-function drawTmp(x1,y1,x2,y2) {
-  if (!tmp) { tmp = document.createElement('div'); tmp.className='hotspot'; tmp.style.borderStyle='dashed'; tmp.style.background='rgba(255,255,255,0.08)'; layer.appendChild(tmp); }
-  tmp.style.left = Math.min(x1,x2)+'px'; tmp.style.top = Math.min(y1,y2)+'px';
-  tmp.style.width = Math.abs(x2-x1)+'px'; tmp.style.height = Math.abs(y2-y1)+'px';
+// 热区渲染
+let tmp=null;
+function drawTmp(x1,y1,x2,y2){
+  if(!tmp){tmp=document.createElement('div');tmp.className='hs';tmp.style.borderStyle='dashed';tmp.style.background='rgba(255,255,255,0.08)';ml.appendChild(tmp)}
+  tmp.style.left=Math.min(x1,x2)+'px';tmp.style.top=Math.min(y1,y2)+'px';tmp.style.width=Math.abs(x2-x1)+'px';tmp.style.height=Math.abs(y2-y1)+'px';
 }
-function clearTmp() { if (tmp) { tmp.remove(); tmp = null; } }
+function clearTmp(){if(tmp){tmp.remove();tmp=null}}
 
-// === 热区渲染 ===
-function renderHS() {
-  layer.querySelectorAll('.hotspot').forEach(el => el.remove());
-  Object.entries(hs).forEach(([id, h]) => {
-    const d = document.createElement('div');
-    d.className = 'hotspot' + (id === cur ? ' sel' : '');
-    d.style.cssText = `left:${h.x}px;top:${h.y}px;width:${h.w}px;height:${h.h}px;`;
-    d.onmousedown = e => { e.stopPropagation(); select(id); };
-    const l = document.createElement('div'); l.className='lbl'; l.textContent = getname(id);
-    d.appendChild(l);
-    layer.appendChild(d);
+function renderHS(){
+  ml.querySelectorAll('.hs').forEach(el=>el.remove());
+  Object.entries(hs).forEach(([id,h])=>{
+    const d=document.createElement('div');
+    d.className='hs'+(id===cur?' sel':'');
+    d.style.cssText=`left:${h.x}px;top:${h.y}px;width:${h.w}px;height:${h.h}px;`;
+    d.onmousedown=e=>{e.stopPropagation();select(id)};
+    const l=document.createElement('div');l.className='lbl';l.textContent=getname(id);d.appendChild(l);
+    ml.appendChild(d);
   });
-  // 恢复临时矩形
-  if (tmp) layer.appendChild(tmp);
+  if(tmp)ml.appendChild(tmp);
 }
+function hitTest(x,y){for(const[id,h]of Object.entries(hs).reverse()){if(x>=h.x&&x<=h.x+h.w&&y>=h.y&&y<=h.y+h.h)return id}return null}
+function select(id){cur=id;renderHS();renderList()}
 
-function hitTest(x, y) {
-  for (const [id, h] of Object.entries(hs).reverse()) {
-    if (x >= h.x && x <= h.x+h.w && y >= h.y && y <= h.y+h.h) return id;
-  }
-  return null;
-}
-
-// === 侧边栏 ===
-function renderList() {
-  const n = Object.keys(hs).length;
-  document.getElementById('cnt').textContent = n;
-  list.innerHTML = BUILDINGS.map(b => {
-    const h = hs[b.id];
-    const cls = ['item', b.id===cur?'sel':'', h?'done':''].filter(Boolean).join(' ');
-    return `<div class="${cls}" onclick="select('${b.id}')">
-      <span>${b.name} ${h ? '✅' : ''}</span>
-      <span class="cat">${b.cat}</span>
-    </div>`;
+// 侧边栏
+function renderList(){
+  document.getElementById('cnt').textContent=Object.keys(hs).length;
+  list.innerHTML=BUILDINGS.map(b=>{
+    const h=hs[b.id],cls=['item',b.id===cur?'sel':'',h?'done':''].filter(Boolean).join(' ');
+    return`<div class="${cls}" onclick="select('${b.id}')"><span>${b.name}${h?' ✅':''}</span><span class="cat">${b.cat}</span></div>`;
   }).join('');
 }
+function doClear(){if(cur&&hs[cur]){delete hs[cur];save();renderHS();renderList();t('已清除')}}
 
-function select(id) { cur = id; renderList(); renderHS(); }
-function getname(id) { const b = BUILDINGS.find(b=>b.id===id); return b?b.name:id; }
-function clearSel() { if (cur && hs[cur]) { delete hs[cur]; save(); renderHS(); renderList(); toastMsg('🗑 已清除'); } }
+// 持久化
+function save(){localStorage.setItem('nuaa-coords-v2',JSON.stringify(hs))}
 
-// === 持久化 ===
-function save() { localStorage.setItem('nuaa-coords', JSON.stringify(hs)); }
-
-// === 导出 ===
-function makeResult() {
-  return BUILDINGS.map(b => {
-    const h = hs[b.id];
-    return {
-      id: b.id, name: b.name, category: b.cat,
-      hotspot: h
-        ? {x:Math.round(h.x*RATIO), y:Math.round(h.y*RATIO),
-           width:Math.round(h.w*RATIO), height:Math.round(h.h*RATIO)}
-        : {x:0, y:0, width:50, height:40}
-    };
-  });
+// 导出
+function doExport(){
+  const r=BUILDINGS.map(b=>{const h=hs[b.id];return{id:b.id,name:b.name,category:b.cat,hotspot:h?{x:h.x,y:h.y,width:h.w,height:h.h}:{x:0,y:0,width:50,height:40}}});
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(r,null,2)],{type:'application/json'}));
+  a.download='airplane-coords.json';a.click();t('📥 已下载');
 }
-
-function exportJSON() {
-  const json = JSON.stringify(makeResult(), null, 2);
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([json], {type:'application/json'}));
-  a.download = 'mock-buildings-new.json';
-  a.click();
-  toastMsg('📥 已下载！');
+function doCopy(){
+  const r=BUILDINGS.map(b=>{const h=hs[b.id];return{id:b.id,name:b.name,category:b.cat,hotspot:h?{x:h.x,y:h.y,width:h.w,height:h.h}:{x:0,y:0,width:50,height:40}}});
+  navigator.clipboard.writeText(JSON.stringify(r,null,2)).then(()=>t('📋 已复制')).catch(()=>t('复制失败'));
 }
+function t(m){const el=toast;el.textContent=m;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1800)}
 
-function copyJSON() {
-  const json = JSON.stringify(makeResult(), null, 2);
-  navigator.clipboard.writeText(json).then(() => toastMsg('📋 已复制！'))
-    .catch(() => { const ta=document.createElement('textarea'); ta.value=json; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toastMsg('📋 已复制！'); });
-}
+// 键盘
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){cur=null;renderList();renderHS();clearTmp()}});
 
-function toastMsg(m) {
-  const t = toast; t.textContent=m; t.classList.add('on');
-  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('on'), 1800);
-}
-
-// === 键盘 ===
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { cur = null; renderList(); renderHS(); clearTmp(); }
-  const n = parseInt(e.key);
-  if (n >= 1 && n <= 9 && !e.ctrlKey && !e.metaKey) {
-    const idx = n - 1;
-    if (idx < BUILDINGS.length) {
-      select(BUILDINGS[idx].id);
-      const el = list.querySelector(`[onclick*="${BUILDINGS[idx].id}"]`);
-      if (el) el.scrollIntoView({block:'center'});
-    }
-  }
-});
-
-// 初始渲染
-renderList();
-renderHS();
+renderList();renderHS();
 </script>
 </body>
 </html>

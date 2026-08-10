@@ -7,6 +7,7 @@ import { FreshmanWindow } from '../FreshmanWindow/FreshmanWindow';
 import type { Building, BuildingClickData, MapImageMeta, MapTransform } from '../../types';
 import { CDN_BASE } from '../../config/cdn';
 import { getCenterTransform, POPOVER_CENTER_OFFSET } from '../BuildingPopover/BuildingPopover';
+import { buildingSprites } from '../../data/building-sprites';
 import './MapView.css';
 
 const MAP_SRC = `${CDN_BASE}/map/hand-drawn-map-v1.jpg`;
@@ -25,14 +26,17 @@ interface MapViewProps {
   selectedBuilding: Building | null;
   onBuildingClick: (data: BuildingClickData | null) => void;
   onMapStateChange?: (state: MapViewState) => void;
+  onFreshmanExpand?: (expanded: boolean) => void;
 }
 
-export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapStateChange }: MapViewProps) {
+export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapStateChange, onFreshmanExpand }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [imageMeta, setImageMeta] = useState<MapImageMeta>({ width: 0, height: 0, loaded: false });
   const [spritesReady, setSpritesReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const spriteBuildingIds = new Set(buildingSprites.flatMap(s => s.buildingIds));
+  const buildingsWithoutSprite = buildings.filter(b => !spriteBuildingIds.has(b.id));
 
   // Refs 保存最新值，供 resize 事件使用（避免闭包过期）
   const imageMetaRef = useRef(imageMeta);
@@ -185,13 +189,12 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
 
         {imageMeta.loaded && (
           <HotspotLayer
-            buildings={buildings}
+            buildings={buildingsWithoutSprite}
             imageWidth={imageMeta.width}
             imageHeight={imageMeta.height}
             transform={transform}
             onBuildingClick={onBuildingClick}
             selectedBuildingId={selectedBuilding?.id}
-            disabled={true}
           />
         )}
       </div>
@@ -225,7 +228,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
         />
       )}
 
-      {!selectedBuilding && <FreshmanWindow />}
+      {!selectedBuilding && <FreshmanWindow onExpandedChange={onFreshmanExpand} />}
 
       {/* 缩放控件 */}
       <div className="map-controls">
