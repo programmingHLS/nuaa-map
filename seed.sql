@@ -1,4 +1,13 @@
-INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-freshman-001', '怎么用知网下载文献？', '手机知网APP操作路径：个人中心→我的服务→学生认证；认证后使用「全球学术快报」或「知网研学」免费下载文献。', 'resolved', '2026-07-30');
+ wrangler 4.115.0    
+────────────────────     
+Resource location: remote
+
+
+🌀 Executing on remote database nuaa-map-db (8b4c07ef-a8b3-4668-8cf8-a0a5ea44838c):
+🌀 To execute on your local development database, remove the --remote flag from your wrangler command.
+🚣 Executed 1 command in 0.40ms
+
+D:\aaaaaaaaaaaaaaaaa\nuaa-map>INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-freshman-001', '怎么用知网下载文献？', '手机知网APP操作路径：个人中心→我的服务→学生认证；认证后使用「全球学术快报」或「知网研学」免费下载文献。', 'resolved', '2026-07-30');
 INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-freshman-002', '考试怎么申请缓考？', '1. 先取得任课教师同意；2. 登录教务系统提交申请，附件上传《课程缓考申请表》及相关证明材料；3. 经辅导员、学院教务员两级审核通过即完成。已缓考课程再次参加考试需填写《已缓考课程考试申请单》提交至学院教务办公室。', 'resolved', '2026-07-30');
 INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-freshman-003', '普通话证书怎么补办？', '办理地点：师生服务大厅6号窗口（教务处窗口）。', 'resolved', '2026-07-30');
 INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-freshman-004', '期末考试时间怎么查？', '两种渠道：任课老师通知、教务处官网公示。', 'resolved', '2026-07-30');
