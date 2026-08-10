@@ -100,11 +100,17 @@
   position: relative;
 }
 
-.hotspot-leader-dot {
+/* 引线组容器：定位在建筑中心(0,0)，整体一起反缩放 */
+.hotspot-leader {
   position: absolute;
   left: 50%; top: 50%;
+  width: 0; height: 0;
+}
+
+.hotspot-leader-dot {
+  position: absolute;
+  left: -7px; top: -7px;
   width: 14px; height: 14px;
-  margin: -7px 0 0 -7px;
   border-radius: 50%;
   background: var(--color-blue-500);
   border: 2px solid #fff;
@@ -113,7 +119,7 @@
 
 .hotspot-leader-line {
   position: absolute;
-  left: 50%; top: 50%;
+  left: 0; top: -1.5px;
   width: 150px; height: 3px;
   background: var(--color-blue-500);
   opacity: 0.85;
@@ -124,8 +130,8 @@
 
 .hotspot-leader-label {
   position: absolute;
-  left: calc(50% + 145px);
-  top: calc(50% - 84px);
+  left: 130px; top: -76px;
+  transform: translate(-50%, -50%);
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 800;
