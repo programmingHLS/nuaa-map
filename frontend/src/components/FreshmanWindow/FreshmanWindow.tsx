@@ -161,9 +161,13 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
       if (resp.fromRemote) {
         answerText = resp.answer;
         statusText = '已通过 AI 生成回答';
+      } else if (resp.answer && resp.answer.includes('思考中')) {
+        // 超时与不可用区分：透传 askRAG 的超时提示，避免误报「找不到答案」
+        answerText = resp.answer;
+        statusText = 'AI 响应超时，请稍后重试';
       } else {
-        answerText = '暂时没有找到答案，已保存为待处理问题。';
-        statusText = 'AI 服务暂不可用，已保存到本地';
+        answerText = '暂时没有找到答案，可标记为待处理问题。';
+        statusText = 'AI 服务暂不可用，可点击「未解决」保存问题';
       }
     }
 
