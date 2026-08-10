@@ -10,12 +10,11 @@ interface HotspotLayerProps {
   onBuildingHover?: (buildingId: string | null) => void;
   selectedBuildingId?: string;
   disabled?: boolean;
-  spriteBuildingIds?: Set<string>;
 }
 
 export function HotspotLayer({
   buildings, imageWidth, imageHeight, transform,
-  onBuildingClick, onBuildingHover, selectedBuildingId, disabled, spriteBuildingIds,
+  onBuildingClick, onBuildingHover, selectedBuildingId, disabled,
 }: HotspotLayerProps) {
   return (
     <div className="hotspot-layer" style={{ width: imageWidth, height: imageHeight }}>
@@ -40,7 +39,7 @@ export function HotspotLayer({
           <button
             key={b.id}
             className={`hotspot hotspot--cat-${b.category} ${isSelected ? 'hotspot--selected' : ''}`}
-            style={{ left: x, top: y, width, height, ...(disabled || spriteBuildingIds?.has(b.id) ? { pointerEvents: 'none' } : {}) }}
+            style={{ left: x, top: y, width, height, ...(disabled ? { pointerEvents: 'none' } : {}) }}
             onClick={handleClick}
             onMouseEnter={() => onBuildingHover?.(b.id)}
             onMouseLeave={() => onBuildingHover?.(null)}
