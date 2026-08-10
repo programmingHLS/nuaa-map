@@ -114,18 +114,18 @@
 .hotspot-leader-line {
   position: absolute;
   left: 50%; top: 50%;
-  width: 60px; height: 3px;
+  width: 150px; height: 3px;
   background: var(--color-blue-500);
   opacity: 0.85;
   border-radius: 2px;
   transform-origin: left center;
-  transform: rotate(-32deg);
+  transform: rotate(-30deg);
 }
 
 .hotspot-leader-label {
   position: absolute;
-  left: calc(50% + 44px);
-  top: calc(50% - 52px);
+  left: calc(50% + 145px);
+  top: calc(50% - 84px);
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 800;

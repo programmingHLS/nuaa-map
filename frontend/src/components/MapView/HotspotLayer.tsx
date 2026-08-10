@@ -53,8 +53,8 @@ export function HotspotLayer({
             {isLeader ? (
               <>
                 <span className="hotspot-leader-dot" style={{ transform: `scale(${invScale})`, transformOrigin: 'center center' }} />
-                <span className="hotspot-leader-line" style={{ transform: `rotate(-32deg) scale(${invScale})`, transformOrigin: 'left center' }} />
-                <span className="hotspot-leader-label" style={{ transform: `scale(${invScale})`, transformOrigin: 'left top' }}>{b.name}</span>
+                <span className="hotspot-leader-line" style={{ transform: `rotate(-30deg) scale(${invScale})`, transformOrigin: 'left center' }} />
+                <span className="hotspot-leader-label" style={{ transform: `scale(${invScale})`, transformOrigin: 'center center' }}>{b.name}</span>
               </>
             ) : (
               <>
