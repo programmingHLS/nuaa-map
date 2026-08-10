@@ -64,6 +64,41 @@ describe('FreshmanWindow', () => {
     expect(await screen.findByText(/暂时没有找到答案/)).toBeInTheDocument();
   });
 
+  it('提交问题：知识库未命中且 AI 可用时展示 AI 回答', async () => {
+    fetchMock.mockImplementation((url: RequestInfo | URL) => {
+      if (String(url).includes('/api/chat')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ answer: 'AI 生成的新生回答', sources: [] }),
+        } as Response);
+      }
+      return Promise.resolve({ ok: false } as Response);
+    });
+    const user = userEvent.setup();
+    setup();
+    await user.click(screen.getByRole('button', { name: /新生问答/ }));
+    await user.type(screen.getByPlaceholderText('例如：图书馆几点关门？'), '完全不存在的奇葩问题xyz');
+    await user.click(screen.getByRole('button', { name: '提交问题' }));
+    expect(await screen.findByText('AI 生成的新生回答')).toBeInTheDocument();
+    expect(screen.getByText('已通过 AI 生成回答')).toBeInTheDocument();
+  });
+
+  it('提交问题：AI 超时时透传「正在思考中」提示（与不可用区分）', async () => {
+    fetchMock.mockImplementation((url: RequestInfo | URL) => {
+      if (String(url).includes('/api/chat')) {
+        return Promise.reject(new DOMException('The operation was aborted', 'AbortError'));
+      }
+      return Promise.resolve({ ok: false } as Response);
+    });
+    const user = userEvent.setup();
+    setup();
+    await user.click(screen.getByRole('button', { name: /新生问答/ }));
+    await user.type(screen.getByPlaceholderText('例如：图书馆几点关门？'), '完全不存在的奇葩问题xyz');
+    await user.click(screen.getByRole('button', { name: '提交问题' }));
+    expect(await screen.findByText(/AI 正在思考中/)).toBeInTheDocument();
+    expect(screen.getByText('AI 响应超时，请稍后重试')).toBeInTheDocument();
+  });
+
   it('关键词搜索过滤常见问题列表', async () => {
     const user = userEvent.setup();
     setup();
