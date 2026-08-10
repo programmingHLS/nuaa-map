@@ -124,8 +124,8 @@
 
 .hotspot-leader-label {
   position: absolute;
-  left: calc(50% + 50px);
-  top: calc(50% - 32px);
+  left: calc(50% + 44px);
+  top: calc(50% - 52px);
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 800;
