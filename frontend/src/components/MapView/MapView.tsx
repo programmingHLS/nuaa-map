@@ -189,7 +189,8 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
 
         {imageMeta.loaded && (
           <HotspotLayer
-            buildings={buildingsWithoutSprite}
+            buildings={buildings}
+            spriteBuildingIds={spriteBuildingIds}
             imageWidth={imageMeta.width}
             imageHeight={imageMeta.height}
             transform={transform}
