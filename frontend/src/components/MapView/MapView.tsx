@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, useLayoutEffect } from 'react';
+import { useRef, useState, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { useMapInteraction, clampTransform } from '../../hooks/useMapInteraction';
 import { HotspotLayer } from './HotspotLayer';
 import { BuildingSpriteLayer } from './BuildingSpriteLayer';
@@ -35,8 +35,12 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
   const [imageMeta, setImageMeta] = useState<MapImageMeta>({ width: 0, height: 0, loaded: false });
   const [spritesReady, setSpritesReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
-  const spriteBuildingIds = new Set(buildingSprites.flatMap(s => s.buildingIds));
-  const buildingsWithoutSprite = buildings.filter(b => !spriteBuildingIds.has(b.id));
+
+  // 有精灵图的建筑：热区仅作纯装饰（点击由精灵图层处理）
+  const spriteBuildingIds = useMemo(
+    () => new Set(buildingSprites.flatMap(s => s.buildingIds)),
+    [],
+  );
 
   // Refs 保存最新值，供 resize 事件使用（避免闭包过期）
   const imageMetaRef = useRef(imageMeta);
@@ -189,7 +193,8 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
 
         {imageMeta.loaded && (
           <HotspotLayer
-            buildings={buildingsWithoutSprite}
+            buildings={buildings}
+            disabledBuildingIds={spriteBuildingIds}
             imageWidth={imageMeta.width}
             imageHeight={imageMeta.height}
             transform={transform}

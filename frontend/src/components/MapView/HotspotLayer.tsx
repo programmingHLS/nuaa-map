@@ -9,12 +9,13 @@ interface HotspotLayerProps {
   onBuildingClick: (data: BuildingClickData) => void;
   onBuildingHover?: (buildingId: string | null) => void;
   selectedBuildingId?: string;
-  disabled?: boolean;
+  /** 仅对指定的建筑禁用点击（纯装饰），其余建筑保持可交互 */
+  disabledBuildingIds?: ReadonlySet<string>;
 }
 
 export function HotspotLayer({
   buildings, imageWidth, imageHeight, transform,
-  onBuildingClick, onBuildingHover, selectedBuildingId, disabled,
+  onBuildingClick, onBuildingHover, selectedBuildingId, disabledBuildingIds,
 }: HotspotLayerProps) {
   return (
     <div className="hotspot-layer" style={{ width: imageWidth, height: imageHeight }}>
@@ -35,11 +36,13 @@ export function HotspotLayer({
         // 反缩放但设上限，避免缩太小时标记过大
         const invScale = Math.min(1 / transform.scale, 2.5);
 
+        const isDecorative = disabledBuildingIds?.has(b.id) ?? false;
+
         return (
           <button
             key={b.id}
             className={`hotspot hotspot--cat-${b.category} ${isSelected ? 'hotspot--selected' : ''}`}
-            style={{ left: x, top: y, width, height, ...(disabled ? { pointerEvents: 'none' } : {}) }}
+            style={{ left: x, top: y, width, height, ...(isDecorative ? { pointerEvents: 'none' } : {}) }}
             onClick={handleClick}
             onMouseEnter={() => onBuildingHover?.(b.id)}
             onMouseLeave={() => onBuildingHover?.(null)}

@@ -61,10 +61,12 @@ describe('HotspotLayer', () => {
     expect(btn.className).toContain('hotspot--selected');
   });
 
-  it('disabled 时 pointer-events: none', () => {
-    setup({ disabled: true });
-    const btn = screen.getByLabelText('查看 巡天楼 详情');
-    expect(btn).toHaveStyle({ pointerEvents: 'none' });
+  it('disabledBuildingIds 时对应热区 pointer-events: none', () => {
+    setup({ disabledBuildingIds: new Set(['building-006']) });
+    const decorative = screen.getByLabelText('查看 巡天楼 详情');
+    const interactive = screen.getByLabelText('查看 东篱苑餐厅 详情');
+    expect(decorative).toHaveStyle({ pointerEvents: 'none' });
+    expect(interactive).not.toHaveStyle({ pointerEvents: 'none' });
   });
 
   it('热区位置样式使用像素坐标', () => {
