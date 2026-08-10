@@ -81,8 +81,8 @@ describe('App 集成', () => {
   it('加载完成后为无精灵图建筑渲染热区', async () => {
     await renderApp();
     const hotspots = document.querySelectorAll('.hotspot');
-    // PR 后热区仅渲染无精灵图建筑（有精灵图建筑走精灵图交互）
-    expect(hotspots.length).toBe(6);
+    // 所有建筑均渲染热区标签（纯装饰指示，点击由精灵图处理）
+    expect(hotspots.length).toBe(39);
     expect(buildings.length).toBe(39);
   });
 
