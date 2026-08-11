@@ -181,10 +181,20 @@ export function BuildingPopover({
     const el = popoverRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => { e.stopPropagation(); };
-    // 仅拦截滚轮防止滚动穿透；不拦截 touch（会阻止 iOS input 聚焦）
+    // 拦截触摸事件防止穿透到地图（原生事件 + passive 不阻止滚动）
+    // 注意：input/textarea 上不拦截，避免 iOS 无法聚焦
+    const stopTouch = (e: TouchEvent) => {
+      const t = e.target as HTMLElement;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON')) return;
+      e.stopPropagation();
+    };
     el.addEventListener('wheel', onWheel);
+    el.addEventListener('touchstart', stopTouch, { passive: true });
+    el.addEventListener('touchmove', stopTouch, { passive: true });
     return () => {
       el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', stopTouch);
+      el.removeEventListener('touchmove', stopTouch);
     };
   }, []);
 
