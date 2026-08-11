@@ -185,7 +185,8 @@ export function BuildingPopover({
     // 注意：input/textarea 上不拦截，避免 iOS 无法聚焦
     const stopTouch = (e: TouchEvent) => {
       const t = e.target as HTMLElement;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON')) return;
+      // 输入框/按钮等交互元素不拦截，确保移动端可聚焦/点击
+      if (t?.closest('input, textarea, button, a, select')) return;
       e.stopPropagation();
     };
     el.addEventListener('wheel', onWheel);

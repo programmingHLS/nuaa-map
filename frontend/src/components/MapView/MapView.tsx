@@ -143,7 +143,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
 
   return (
     <div
-      className={`map-container ${isDragging ? 'map-container--dragging' : ''}`}
+      className={`map-container ${isDragging ? 'map-container--dragging' : ''} ${selectedBuilding ? 'map-container--locked' : ''}`}
       ref={containerRef}
       {...handlers}
     >
