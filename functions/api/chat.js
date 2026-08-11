@@ -13,41 +13,58 @@ export async function onRequestPost(context) {
         let answer = null;
         let sources = [];
         let qaContext = [];
+        let bestScore = 0;
 
         if (db) {
             const keywords = tokenize(question);
+            const allResults = new Map();
+
             if (keywords.length > 0) {
                 const likeClauses = keywords.map(() => '(question LIKE ? OR answer LIKE ?)').join(' OR ');
                 const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
                 const { results } = await db.prepare(
                     `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (${likeClauses}) LIMIT 10`
                 ).bind(...params).all();
-
-                const scored = results.map(row => ({
-                    row,
-                    score: scoreMatch(keywords, row.question, row.answer || ''),
-                })).sort((a, b) => b.score - a.score);
-
-                qaContext = scored
-                    .filter(s => s.score > 0 && s.row.answer)
-                    .slice(0, 5)
-                    .map(s => s.row);
-
-                const bestMatch = scored[0];
-                if (bestMatch && bestMatch.score >= 30 && bestMatch.row.answer) {
-                    sources = [bestMatch.row.id];
+                for (const row of results) {
+                    if (!allResults.has(row.id)) allResults.set(row.id, row);
                 }
+            }
+
+            {
+                const { results } = await db.prepare(
+                    `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (question LIKE ? OR answer LIKE ?) LIMIT 5`
+                ).bind(`%${question}%`, `%${question}%`).all();
+                for (const row of results) {
+                    if (!allResults.has(row.id)) allResults.set(row.id, row);
+                }
+            }
+
+            const scored = [...allResults.values()].map(row => ({
+                row,
+                score: scoreMatch(keywords, row.question, row.answer || ''),
+            })).sort((a, b) => b.score - a.score);
+
+            qaContext = scored
+                .filter(s => s.score > 0 && s.row.answer)
+                .slice(0, 5)
+                .map(s => s.row);
+
+            bestScore = scored[0]?.score || 0;
+            if (scored[0] && scored[0].score >= 30 && scored[0].row.answer) {
+                sources = [scored[0].row.id];
             }
         }
 
-        if (env.LLM_API_KEY && env.LLM_API_URL) {
+        if (bestScore >= 60 && qaContext.length > 0) {
+            answer = qaContext[0].answer;
+        } else if (env.LLM_API_KEY && env.LLM_API_URL) {
             answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext);
         } else if (qaContext.length > 0) {
             answer = qaContext[0].answer;
         }
 
         if (!answer) {
-            answer = '\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u672a\u914d\u7f6e\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u3002';
+            answer = '智能问答服务暂未配置，请联系管理员。';
         }
 
         if (db) {
@@ -62,7 +79,7 @@ export async function onRequestPost(context) {
         return jsonResponse({ answer, sources });
     } catch (err) {
         return jsonResponse({
-            answer: '\u62b1\u6b49\uff0c\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\u3002',
+            answer: '抱歉，智能问答服务暂时不可用。',
             error: err.message,
         }, 500);
     }
@@ -76,28 +93,29 @@ function jsonResponse(data, status = 200) {
 }
 
 const STOP_WORDS = new Set([
-    '\u7684', '\u4e86', '\u5728', '\u662f', '\u6211', '\u6709', '\u548c', '\u5c31', '\u4e0d',
-    '\u4eba', '\u90fd', '\u4e00', '\u4e0a', '\u4e5f', '\u5f88', '\u5230',
-    '\u8bf4', '\u8981', '\u53bb', '\u4f60', '\u4f1a', '\u7740', '\u6ca1\u6709', '\u770b',
-    '\u597d', '\u81ea\u5df1', '\u8fd9', '\u4ed6', '\u5979', '\u5b83', '\u4eec', '\u90a3',
-    '\u4e9b', '\u5417', '\u554a', '\u5462', '\u5427', '\u55ef', '\u54e6',
-    '\u600e\u4e48', '\u4ec0\u4e48', '\u5982\u4f55', '\u54ea\u91cc', '\u54ea\u4e2a', '\u54ea\u4e9b',
-    '\u4f55\u65f6', '\u591a\u5c11', '\u51e0', '\u5565', '\u548b', '\u4e3a\u5565', '\u4e3a\u4ec0\u4e48',
-    '\u8bf7\u95ee', '\u8bf7',
+    '的', '了', '在', '是', '我', '有', '和', '就', '不',
+    '人', '都', '一', '上', '也', '很', '到',
+    '说', '要', '去', '你', '会', '着', '没有', '看',
+    '好', '自己', '这', '他', '她', '它', '们', '那',
+    '些', '吗', '啊', '呢', '吧', '嗯', '哦',
+    '请问', '请',
 ]);
 
 function tokenize(text) {
-    const raw = text.toLowerCase().split(/[\s,.\u3002\uff0c\uff01\uff1f\u3001\uff1b\uff1a\u201c\u201d\u2018\u2019\uff08\uff09()\u3010\u3011\u300a\u300b/\\|]+/);
+    const raw = text.toLowerCase().split(/[\s,.。，！？、；：""''（）()【】《》/\\|]+/);
     const tokens = [];
     for (const token of raw) {
         if (/[\u4e00-\u9fff]/.test(token)) {
-            for (const ch of token) {
-                if (/[\u4e00-\u9fff]/.test(ch) && !STOP_WORDS.has(ch)) tokens.push(ch);
-            }
             for (let i = 0; i < token.length - 1; i++) {
                 const bigram = token.substring(i, i + 2);
                 if (/[\u4e00-\u9fff]/.test(bigram[0]) && /[\u4e00-\u9fff]/.test(bigram[1]) && !STOP_WORDS.has(bigram)) {
                     tokens.push(bigram);
+                }
+            }
+            for (let i = 0; i < token.length - 2; i++) {
+                const trigram = token.substring(i, i + 3);
+                if (/[\u4e00-\u9fff]/.test(trigram) && !STOP_WORDS.has(trigram)) {
+                    tokens.push(trigram);
                 }
             }
             if (!STOP_WORDS.has(token)) tokens.push(token);
@@ -122,7 +140,7 @@ function scoreMatch(keywords, questionText, answerText) {
 }
 
 async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext) {
-    const systemPrompt = '你是南京航空航天大学校园地图智能问答助手。\n请基于提供的知识库信息回答用户关于南航天目湖校区的各种问题。\n请严格遵守以下规则：\n1. 优先使用提供的知识库内容回答，不要编造信息。\n2. 如果知识库中没有相关信息，坦诚告知用户"该信息尚未记录，请咨询学校相关部门"。\n3. 回答要简洁、准确，符合学生助手语境。\n4. 涉及时间、地点、办事流程的信息时，直接给出明确答案。\n5. 使用中文回答。\n6. 可以适当使用 Markdown 格式提升可读性，但不要使用标题（#）或图片。';
+    const systemPrompt = '你是南京航空航天大学天目湖校区校园助手"阿源"，来自致元书院。\n请基于提供的知识库信息回答用户关于天目湖校区的各种问题。\n请严格遵守以下规则：\n1. 必须优先使用提供的知识库内容回答，严格照搬知识库中的答案，不要改写、缩写或编造。\n2. 如果知识库中有相关内容，直接引用知识库答案，可以适当补充格式但不要改变事实。\n3. 如果知识库中没有相关信息，坦诚告知"该信息尚未记录，建议咨询师生服务大厅或辅导员确认"。\n4. 涉及时间、地点、办事流程的信息时，必须与知识库完全一致，不得修改。\n5. 使用中文回答，可以适当使用 Markdown 格式提升可读性，但不要使用标题（#）或图片。';
 
     const contextSections = [];
 
@@ -145,7 +163,7 @@ async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaC
         ? `\n\n--- 参考知识库信息 ---\n${contextSections.join('\n\n')}\n--- 结束 ---\n\n`
         : '';
 
-    const userPrompt = `${contextBlock}用户问题：${question}\n\n请根据以上信息回答用户的问题。`;
+    const userPrompt = `${contextBlock}用户问题：${question}\n\n请根据以上知识库信息回答用户的问题。如果知识库中有匹配的答案，请直接引用，不要改写。`;
 
     const resp = await fetch(env.LLM_API_URL, {
         method: 'POST',
@@ -159,7 +177,7 @@ async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaC
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt },
             ],
-            temperature: 0.7,
+            temperature: 0.3,
             max_tokens: 1024,
         }),
     });
