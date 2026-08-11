@@ -1,3 +1,7 @@
+.map-view-root {
+  flex: 1; position: relative; display: flex;
+  min-width: 0; min-height: 0;
+}
 .map-container {
   flex:1; position:relative; overflow:hidden; cursor:grab;
   touch-action: none; /* 完全禁用浏览器默认手势，自定义双指缩放接管所有触控 */

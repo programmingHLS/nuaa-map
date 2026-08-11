@@ -144,7 +144,7 @@
 /* 周边设施 */
 .popover-nearby { margin-top:10px; margin-bottom:4px; }
 .popover-nearby-label { font-size:var(--text-xs); color:var(--color-slate-400); margin-bottom:8px; font-weight:600; }
-.popover-nearby-list { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; }
+.popover-nearby-list { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; touch-action: pan-x; }
 .popover-nearby-list::-webkit-scrollbar { height:5px; }
 .popover-nearby-list::-webkit-scrollbar-thumb { background:rgba(37,99,235,0.18); border-radius:3px; }
 .popover-nearby-list::-webkit-scrollbar-thumb:hover { background:rgba(37,99,235,0.35); }
