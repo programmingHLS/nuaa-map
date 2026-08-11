@@ -7,7 +7,6 @@
     var(--color-sky-50);
 }
 .map-container--dragging { cursor:grabbing; }
-.map-container--locked { touch-action: none; }
 
 .map-loading {
   position:absolute; inset:0; display:flex;
