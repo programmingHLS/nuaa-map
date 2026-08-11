@@ -633,6 +633,13 @@
       "height": 132
     },
     "description": "天目湖校区书院办公服务场所。",
-    "floors": 1
+    "floors": 1,
+    "images": [
+      "/buildings/shyuan/01.jpg",
+      "/buildings/shyuan/02.jpg",
+      "/buildings/shyuan/03.jpg",
+      "/buildings/shyuan/04.jpg",
+      "/buildings/shyuan/05.jpg"
+    ]
   }
 ]

@@ -37,9 +37,8 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   // 有精灵图的建筑：热区仅作纯装饰（点击由精灵图层处理）
-  // 致元书院办公室（building-039）也是纯装饰，不可点击
   const spriteBuildingIds = useMemo(
-    () => new Set([...buildingSprites.flatMap(s => s.buildingIds), 'building-039']),
+    () => new Set(buildingSprites.flatMap(s => s.buildingIds)),
     [],
   );
 
