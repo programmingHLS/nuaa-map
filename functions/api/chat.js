@@ -13,6 +13,7 @@ export async function onRequestPost(context) {
         let answer = null;
         let sources = [];
         let qaContext = [];
+        let bestScore = 0;
 
         if (db) {
             const keywords = tokenize(question);
@@ -33,15 +34,22 @@ export async function onRequestPost(context) {
                     .slice(0, 5)
                     .map(s => s.row);
 
-                const bestMatch = scored[0];
-                if (bestMatch && bestMatch.score >= 30 && bestMatch.row.answer) {
-                    sources = [bestMatch.row.id];
+                bestScore = scored.length > 0 ? scored[0].score : 0;
+
+                if (bestScore >= 30 && scored[0].row.answer) {
+                    sources = [scored[0].row.id];
                 }
             }
         }
 
+        // 本地匹配分数过低或没有匹配时，才联网搜索，节省 Tavily 额度
+        let webResults = [];
+        if ((qaContext.length === 0 || bestScore < 30) && env.TAVILY_API_KEY) {
+            webResults = await searchWeb(env, question, 3);
+        }
+
         if (env.LLM_API_KEY && env.LLM_API_URL) {
-            answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext);
+            answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext, webResults);
         } else if (qaContext.length > 0) {
             answer = qaContext[0].answer;
         }
@@ -121,8 +129,36 @@ function scoreMatch(keywords, questionText, answerText) {
     return totalWeight === 0 ? 0 : (matchedWeight / totalWeight) * 100;
 }
 
-async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext) {
-    const systemPrompt = '你是南京航空航天大学校园地图智能问答助手。\n请基于提供的知识库信息回答用户关于南航天目湖校区的各种问题。\n请严格遵守以下规则：\n1. 优先使用提供的知识库内容回答，不要编造信息。\n2. 如果知识库中没有相关信息，坦诚告知用户"该信息尚未记录，请咨询学校相关部门"。\n3. 回答要简洁、准确，符合学生助手语境。\n4. 涉及时间、地点、办事流程的信息时，直接给出明确答案。\n5. 使用中文回答。\n6. 可以适当使用 Markdown 格式提升可读性，但不要使用标题（#）或图片。';
+async function searchWeb(env, query, maxResults = 3) {
+    if (!env.TAVILY_API_KEY) return [];
+
+    try {
+        const resp = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                api_key: env.TAVILY_API_KEY,
+                query,
+                max_results: maxResults,
+                search_depth: 'basic',
+            }),
+        });
+        if (!resp.ok) return [];
+
+        const data = await resp.json();
+        return (data.results || []).map(r => ({
+            title: r.title || '',
+            url: r.url || '',
+            content: r.content || '',
+        }));
+    } catch (err) {
+        console.error('Tavily search error:', err);
+        return [];
+    }
+}
+
+async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext, webResults = []) {
+    const systemPrompt = '你是南京航空航天大学校园地图智能问答助手。\n请基于提供的知识库信息回答用户关于南航天目湖校区的各种问题。\n请严格遵守以下规则：\n1. 优先使用提供的知识库内容回答，不要编造信息。\n2. 如果知识库中没有相关信息，可以结合联网搜索结果回答，并注明信息来自网络、可能变化；涉及报到、缴费、考试、报销等关键流程时，建议用户咨询学校相关部门确认。\n3. 回答要简洁、准确，符合学生助手语境。\n4. 涉及时间、地点、办事流程的信息时，直接给出明确答案。\n5. 使用中文回答。\n6. 可以适当使用 Markdown 格式提升可读性，但不要使用标题（#）或图片。';
 
     const contextSections = [];
 
@@ -141,6 +177,13 @@ async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaC
         contextSections.push(`以下是从校园知识库中检索到的相关问答：\n${qaText}`);
     }
 
+    if (webResults.length > 0) {
+        const webText = webResults.map((r, i) =>
+            `来源 ${i + 1}：${r.title}\n链接：${r.url}\n内容：${r.content}`
+        ).join('\n\n');
+        contextSections.push(`以下是从互联网检索到的信息：\n${webText}`);
+    }
+
     const contextBlock = contextSections.length > 0
         ? `\n\n--- 参考知识库信息 ---\n${contextSections.join('\n\n')}\n--- 结束 ---\n\n`
         : '';
@@ -154,7 +197,7 @@ async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaC
             'Authorization': `Bearer ${env.LLM_API_KEY}`,
         },
         body: JSON.stringify({
-            model: env.LLM_MODEL || 'deepseek-v4-pro',
+            model: env.LLM_MODEL || 'deepseek-chat',
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt },
