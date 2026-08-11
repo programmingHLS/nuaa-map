@@ -215,7 +215,7 @@ async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaC
             'Authorization': `Bearer ${env.LLM_API_KEY}`,
         },
         body: JSON.stringify({
-            model: env.LLM_MODEL || 'deepseek-chat',
+            model: env.LLM_MODEL || 'deepseek-v4-flash',
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt },
