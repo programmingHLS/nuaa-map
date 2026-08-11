@@ -182,7 +182,13 @@ export function BuildingPopover({
     if (!el) return;
     const onWheel = (e: WheelEvent) => { e.stopPropagation(); };
     // 拦截触摸事件防止穿透到地图（原生事件 + passive 不阻止滚动）
-    const stopTouch = (e: TouchEvent) => { e.stopPropagation(); };
+    // 注意：input/textarea 上不拦截，避免 iOS 无法聚焦
+    const stopTouch = (e: TouchEvent) => {
+      const t = e.target as HTMLElement;
+      // 输入框/按钮等交互元素不拦截，确保移动端可聚焦/点击
+      if (t?.closest('input, textarea, button, a, select')) return;
+      e.stopPropagation();
+    };
     el.addEventListener('wheel', onWheel);
     el.addEventListener('touchstart', stopTouch, { passive: true });
     el.addEventListener('touchmove', stopTouch, { passive: true });

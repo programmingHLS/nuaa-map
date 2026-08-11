@@ -141,6 +141,7 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
     : null;
 
   return (
+    <div className="map-view-root">
     <div
       className={`map-container ${isDragging ? 'map-container--dragging' : ''}`}
       ref={containerRef}
@@ -204,35 +205,6 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
         )}
       </div>
 
-      {/* 建筑气泡弹窗（渲染在变换层之外，不随地图缩放） */}
-      {selectedBuilding && selectedPopoverState && (
-        <BuildingPopover
-          building={selectedBuilding}
-          screenX={selectedPopoverState.screenX}
-          screenY={selectedPopoverState.screenY}
-          screenWidth={selectedPopoverState.screenW}
-          screenHeight={selectedPopoverState.screenH}
-          containerWidth={containerSize.w}
-          containerHeight={containerSize.h}
-          buildings={buildings}
-          onClose={() => onBuildingClick(null)}
-          onNavigateToBuilding={(bld) => {
-            const cx = bld.hotspot.x + bld.hotspot.width / 2;
-            const cy = bld.hotspot.y + bld.hotspot.height / 2;
-            const scale = transform.scale;
-            window.dispatchEvent(new CustomEvent('map-navigate', {
-              detail: getCenterTransform(containerSize.w, containerSize.h, cx, cy, scale, POPOVER_CENTER_OFFSET),
-            }));
-            // 用居中后的预期坐标，避免旧 transform 快照导致弹窗错位
-            const sx = containerSize.w / 2 - bld.hotspot.width * scale / 2;
-            const sy = containerSize.h / 2 + POPOVER_CENTER_OFFSET - bld.hotspot.height * scale / 2;
-            const sw = bld.hotspot.width * scale;
-            const sh = bld.hotspot.height * scale;
-            onBuildingClick({ building: bld, screenX: sx, screenY: sy, screenWidth: sw, screenHeight: sh });
-          }}
-        />
-      )}
-
       {!selectedBuilding && <FreshmanWindow onExpandedChange={onFreshmanExpand} />}
 
       {/* 缩放控件 */}
@@ -266,6 +238,36 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
       {imageMeta.loaded && (
         <p className="map-hint">滚轮缩放 · 拖拽平移 · 点击建筑查看详情</p>
       )}
+    </div>
+
+    {/* 建筑气泡弹窗（渲染在 map-container 之外，避免继承 touch-action:none 影响 input 聚焦） */}
+    {selectedBuilding && selectedPopoverState && (
+      <BuildingPopover
+        building={selectedBuilding}
+        screenX={selectedPopoverState.screenX}
+        screenY={selectedPopoverState.screenY}
+        screenWidth={selectedPopoverState.screenW}
+        screenHeight={selectedPopoverState.screenH}
+        containerWidth={containerSize.w}
+        containerHeight={containerSize.h}
+        buildings={buildings}
+        onClose={() => onBuildingClick(null)}
+        onNavigateToBuilding={(bld) => {
+          const cx = bld.hotspot.x + bld.hotspot.width / 2;
+          const cy = bld.hotspot.y + bld.hotspot.height / 2;
+          const scale = transform.scale;
+          window.dispatchEvent(new CustomEvent('map-navigate', {
+            detail: getCenterTransform(containerSize.w, containerSize.h, cx, cy, scale, POPOVER_CENTER_OFFSET),
+          }));
+          // 用居中后的预期坐标，避免旧 transform 快照导致弹窗错位
+          const sx = containerSize.w / 2 - bld.hotspot.width * scale / 2;
+          const sy = containerSize.h / 2 + POPOVER_CENTER_OFFSET - bld.hotspot.height * scale / 2;
+          const sw = bld.hotspot.width * scale;
+          const sh = bld.hotspot.height * scale;
+          onBuildingClick({ building: bld, screenX: sx, screenY: sy, screenWidth: sw, screenHeight: sh });
+        }}
+      />
+    )}
     </div>
   );
 }
