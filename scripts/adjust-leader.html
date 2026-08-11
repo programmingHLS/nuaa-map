@@ -2,27 +2,27 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>引线标签位置调节</title>
+<title>致元书院引线定位</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui;background:#1a1a2e;color:#eee;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .top{padding:8px 14px;background:#0f3460;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
 .top h2{font-size:13px}
-.top .out{font-size:12px;color:#4ecca3;font-family:monospace;flex:1;min-width:200px}
+.top .out{font-size:12px;color:#4ecca3;font-family:monospace;flex:1;min-width:220px;line-height:1.6}
 .top button{padding:5px 12px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;background:#4ecca3;color:#1a1a2e}
-.area{flex:1;overflow:hidden;position:relative;cursor:crosshair}
+.area{flex:1;overflow:hidden;position:relative;cursor:crosshair;background:#0a0a15}
 .img-wrap{position:absolute;top:0;left:0;transform-origin:0 0}
 .img-wrap img{display:block;max-width:none}
-.info{position:absolute;bottom:8px;left:8px;right:8px;padding:6px 12px;background:rgba(0,0,0,0.8);border-radius:6px;font-size:11px;display:flex;justify-content:space-between;flex-wrap:wrap}
+.info{position:absolute;bottom:8px;left:8px;right:8px;padding:6px 12px;background:rgba(0,0,0,0.8);border-radius:6px;font-size:11px;display:flex;justify-content:space-between;flex-wrap:wrap;z-index:5}
 </style>
 </head>
 <body>
 
 <div class="top">
-  <h2>🔧 拖动标签到线末端满意位置</h2>
+  <h2>🔧 拖动<b>圆点</b>整体平移 · 拖动<b>标签</b>单独调引线</h2>
   <button onclick="zoomIn()">+</button>
   <button onclick="zoomOut()">−</button>
-  <button onclick="copyOut()">📋 复制CSS</button>
+  <button onclick="copyOut()">📋 复制</button>
   <div class="out" id="out"></div>
 </div>
 
@@ -31,21 +31,22 @@ body{font-family:system-ui;background:#1a1a2e;color:#eee;height:100vh;display:fl
     <img id="img" src="hand-drawn-map-small.jpg" draggable="false">
   </div>
   <div class="info">
-    <span>拖动蓝色文字到线上末端对齐</span>
+    <span>右键拖动平移地图 · 滚轮缩放</span>
     <span>缩放: <b id="z">100%</b></span>
-    <span>标签偏移: <b id="offs">-</b></span>
   </div>
 </div>
 
 <script>
-// 地图 7176x5382, 缩略图 2500x1875
 const RATIO = 7176/2500;
-// 致元书院建筑中心（原图）
-const CX = 5146, CY = 2278;
+// 当前致元书院建筑中心（原图）
+let centerX = 5146, centerY = 2278;
+// 标签相对圆点的偏移（原图），可单独拖
+let labelOffX = 104, labelOffY = -60;
 
 let scale=1, px=0, py=0, panning=false, pax=0,pay=0,ppx=0,ppy=0;
-let labelOff={x:160,y:-90}; // 相对建筑中心（原图像素），初始猜测
 const wrap=document.getElementById('wrap'), iwrap=document.getElementById('iwrap'), img=document.getElementById('img');
+
+let dotEl, lineEl, labelEl;
 
 img.onload=()=>{
   const cw=wrap.clientWidth, ch=wrap.clientHeight;
@@ -55,27 +56,38 @@ img.onload=()=>{
 };
 if(img.complete) img.onload();
 
-function s2i(ex,ey){const r=wrap.getBoundingClientRect();return{x:(ex-r.left-px)/scale*RATIO,y:(ey-r.top-py)/scale*RATIO}}
-function i2s(x,y){return{x:px+(x/RATIO)*scale,y:py+(y/RATIO)*scale}}
-
 function zoomIn(){scale=Math.min(5,scale*1.3);render()}
 function zoomOut(){scale=Math.max(0.2,scale/1.3);render()}
 
-// 在缩略图上创建叠加
-let dotEl, lineEl, labelEl;
 function build(){
-  dotEl=document.createElement('div');dotEl.style.cssText='position:absolute;width:8px;height:8px;border-radius:50%;background:#3b82f6;border:2px solid #fff;transform:translate(-50%,-50%);pointer-events:none;';
-  lineEl=document.createElement('div');lineEl.style.cssText='position:absolute;height:3px;background:#3b82f6;border-radius:2px;transform-origin:left center;pointer-events:none;';
-  labelEl=document.createElement('div');labelEl.textContent='致元书院办公室';labelEl.style.cssText='position:absolute;padding:5px 12px;background:rgba(255,255,255,0.95);color:#172554;font:700 14px system-ui;border:1px solid #3b82f6;border-radius:8px;white-space:nowrap;cursor:grab;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,0.2);';
-  wrap.appendChild(dotEl);wrap.appendChild(lineEl);wrap.appendChild(labelEl);
-  // 拖动标签
+  dotEl=document.createElement('div');
+  dotEl.style.cssText='position:absolute;width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid #fff;transform:translate(-50%,-50%);cursor:move;box-shadow:0 2px 8px rgba(0,0,0,0.4);z-index:3;';
+  lineEl=document.createElement('div');
+  lineEl.style.cssText='position:absolute;height:3px;background:#3b82f6;transform-origin:left center;z-index:2;pointer-events:none;';
+  labelEl=document.createElement('div');
+  labelEl.textContent='致元书院办公室';
+  labelEl.style.cssText='position:absolute;padding:5px 12px;background:rgba(255,255,255,0.95);color:#172554;font:700 14px system-ui;border:1px solid #3b82f6;border-radius:8px;white-space:nowrap;cursor:grab;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,0.25);z-index:4;';
+  wrap.appendChild(lineEl);wrap.appendChild(dotEl);wrap.appendChild(labelEl);
+
+  // 拖动圆点 → 整体平移
+  dotEl.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation();
+    const startX=e.clientX,startY=e.clientY,startCX=centerX,startCY=centerY;
+    const onMove=ev=>{
+      centerX=startCX+(ev.clientX-startX)/scale*RATIO;
+      centerY=startCY+(ev.clientY-startY)/scale*RATIO;
+      render();
+    };
+    const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp)};
+    window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);
+  });
+  // 拖动标签 → 单独调引线
   labelEl.addEventListener('mousedown',e=>{
     e.preventDefault();e.stopPropagation();
-    const startX=e.clientX, startY=e.clientY, startOff={...labelOff};
+    const startX=e.clientX,startY=e.clientY,startLX=labelOffX,startLY=labelOffY;
     const onMove=ev=>{
-      const deltaX=(ev.clientX-startX)/scale*RATIO;
-      const deltaY=(ev.clientY-startY)/scale*RATIO;
-      labelOff={x:startOff.x+deltaX, y:startOff.y+deltaY};
+      labelOffX=startLX+(ev.clientX-startX)/scale*RATIO;
+      labelOffY=startLY+(ev.clientY-startY)/scale*RATIO;
       render();
     };
     const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp)};
@@ -91,8 +103,6 @@ wrap.addEventListener('wheel',e=>{
   px-=mx*(scale-old); py-=my*(scale-old); render();
 },{passive:false});
 wrap.addEventListener('contextmenu',e=>e.preventDefault());
-
-// 右键拖动平移
 wrap.addEventListener('mousedown',e=>{
   if(e.button===1||e.button===2||e.shiftKey){panning=true;pax=e.clientX;pay=e.clientY;ppx=px;ppy=py}
 });
@@ -102,31 +112,30 @@ window.addEventListener('mousemove',e=>{
 window.addEventListener('mouseup',()=>panning=false);
 
 function render(){
-  const cs=scale; // 缩略图scale
   iwrap.style.transform=`translate(${px}px,${py}px) scale(${scale})`;
   document.getElementById('z').textContent=Math.round(scale*100)+'%';
-  // 建筑中心（缩略图坐标）
-  const bx=px+(CX/RATIO)*cs, by=py+(CY/RATIO)*cs;
-  // 圆点
+  const cs=scale;
+  // 圆点（原图中心 → 屏幕）
+  const bx=px+(centerX/RATIO)*cs, by=py+(centerY/RATIO)*cs;
   dotEl.style.left=bx+'px'; dotEl.style.top=by+'px';
-  // 标签（缩略图坐标）
-  const lx=px+((CX+labelOff.x)/RATIO)*cs, ly=py+((CY+labelOff.y)/RATIO)*cs;
+  // 标签
+  const lx=px+((centerX+labelOffX)/RATIO)*cs, ly=py+((centerY+labelOffY)/RATIO)*cs;
   labelEl.style.left=lx+'px'; labelEl.style.top=ly+'px';
-  // 引线：从圆点到标签
+  // 引线
   const dx=lx-bx, dy=ly-by;
   const len=Math.sqrt(dx*dx+dy*dy);
   const ang=Math.atan2(dy,dx)*180/Math.PI;
   lineEl.style.left=bx+'px'; lineEl.style.top=by+'px';
   lineEl.style.width=len+'px';
   lineEl.style.transform=`rotate(${ang}deg)`;
-  // 输出
-  const out=`label: left: calc(50% + ${Math.round(labelOff.x)}px); top: calc(50% + ${Math.round(labelOff.y)}px);`;
-  document.getElementById('out').textContent=out;
-  document.getElementById('offs').textContent=`(${Math.round(labelOff.x)}, ${Math.round(labelOff.y)})px 相对建筑中心`;
+
+  document.getElementById('out').innerHTML=
+    `hotspot 中心: x=${Math.round(centerX)}, y=${Math.round(centerY)}<br>`+
+    `label 偏移: left=${Math.round(labelOffX)}, top=${Math.round(labelOffY)}`;
 }
 
 function copyOut(){
-  const t=document.getElementById('out').textContent;
+  const t=`center: (${Math.round(centerX)}, ${Math.round(centerY)}) | labelOff: (${Math.round(labelOffX)}, ${Math.round(labelOffY)})`;
   navigator.clipboard.writeText(t).then(()=>alert('已复制: '+t)).catch(()=>alert(t));
 }
 </script>
