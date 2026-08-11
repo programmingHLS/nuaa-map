@@ -28,21 +28,22 @@ export async function onRequestPost(context) {
                     score: scoreMatch(keywords, row.question, row.answer || ''),
                 })).sort((a, b) => b.score - a.score);
 
-                const bestMatch = scored[0];
-                if (bestMatch && bestMatch.score >= 30 && bestMatch.row.answer) {
-                    answer = bestMatch.row.answer;
-                    sources = [bestMatch.row.id];
-                }
-
                 qaContext = scored
                     .filter(s => s.score > 0 && s.row.answer)
                     .slice(0, 5)
                     .map(s => s.row);
+
+                const bestMatch = scored[0];
+                if (bestMatch && bestMatch.score >= 30 && bestMatch.row.answer) {
+                    sources = [bestMatch.row.id];
+                }
             }
         }
 
         if (env.LLM_API_KEY && env.LLM_API_URL) {
             answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext);
+        } else if (qaContext.length > 0) {
+            answer = qaContext[0].answer;
         }
 
         if (!answer) {
