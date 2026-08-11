@@ -17,22 +17,37 @@ export async function onRequestPost(context) {
 
         if (db) {
             const keywords = tokenize(question);
+            const allResults = new Map();
+
             if (keywords.length > 0) {
                 const likeClauses = keywords.map(() => '(question LIKE ? OR answer LIKE ?)').join(' OR ');
                 const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
                 const { results } = await db.prepare(
                     `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (${likeClauses}) LIMIT 10`
                 ).bind(...params).all();
+                for (const row of results) {
+                    if (!allResults.has(row.id)) allResults.set(row.id, row);
+                }
+            }
 
-                const scored = results.map(row => ({
-                    row,
-                    score: scoreMatch(keywords, row.question, row.answer || ''),
-                })).sort((a, b) => b.score - a.score);
+            {
+                const { results } = await db.prepare(
+                    `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (question LIKE ? OR answer LIKE ?) LIMIT 5`
+                ).bind(`%${question}%`, `%${question}%`).all();
+                for (const row of results) {
+                    if (!allResults.has(row.id)) allResults.set(row.id, row);
+                }
+            }
 
-                qaContext = scored
-                    .filter(s => s.score > 0 && s.row.answer)
-                    .slice(0, 5)
-                    .map(s => s.row);
+            const scored = [...allResults.values()].map(row => ({
+                row,
+                score: scoreMatch(keywords, row.question, row.answer || ''),
+            })).sort((a, b) => b.score - a.score);
+
+            qaContext = scored
+                .filter(s => s.score > 0 && s.row.answer)
+                .slice(0, 5)
+                .map(s => s.row);
 
                 bestScore = scored.length > 0 ? scored[0].score : 0;
 
@@ -99,13 +114,16 @@ function tokenize(text) {
     const tokens = [];
     for (const token of raw) {
         if (/[\u4e00-\u9fff]/.test(token)) {
-            for (const ch of token) {
-                if (/[\u4e00-\u9fff]/.test(ch) && !STOP_WORDS.has(ch)) tokens.push(ch);
-            }
             for (let i = 0; i < token.length - 1; i++) {
                 const bigram = token.substring(i, i + 2);
                 if (/[\u4e00-\u9fff]/.test(bigram[0]) && /[\u4e00-\u9fff]/.test(bigram[1]) && !STOP_WORDS.has(bigram)) {
                     tokens.push(bigram);
+                }
+            }
+            for (let i = 0; i < token.length - 2; i++) {
+                const trigram = token.substring(i, i + 3);
+                if (/[\u4e00-\u9fff]/.test(trigram) && !STOP_WORDS.has(trigram)) {
+                    tokens.push(trigram);
                 }
             }
             if (!STOP_WORDS.has(token)) tokens.push(token);
@@ -202,7 +220,7 @@ async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaC
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt },
             ],
-            temperature: 0.7,
+            temperature: 0.3,
             max_tokens: 1024,
         }),
     });

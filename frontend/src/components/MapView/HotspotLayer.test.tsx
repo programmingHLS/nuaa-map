@@ -85,4 +85,26 @@ describe('HotspotLayer', () => {
     // stopPropagation 在 React 合成事件层生效，原生父级监听仍会收到冒泡（React 委托在根）——这里只验证回调未被重复触发
     expect(onBuildingClick).toHaveBeenCalledTimes(1);
   });
+
+  it('书院（building-039）矩形区域不拦截点击，交互热区为文字标签', () => {
+    const shuyuan: Building = {
+      id: 'building-039', name: '致元书院办公室', category: 'service',
+      hotspot: { x: 500, y: 600, width: 133, height: 132 }, description: '书院办公',
+    };
+    const { onBuildingClick } = setup({ buildings: [shuyuan] });
+    // 整个矩形按钮 pointer-events: none（不拦截点击）
+    const btn = screen.getByLabelText('查看 致元书院办公室 详情');
+    expect(btn).toHaveStyle({ pointerEvents: 'none' });
+    // 文字标签作为热区：点击触发与普通建筑一致的回调
+    const label = screen.getByRole('button', { name: '致元书院办公室' });
+    fireEvent.click(label);
+    expect(onBuildingClick).toHaveBeenCalledTimes(1);
+    expect(onBuildingClick).toHaveBeenCalledWith({
+      building: shuyuan,
+      screenX: -50 + 500 * 2,
+      screenY: 30 + 600 * 2,
+      screenWidth: 133 * 2,
+      screenHeight: 132 * 2,
+    });
+  });
 });
