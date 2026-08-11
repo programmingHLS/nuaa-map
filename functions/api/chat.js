@@ -63,23 +63,37 @@ export async function onRequestPost(context) {
             webResults = await searchWeb(env, question, 3);
         }
 
-        if (env.LLM_API_KEY && env.LLM_API_URL) {
-            answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext, webResults);
+        if (bestScore >= 60 && qaContext.length > 0) {
+            answer = qaContext[0].answer;
+        } else if (env.LLM_API_KEY && env.LLM_API_URL) {
+            try {
+                answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext, webResults);
+            } catch (llmErr) {
+                answer = qaContext.length > 0
+                    ? qaContext[0].answer
+                    : null;
+            }
         } else if (qaContext.length > 0) {
             answer = qaContext[0].answer;
         }
 
         if (!answer) {
-            answer = '\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u672a\u914d\u7f6e\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u3002';
+            answer = env.LLM_API_KEY
+                ? '\u62b1\u6b49\uff0c\u668a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002'
+                : '\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u672a\u914d\u7f6e\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u3002';
         }
 
         if (db) {
-            await db.prepare(
-                'INSERT INTO chat_logs (id, question, answer, building_id, building_name) VALUES (?, ?, ?, ?, ?)'
-            ).bind(
-                `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                question, answer, buildingId || null, buildingName || null
-            ).run();
+            try {
+                await db.prepare(
+                    'INSERT INTO chat_logs (id, question, answer, building_id, building_name) VALUES (?, ?, ?, ?, ?)'
+                ).bind(
+                    `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                    question, answer, buildingId || null, buildingName || null
+                ).run();
+            } catch (logErr) {
+                // 日志写入失败不影响主响应
+            }
         }
 
         return jsonResponse({ answer, sources });
@@ -94,7 +108,21 @@ export async function onRequestPost(context) {
 function jsonResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*',
+        },
+    });
+}
+
+export async function onRequestOptions() {
+    return new Response(null, {
+        status: 204,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        },
     });
 }
 
