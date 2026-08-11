@@ -15,7 +15,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([{
     id: 'welcome', role: 'assistant',
-    content: '你好！我是南航校园助手 🛩️\n\n有什么关于天目湖校区的问题都可以问我～',
+    content: '你好！我是阿源，来自致元书院。有什么关于天目湖校区的问题都可以问我～',
     timestamp: Date.now(),
   }]);
   const [input, setInput] = useState('');
@@ -94,16 +94,16 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
     <div className={`chat-widget ${isOpen ? 'chat-widget--open' : ''}`} ref={chatRef}>
       {!isOpen ? (
         <button className="chat-fab" onClick={() => setIsOpen(true)} aria-label="打开智能问答">
-          <img src="/buildings/sprites/assistant.png" alt="校园助手" className="chat-fab-img" />
+          <img src="/buildings/sprites/assistant.png" alt="阿源" className="chat-fab-img" />
         </button>
       ) : (
         <div className="chat-panel">
           <div className="chat-header">
             <div className="chat-header-title">
-              <img src="/buildings/sprites/ai-avatar.png" alt="校园助手" className="chat-header-img" />
+              <img src="/buildings/sprites/ai-avatar.png" alt="阿源" className="chat-header-img" />
               <div>
-                <h3 className="chat-header-name">校园助手</h3>
-                <span className="chat-header-status">AI · 测试模式</span>
+                <h3 className="chat-header-name">阿源</h3>
+                <span className="chat-header-status">致元书院 · 阿源</span>
               </div>
             </div>
             <button className="chat-close" onClick={() => setIsOpen(false)} aria-label="关闭">

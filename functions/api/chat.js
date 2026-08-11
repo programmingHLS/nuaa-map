@@ -12,6 +12,7 @@ export async function onRequestPost(context) {
 
         let answer = null;
         let sources = [];
+        let qaContext = [];
 
         if (db) {
             const keywords = tokenize(question);
@@ -22,25 +23,27 @@ export async function onRequestPost(context) {
                     `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (${likeClauses}) LIMIT 10`
                 ).bind(...params).all();
 
-                let bestMatch = null;
-                let bestScore = 0;
-                for (const row of results) {
-                    const score = scoreMatch(keywords, row.question, row.answer || '');
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMatch = row;
-                    }
-                }
+                const scored = results.map(row => ({
+                    row,
+                    score: scoreMatch(keywords, row.question, row.answer || ''),
+                })).sort((a, b) => b.score - a.score);
 
-                if (bestMatch && bestScore >= 30 && bestMatch.answer) {
-                    answer = bestMatch.answer;
-                    sources = [bestMatch.id];
+                qaContext = scored
+                    .filter(s => s.score > 0 && s.row.answer)
+                    .slice(0, 5)
+                    .map(s => s.row);
+
+                const bestMatch = scored[0];
+                if (bestMatch && bestMatch.score >= 30 && bestMatch.row.answer) {
+                    sources = [bestMatch.row.id];
                 }
             }
         }
 
-        if (!answer && env.LLM_API_KEY && env.LLM_API_URL) {
-            answer = await callLLM(env, question, buildingId, buildingName, buildingCtx);
+        if (env.LLM_API_KEY && env.LLM_API_URL) {
+            answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext);
+        } else if (qaContext.length > 0) {
+            answer = qaContext[0].answer;
         }
 
         if (!answer) {
@@ -68,7 +71,7 @@ export async function onRequestPost(context) {
 function jsonResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
     });
 }
 
@@ -118,15 +121,31 @@ function scoreMatch(keywords, questionText, answerText) {
     return totalWeight === 0 ? 0 : (matchedWeight / totalWeight) * 100;
 }
 
-async function callLLM(env, question, buildingId, buildingName, buildingCtx) {
-    const systemPrompt = '\u4f60\u662f\u5357\u4eac\u822a\u7a7a\u822a\u5929\u5927\u5b66\u6821\u56ed\u5730\u56fe\u667a\u80fd\u95ee\u7b54\u52a9\u624b\u3002\u8bf7\u57fa\u4e8e\u63d0\u4f9b\u7684\u4fe1\u606f\u56de\u7b54\u95ee\u9898\uff0c\u5982\u679c\u4e0d\u786e\u5b9a\uff0c\u8bf7\u5982\u5b9e\u8bf4\u660e\u3002';
-    let userPrompt = question;
+async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext) {
+    const systemPrompt = '你是南京航空航天大学校园地图智能问答助手。\n请基于提供的知识库信息回答用户关于南航天目湖校区的各种问题。\n请严格遵守以下规则：\n1. 优先使用提供的知识库内容回答，不要编造信息。\n2. 如果知识库中没有相关信息，坦诚告知用户"该信息尚未记录，请咨询学校相关部门"。\n3. 回答要简洁、准确，符合学生助手语境。\n4. 涉及时间、地点、办事流程的信息时，直接给出明确答案。\n5. 使用中文回答。\n6. 可以适当使用 Markdown 格式提升可读性，但不要使用标题（#）或图片。';
+
+    const contextSections = [];
+
+    if (buildingCtx && typeof buildingCtx === 'string' && buildingCtx.trim()) {
+        contextSections.push(`用户当前正在查看的建筑信息：\n${buildingCtx.trim()}`);
+    }
+
     if (buildingName) {
-        userPrompt = `\u5173\u4e8e${buildingName}\uff1a${question}`;
+        contextSections.push(`用户当前关注的建筑：${buildingName}`);
     }
-    if (buildingCtx) {
-        userPrompt += `\n\n\u5efa\u7b51\u4fe1\u606f\uff1a${buildingCtx}`;
+
+    if (qaContext && qaContext.length > 0) {
+        const qaText = qaContext.map((r, i) =>
+            `参考 ${i + 1}：问：${r.question}\n答：${r.answer}`
+        ).join('\n\n');
+        contextSections.push(`以下是从校园知识库中检索到的相关问答：\n${qaText}`);
     }
+
+    const contextBlock = contextSections.length > 0
+        ? `\n\n--- 参考知识库信息 ---\n${contextSections.join('\n\n')}\n--- 结束 ---\n\n`
+        : '';
+
+    const userPrompt = `${contextBlock}用户问题：${question}\n\n请根据以上信息回答用户的问题。`;
 
     const resp = await fetch(env.LLM_API_URL, {
         method: 'POST',
