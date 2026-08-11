@@ -64,7 +64,7 @@ export async function onRequestPost(context) {
         }
 
         if (!answer) {
-            answer = '�����ʴ������δ���ã�����ϵ����Ա��';
+            answer = '\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u672a\u914d\u7f6e\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u3002';
         }
 
         if (db) {
@@ -79,7 +79,7 @@ export async function onRequestPost(context) {
         return jsonResponse({ answer, sources });
     } catch (err) {
         return jsonResponse({
-            answer: '��Ǹ�������ʴ������ʱ�����á�',
+            answer: '\u62b1\u6b49\uff0c\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\u3002',
             error: err.message,
         }, 500);
     }
@@ -93,16 +93,18 @@ function jsonResponse(data, status = 200) {
 }
 
 const STOP_WORDS = new Set([
-    '��', '��', '��', '��', '��', '��', '��', '��', '��',
-    '��', '��', 'һ', '��', 'Ҳ', '��', '��',
-    '˵', 'Ҫ', 'ȥ', '��', '��', '��', 'û��', '��',
-    '��', '�Լ�', '��', '��', '��', '��', '��', '��',
-    'Щ', '��', '��', '��', '��', '��', 'Ŷ',
-    '����', '��',
+    '\u7684', '\u4e86', '\u5728', '\u662f', '\u6211', '\u6709', '\u548c', '\u5c31', '\u4e0d',
+    '\u4eba', '\u90fd', '\u4e00', '\u4e0a', '\u4e5f', '\u5f88', '\u5230',
+    '\u8bf4', '\u8981', '\u53bb', '\u4f60', '\u4f1a', '\u7740', '\u6ca1\u6709', '\u770b',
+    '\u597d', '\u81ea\u5df1', '\u8fd9', '\u4ed6', '\u5979', '\u5b83', '\u4eec', '\u90a3',
+    '\u4e9b', '\u5417', '\u554a', '\u5462', '\u5427', '\u55ef', '\u54e6',
+    '\u600e\u4e48', '\u4ec0\u4e48', '\u5982\u4f55', '\u54ea\u91cc', '\u54ea\u4e2a', '\u54ea\u4e9b',
+    '\u4f55\u65f6', '\u591a\u5c11', '\u51e0', '\u5565', '\u548b', '\u4e3a\u5565', '\u4e3a\u4ec0\u4e48',
+    '\u8bf7\u95ee', '\u8bf7',
 ]);
 
 function tokenize(text) {
-    const raw = text.toLowerCase().split(/[\s,.��������������""''����()��������/\\|]+/);
+    const raw = text.toLowerCase().split(/[\s,.\u3002\uff0c\uff01\uff1f\u3001\uff1b\uff1a\u201c\u201d\u2018\u2019\uff08\uff09()\u3010\u3011\u300a\u300b/\\|]+/);
     const tokens = [];
     for (const token of raw) {
         if (/[\u4e00-\u9fff]/.test(token)) {
