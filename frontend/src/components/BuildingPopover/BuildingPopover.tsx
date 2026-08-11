@@ -181,8 +181,15 @@ export function BuildingPopover({
     const el = popoverRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => { e.stopPropagation(); };
-    // 拦截触摸事件防止穿透到地图（原生事件 + passive 不阻止滚动）
-    const stopTouch = (e: TouchEvent) => { e.stopPropagation(); };
+
+    const stopTouch = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('input, textarea, button, [role="button"]')) {
+        return;
+      }
+      e.stopPropagation();
+    };
+
     el.addEventListener('wheel', onWheel);
     el.addEventListener('touchstart', stopTouch, { passive: true });
     el.addEventListener('touchmove', stopTouch, { passive: true });
@@ -489,12 +496,11 @@ export function BuildingPopover({
 
               <div className="popover-chat-input-row">
                 <input ref={inputRef} className="popover-chat-input" type="text"
-                  placeholder={`问问关于${building.name}的问题…`}
+                  placeholder={chatLoading ? 'AI 思考中…' : `问问关于${building.name}的问题…`}
                   value={chatInput} onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuestion(); } }}
                   onFocus={() => { inputBlurGuard.current = false; }}
-                  onBlur={() => { inputBlurGuard.current = true; setTimeout(() => { inputBlurGuard.current = false; }, 300); }}
-                  disabled={chatLoading} />
+                  onBlur={() => { inputBlurGuard.current = true; setTimeout(() => { inputBlurGuard.current = false; }, 300); }} />
                 <button className="popover-chat-send" onClick={sendQuestion}
                   disabled={!chatInput.trim() || chatLoading} aria-label="发送">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"

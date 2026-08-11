@@ -79,6 +79,13 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
         timestamp: Date.now(),
       }]);
       setSuggestions(getRelatedQuestions(text, 3));
+    }).catch(() => {
+      setMessages(prev => [...prev, {
+        id: `a-${Date.now()}`, role: 'assistant',
+        content: '抱歉，AI 服务暂时不可用，请稍后重试。',
+        timestamp: Date.now(),
+      }]);
+    }).finally(() => {
       setIsLoading(false);
     });
   }, [isLoading]);
