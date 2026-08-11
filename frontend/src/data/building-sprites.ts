@@ -167,7 +167,7 @@ export const buildingSprites = [
   {
     image: `${CDN_BASE}/sprites/东体育场.png`,
     buildingIds: ['building-029'],
-    displayWidth: 989,
+    displayWidth: 1200,
     centerX: 5079,
     centerY: 3990,
   },

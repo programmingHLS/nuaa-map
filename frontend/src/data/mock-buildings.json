@@ -360,7 +360,7 @@
       "width": 106,
       "height": 106
     },
-    "description": "研究生宿舍，两人间，配备独立卫浴和空调。",
+    "description": "四人间，配备独立卫浴和空调。",
     "floors": 6,
     "images": [
       "/buildings/dongli-sushe/01.webp",
@@ -632,7 +632,14 @@
       "width": 133,
       "height": 132
     },
-    "description": "天目湖校区书院办公服务场所。",
-    "floors": 1
+    "description": "位于B5-104，致元书院教务员辅导员办公室。致元书院是南航面向数智时代人才培养设立的创新型特色书院，现有2025级本科生720人，覆盖材料、数学、计算机、人工智能等4个学院14个专业。",
+    "floors": 1,
+    "images": [
+      "/buildings/shyuan/01.jpg",
+      "/buildings/shyuan/02.jpg",
+      "/buildings/shyuan/03.jpg",
+      "/buildings/shyuan/04.jpg",
+      "/buildings/shyuan/05.jpg"
+    ]
   }
 ]

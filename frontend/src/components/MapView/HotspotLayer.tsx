@@ -37,13 +37,17 @@ export function HotspotLayer({
         const invScale = Math.min(1 / transform.scale, 2.5);
 
         const isDecorative = disabledBuildingIds?.has(b.id) ?? false;
-        const isLeader = b.id === 'building-039'; // 致元书院办公室：圆点+引线+外部标签
+        const isLeader = b.id === 'building-039'; // 致元书院办公室：圆点+引线+外部标签，交互热区为文字标签
 
         return (
           <button
             key={b.id}
             className={`hotspot hotspot--cat-${b.category} ${isSelected ? 'hotspot--selected' : ''} ${isLeader ? 'hotspot--leader' : ''}`}
-            style={{ left: x, top: y, width, height, ...(isDecorative ? { pointerEvents: 'none' } : {}) }}
+            style={{
+              left: x, top: y, width, height,
+              // 书院：整个矩形区域不拦截点击，仅文字标签可点（由 label 自行处理）
+              ...(isLeader || isDecorative ? { pointerEvents: 'none' } : {}),
+            }}
             onClick={handleClick}
             onMouseEnter={() => onBuildingHover?.(b.id)}
             onMouseLeave={() => onBuildingHover?.(null)}
@@ -54,7 +58,26 @@ export function HotspotLayer({
               <span className="hotspot-leader" style={{ transform: `scale(${invScale})`, transformOrigin: '0 0' }}>
                 <span className="hotspot-leader-dot" />
                 <span className="hotspot-leader-line" />
-                <span className="hotspot-leader-label">{b.name}</span>
+                <span
+                  className={`hotspot-leader-label ${isSelected ? 'hotspot-leader-label--selected' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClick(e);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleClick(e as unknown as React.MouseEvent);
+                    }
+                  }}
+                  onMouseEnter={() => onBuildingHover?.(b.id)}
+                  onMouseLeave={() => onBuildingHover?.(null)}
+                >
+                  {b.name}
+                </span>
               </span>
             ) : (
               <>
