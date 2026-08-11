@@ -100,7 +100,7 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
         <div className="chat-panel">
           <div className="chat-header">
             <div className="chat-header-title">
-              <span className="chat-header-icon">🛩️</span>
+              <img src="/buildings/sprites/ai-avatar.png" alt="校园助手" className="chat-header-img" />
               <div>
                 <h3 className="chat-header-name">校园助手</h3>
                 <span className="chat-header-status">AI · 测试模式</span>

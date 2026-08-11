@@ -54,7 +54,12 @@
 
 .chat-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; flex-shrink:0; background:rgba(255,255,255,0.6); border-bottom:1px solid rgba(0,0,0,0.06); position:relative; z-index:2; }
 .chat-header-title { display:flex; align-items:center; gap:10px; }
-.chat-header-icon { font-size:26px; }
+.chat-header-img {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
 .chat-header-name { font-family:var(--font-display); font-size:var(--text-base); font-weight:700; color:var(--color-slate-800); }
 .chat-header-status { font-size:11px; color:var(--color-blue-500); font-weight:500; }
 .chat-header-status::before { content:'● '; font-size:6px; vertical-align:middle; }
