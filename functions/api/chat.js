@@ -122,30 +122,30 @@ function scoreMatch(keywords, questionText, answerText) {
 }
 
 async function callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext) {
-    const systemPrompt = 'ÄãÊÇÄÏ¾©º½¿Õº½Ìì´óÑ§Ğ£Ô°µØÍ¼ÖÇÄÜÎÊ´ğÖúÊÖ¡£\nÇë»ùÓÚÌá¹©µÄÖªÊ¶¿âĞÅÏ¢»Ø´ğÓÃ»§¹ØÓÚÄÏº½ÌìÄ¿ºşĞ£ÇøµÄ¸÷ÖÖÎÊÌâ¡£\nÇëÑÏ¸ñ×ñÊØÒÔÏÂ¹æÔò£º\n1. ÓÅÏÈÊ¹ÓÃÌá¹©µÄÖªÊ¶¿âÄÚÈİ»Ø´ğ£¬²»Òª±àÔìĞÅÏ¢¡£\n2. Èç¹ûÖªÊ¶¿âÖĞÃ»ÓĞÏà¹ØĞÅÏ¢£¬Ì¹³Ï¸æÖªÓÃ»§"¸ÃĞÅÏ¢ÉĞÎ´¼ÇÂ¼£¬Çë×ÉÑ¯Ñ§Ğ£Ïà¹Ø²¿ÃÅ"¡£\n3. »Ø´ğÒª¼ò½à¡¢×¼È·£¬·ûºÏÑ§ÉúÖúÊÖÓï¾³¡£\n4. Éæ¼°Ê±¼ä¡¢µØµã¡¢°ìÊÂÁ÷³ÌµÄĞÅÏ¢Ê±£¬Ö±½Ó¸ø³öÃ÷È·´ğ°¸¡£\n5. Ê¹ÓÃÖĞÎÄ»Ø´ğ¡£\n6. ¿ÉÒÔÊÊµ±Ê¹ÓÃ Markdown ¸ñÊ½ÌáÉı¿É¶ÁĞÔ£¬µ«²»ÒªÊ¹ÓÃ±êÌâ£¨#£©»òÍ¼Æ¬¡£';
+    const systemPrompt = 'ä½ æ˜¯å—äº¬èˆªç©ºèˆªå¤©å¤§å­¦æ ¡å›­åœ°å›¾æ™ºèƒ½é—®ç­”åŠ©æ‰‹ã€‚\nè¯·åŸºäºæä¾›çš„çŸ¥è¯†åº“ä¿¡æ¯å›ç­”ç”¨æˆ·å…³äºå—èˆªå¤©ç›®æ¹–æ ¡åŒºçš„å„ç§é—®é¢˜ã€‚\nè¯·ä¸¥æ ¼éµå®ˆä»¥ä¸‹è§„åˆ™ï¼š\n1. ä¼˜å…ˆä½¿ç”¨æä¾›çš„çŸ¥è¯†åº“å†…å®¹å›ç­”ï¼Œä¸è¦ç¼–é€ ä¿¡æ¯ã€‚\n2. å¦‚æœçŸ¥è¯†åº“ä¸­æ²¡æœ‰ç›¸å…³ä¿¡æ¯ï¼Œå¦è¯šå‘ŠçŸ¥ç”¨æˆ·"è¯¥ä¿¡æ¯å°šæœªè®°å½•ï¼Œè¯·å’¨è¯¢å­¦æ ¡ç›¸å…³éƒ¨é—¨"ã€‚\n3. å›ç­”è¦ç®€æ´ã€å‡†ç¡®ï¼Œç¬¦åˆå­¦ç”ŸåŠ©æ‰‹è¯­å¢ƒã€‚\n4. æ¶‰åŠæ—¶é—´ã€åœ°ç‚¹ã€åŠäº‹æµç¨‹çš„ä¿¡æ¯æ—¶ï¼Œç›´æ¥ç»™å‡ºæ˜ç¡®ç­”æ¡ˆã€‚\n5. ä½¿ç”¨ä¸­æ–‡å›ç­”ã€‚\n6. å¯ä»¥é€‚å½“ä½¿ç”¨ Markdown æ ¼å¼æå‡å¯è¯»æ€§ï¼Œä½†ä¸è¦ä½¿ç”¨æ ‡é¢˜ï¼ˆ#ï¼‰æˆ–å›¾ç‰‡ã€‚';
 
     const contextSections = [];
 
     if (buildingCtx && typeof buildingCtx === 'string' && buildingCtx.trim()) {
-        contextSections.push(`ÓÃ»§µ±Ç°ÕıÔÚ²é¿´µÄ½¨ÖşĞÅÏ¢£º\n${buildingCtx.trim()}`);
+        contextSections.push(`ç”¨æˆ·å½“å‰æ­£åœ¨æŸ¥çœ‹çš„å»ºç­‘ä¿¡æ¯ï¼š\n${buildingCtx.trim()}`);
     }
 
     if (buildingName) {
-        contextSections.push(`ÓÃ»§µ±Ç°¹Ø×¢µÄ½¨Öş£º${buildingName}`);
+        contextSections.push(`ç”¨æˆ·å½“å‰å…³æ³¨çš„å»ºç­‘ï¼š${buildingName}`);
     }
 
     if (qaContext && qaContext.length > 0) {
         const qaText = qaContext.map((r, i) =>
-            `²Î¿¼ ${i + 1}£ºÎÊ£º${r.question}\n´ğ£º${r.answer}`
+            `å‚è€ƒ ${i + 1}ï¼šé—®ï¼š${r.question}\nç­”ï¼š${r.answer}`
         ).join('\n\n');
-        contextSections.push(`ÒÔÏÂÊÇ´ÓĞ£Ô°ÖªÊ¶¿âÖĞ¼ìË÷µ½µÄÏà¹ØÎÊ´ğ£º\n${qaText}`);
+        contextSections.push(`ä»¥ä¸‹æ˜¯ä»æ ¡å›­çŸ¥è¯†åº“ä¸­æ£€ç´¢åˆ°çš„ç›¸å…³é—®ç­”ï¼š\n${qaText}`);
     }
 
     const contextBlock = contextSections.length > 0
-        ? `\n\n--- ²Î¿¼ÖªÊ¶¿âĞÅÏ¢ ---\n${contextSections.join('\n\n')}\n--- ½áÊø ---\n\n`
+        ? `\n\n--- å‚è€ƒçŸ¥è¯†åº“ä¿¡æ¯ ---\n${contextSections.join('\n\n')}\n--- ç»“æŸ ---\n\n`
         : '';
 
-    const userPrompt = `${contextBlock}ÓÃ»§ÎÊÌâ£º${question}\n\nÇë¸ù¾İÒÔÉÏĞÅÏ¢»Ø´ğÓÃ»§µÄÎÊÌâ¡£`;
+    const userPrompt = `${contextBlock}ç”¨æˆ·é—®é¢˜ï¼š${question}\n\nè¯·æ ¹æ®ä»¥ä¸Šä¿¡æ¯å›ç­”ç”¨æˆ·çš„é—®é¢˜ã€‚`;
 
     const resp = await fetch(env.LLM_API_URL, {
         method: 'POST',

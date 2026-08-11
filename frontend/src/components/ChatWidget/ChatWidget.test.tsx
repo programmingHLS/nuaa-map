@@ -32,13 +32,13 @@ describe('ChatWidget', () => {
   it('初始为收起状态，只显示 FAB 按钮', () => {
     setup();
     expect(screen.getByLabelText('打开智能问答')).toBeInTheDocument();
-    expect(screen.queryByText('校园助手')).not.toBeInTheDocument();
+    expect(screen.queryByText('阿源')).not.toBeInTheDocument();
   });
 
   it('点击 FAB 打开面板，显示欢迎消息与快捷建议', () => {
     setup();
     fireEvent.click(screen.getByLabelText('打开智能问答'));
-    expect(screen.getByText('校园助手')).toBeInTheDocument();
+    expect(screen.getByText('阿源')).toBeInTheDocument();
     expect(screen.getByText(/有什么关于天目湖校区的问题都可以问我/)).toBeInTheDocument();
     expect(screen.getByText('猜你想问')).toBeInTheDocument();
     // 快捷建议按钮（来自知识库默认前 3 条）
@@ -127,14 +127,14 @@ describe('ChatWidget', () => {
     setup();
     fireEvent.click(screen.getByLabelText('打开智能问答'));
     fireEvent.click(screen.getByLabelText('关闭'));
-    expect(screen.queryByText('校园助手')).not.toBeInTheDocument();
+    expect(screen.queryByText('阿源')).not.toBeInTheDocument();
   });
 
   it('Escape 键关闭面板', () => {
     setup();
     fireEvent.click(screen.getByLabelText('打开智能问答'));
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.queryByText('校园助手')).not.toBeInTheDocument();
+    expect(screen.queryByText('阿源')).not.toBeInTheDocument();
   });
 
   it('RAG 服务不可用时仍显示回复（错误降级文案由服务层处理）', async () => {
