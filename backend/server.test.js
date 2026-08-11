@@ -98,11 +98,11 @@ describe('buildSystemPrompt / buildUserPrompt', () => {
         assert.ok(p.includes('中文'));
     });
 
-    test('系统提示：关键流程允许结合自身知识但要求提示咨询', () => {
+    test('系统提示：允许结合自身知识与联网搜索但要求提示咨询', () => {
         const p = buildSystemPrompt();
-        assert.ok(p.includes('可以结合自身知识尽力回答'));
-        assert.ok(p.includes('建议咨询学校相关部门确认'));
-        assert.ok(p.includes('不确定'));
+        assert.ok(p.includes('可以结合自身知识和联网搜索结果回答'));
+        assert.ok(p.includes('注明信息来源'));
+        assert.ok(p.includes('咨询学校相关部门确认'));
     });
 
     test('用户提示包含参考知识库', () => {

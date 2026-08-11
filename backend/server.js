@@ -104,9 +104,6 @@ function scoreEntry(userTokens, questionText) {
     return (matchedWeight / totalWeight) * 100;
 }
 
-/**
- * 从 QA 知识库中检索最相关的 topN 条目
- */
 function retrieveQA(question, topN = 5) {
     const tokens = tokenize(question);
     const scored = qaEntries.map(entry => ({
@@ -117,9 +114,6 @@ function retrieveQA(question, topN = 5) {
     return scored.filter(s => s.score > 0).slice(0, topN);
 }
 
-/**
- * 根据用户问题和建筑信息，进行关键词匹配建筑名称/描述
- */
 function retrieveBuildingInfo(question, buildingId) {
     const tokens = tokenize(question);
     const results = [];
@@ -152,9 +146,9 @@ function buildSystemPrompt() {
 请基于提供的知识库（QA 问答、建筑信息）回答用户关于南航天目湖校区的各种问题。
 请严格遵守以下规则：
 1. 优先使用提供的知识库内容回答，不要编造信息。
-2. 如果知识库中没有相关信息，可以结合自身知识尽力回答；
-   但涉及报到、缴费、考试、报销等关键流程时，应注明信息可能变化，建议咨询学校相关部门确认。
-   对自身知识也不确定的内容，必须明确标注「不确定」，不得编造具体细节。
+2. 如果知识库中没有相关信息，可以结合自身知识和联网搜索结果回答，
+   并注明信息来源；涉及报到、缴费、考试、报销等关键流程时，
+   建议用户咨询学校相关部门确认。
 3. 回答要简洁、准确，符合学生助手语境。
 4. 回答中可以适当引导用户（如"建议你咨询师生服务大厅X号窗口办理"）。
 5. 涉及时间、地点、办事流程的信息时，直接给出明确答案。
@@ -198,13 +192,42 @@ function buildUserPrompt(question, qaResults, buildingResults, contextText) {
     return `${contextBlock}用户问题：${question}\n\n请根据以上信息回答用户的问题。`;
 }
 
+async function searchWeb(query, maxResults = 3) {
+    const apiKey = process.env.TAVILY_API_KEY;
+    if (!apiKey) return [];
+
+    try {
+        const resp = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                api_key: apiKey,
+                query,
+                max_results: maxResults,
+                search_depth: 'basic',
+            }),
+        });
+        if (!resp.ok) return [];
+
+        const data = await resp.json();
+        return (data.results || []).map(r => ({
+            title: r.title || '',
+            url: r.url || '',
+            content: r.content || '',
+        }));
+    } catch (err) {
+        console.error('Tavily search error:', err);
+        return [];
+    }
+}
+
 /* =============================================================
  *  LLM 调用
  * ============================================================= */
 
 const LLM_API_URL = process.env.LLM_API_URL || 'https://api.deepseek.com/v1/chat/completions';
 const LLM_API_KEY = process.env.LLM_API_KEY || '';
-const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-v4-pro';
+const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-chat';
 
 async function callLLM(systemPrompt, userPrompt) {
     if (!LLM_API_KEY) {
@@ -300,7 +323,6 @@ app.post('/api/chat', async (req, res) => {
     const body = req.body || {};
     const { question, buildingId, context, messages, building_id, stream } = body;
 
-    // 兼容两种前端协议：question（单轮）+ messages（带历史）
     const lastUserMsg = question
         ? question
         : (Array.isArray(messages)
@@ -315,6 +337,7 @@ app.post('/api/chat', async (req, res) => {
     const effectiveBuildingId = buildingId || building_id;
     const qaResults = retrieveQA(trimmed, 5);
     const buildingResults = retrieveBuildingInfo(trimmed, effectiveBuildingId);
+    const bestScore = qaResults.length > 0 ? qaResults[0].score : 0;
 
     let buildingContext = context || '';
     if (effectiveBuildingId && !buildingContext) {
@@ -327,7 +350,18 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const systemPrompt = buildSystemPrompt();
-    const userPrompt = buildUserPrompt(trimmed, qaResults, buildingResults, buildingContext);
+
+    // 本地知识库匹配分数低或无结果，调用 Tavily 联网搜索补充上下文
+    let userPrompt = buildUserPrompt(trimmed, qaResults, buildingResults, buildingContext);
+    if ((qaResults.length === 0 || bestScore < 30) && process.env.TAVILY_API_KEY) {
+        const webResults = await searchWeb(trimmed, 3);
+        if (webResults.length > 0) {
+            const webText = webResults.map((r, i) =>
+                `来源 ${i + 1}：${r.title}\n链接：${r.url}\n内容：${r.content}`
+            ).join('\n\n');
+            userPrompt += `\n\n--- 联网搜索结果 ---\n${webText}\n--- 结束 ---`;
+        }
+    }
 
     if (!LLM_API_KEY) {
         return res.status(500).json({
@@ -338,7 +372,6 @@ app.post('/api/chat', async (req, res) => {
 
     const useStream = stream === true;
 
-    // 带历史时保留最近几轮；最后一条 user 消息替换为带 RAG 上下文的 userPrompt
     const llmMessages = [{ role: 'system', content: systemPrompt }];
     if (Array.isArray(messages) && messages.length > 0) {
         const history = [...messages].slice(-4);
@@ -372,7 +405,6 @@ app.post('/api/chat', async (req, res) => {
         }
 
         if (useStream) {
-            // SSE 流式输出：逐行解析上游事件并转发
             res.setHeader('Content-Type', 'text/event-stream');
             res.setHeader('Cache-Control', 'no-cache');
             res.setHeader('Connection', 'keep-alive');
@@ -384,7 +416,6 @@ app.post('/api/chat', async (req, res) => {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                // stream: true 保持跨 chunk 的多字节字符完整，避免中文乱码
                 buffer += decoder.decode(value, { stream: true });
                 let nl;
                 while ((nl = buffer.indexOf('\n')) >= 0) {
@@ -415,7 +446,6 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// 仅当直接运行时监听端口（被测试 import 时不监听，测试用 supertest 驱动 app）
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isDirectRun) {
     app.listen(PORT, () => {
@@ -426,6 +456,5 @@ if (isDirectRun) {
     });
 }
 
-// 导出 app 供测试（supertest）使用
 export { app };
 export { tokenize, scoreEntry, retrieveQA, retrieveBuildingInfo, buildSystemPrompt, buildUserPrompt };
