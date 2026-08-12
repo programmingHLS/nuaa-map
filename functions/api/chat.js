@@ -62,7 +62,7 @@ export async function onRequestPost(context) {
             webResults = await searchWeb(env, question, 3);
         }
 
-        if (bestScore >= 30 && qaContext.length > 0) {
+        if (bestScore >= 60 && qaContext.length > 0) {
             answer = qaContext[0].answer;
         } else if (env.LLM_API_KEY && env.LLM_API_URL) {
             try {
