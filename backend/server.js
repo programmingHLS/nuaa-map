@@ -227,7 +227,7 @@ async function searchWeb(query, maxResults = 3) {
 
 const LLM_API_URL = process.env.LLM_API_URL || 'https://api.deepseek.com/v1/chat/completions';
 const LLM_API_KEY = process.env.LLM_API_KEY || '';
-const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-chat';
+const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-v4-flash';
 
 async function callLLM(systemPrompt, userPrompt) {
     if (!LLM_API_KEY) {
