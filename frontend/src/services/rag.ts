@@ -33,6 +33,7 @@ async function callRemoteRAG(
                 question,
                 context: context?.buildingDescription,
                 buildingId: context?.buildingId,
+                buildingName: context?.buildingName,
             }),
             signal: AbortSignal.timeout(30000),
         });

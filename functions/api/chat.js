@@ -12,51 +12,77 @@ export async function onRequestPost(context) {
 
         let answer = null;
         let sources = [];
+        let sourceType = null;
+        let llmError = null;
 
-        if (db) {
-            const keywords = tokenize(question);
-            if (keywords.length > 0) {
-                const likeClauses = keywords.map(() => '(question LIKE ? OR answer LIKE ?)').join(' OR ');
-                const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
-                const { results } = await db.prepare(
-                    `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (${likeClauses}) LIMIT 10`
-                ).bind(...params).all();
+        try {
+            if (db) {
+                const allKeywords = tokenize(question);
+                const keywords = allKeywords
+                    .sort((a, b) => b.length - a.length)
+                    .slice(0, 8);
+                if (keywords.length > 0) {
+                    const likeClauses = keywords.map(() => '(question LIKE ? OR answer LIKE ?)').join(' OR ');
+                    const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
+                    const { results } = await db.prepare(
+                        `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (${likeClauses}) LIMIT 10`
+                    ).bind(...params).all();
 
-                let bestMatch = null;
-                let bestScore = 0;
-                for (const row of results) {
-                    const score = scoreMatch(keywords, row.question, row.answer || '');
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMatch = row;
+                    let bestMatch = null;
+                    let bestScore = 0;
+                    for (const row of results) {
+                        const score = scoreMatch(allKeywords, row.question, row.answer || '');
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMatch = row;
+                        }
+                    }
+
+                    if (bestMatch && bestScore >= 30 && bestMatch.answer) {
+                        answer = bestMatch.answer;
+                        sources = [bestMatch.id];
+                        sourceType = 'd1';
                     }
                 }
-
-                if (bestMatch && bestScore >= 30 && bestMatch.answer) {
-                    answer = bestMatch.answer;
-                    sources = [bestMatch.id];
-                }
             }
+        } catch (dbErr) {
+            console.error('D1 query failed:', dbErr.message);
         }
 
-        if (!answer && env.LLM_API_KEY && env.LLM_API_URL) {
-            answer = await callLLM(env, question, buildingId, buildingName, buildingCtx);
+        if (!answer) {
+            if (env.LLM_API_KEY && env.LLM_API_URL) {
+                try {
+                    answer = await callLLM(env, question, buildingId, buildingName, buildingCtx);
+                    if (answer) sourceType = 'llm';
+                } catch (llmErr) {
+                    console.error('LLM call failed:', llmErr.message);
+                    llmError = llmErr.message;
+                }
+            } else {
+                llmError = `LLM not configured: LLM_API_KEY=${env.LLM_API_KEY ? 'set' : 'missing'}, LLM_API_URL=${env.LLM_API_URL || 'missing'}`;
+            }
         }
 
         if (!answer) {
             answer = '\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u672a\u914d\u7f6e\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u3002';
         }
 
-        if (db) {
-            await db.prepare(
-                'INSERT INTO chat_logs (id, question, answer, building_id, building_name) VALUES (?, ?, ?, ?, ?)'
-            ).bind(
-                `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                question, answer, buildingId || null, buildingName || null
-            ).run();
+        try {
+            if (db) {
+                await db.prepare(
+                    'INSERT INTO chat_logs (id, question, answer, building_id, building_name) VALUES (?, ?, ?, ?, ?)'
+                ).bind(
+                    `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                    question, answer, buildingId || null, buildingName || null
+                ).run();
+            }
+        } catch (logErr) {
+            console.error('chat_logs insert failed:', logErr.message);
         }
 
-        return jsonResponse({ answer, sources });
+        const resp = { answer, sources, sourceType };
+        if (llmError) resp.llmError = llmError;
+        return jsonResponse(resp);
     } catch (err) {
         return jsonResponse({
             answer: '\u62b1\u6b49\uff0c\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\u3002',
