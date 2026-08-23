@@ -1,6 +1,10 @@
 const fs = require('fs');
 
-const sql = fs.readFileSync('d:/aaaaaaaaaaaaaaaaa/nuaa-map/seed.sql', 'utf8');
+const path = require('path');
+
+const ROOT = __dirname;
+const sqlPath = process.argv[2] || path.join(ROOT, 'seed.sql');
+const sql = fs.readFileSync(sqlPath, 'utf8');
 const lines = sql.split('\n').filter(l => l.trim().startsWith('INSERT'));
 const questions = [];
 
@@ -61,17 +65,17 @@ console.log('Parsed:', questions.length);
 
 const json = {
     id: 'qa-freshman',
-    category: '新生问答',
-    description: '南京航空航天大学校园常见问题汇总（' + questions.length + '条）',
-    keywords: ['新生', '报到', '校园', 'FAQ', '常见问题'],
+    category: '鏂扮敓闂瓟',
+    description: '鍗椾含鑸┖鑸ぉ澶у鏍″洯甯歌闂姹囨�伙紙' + questions.length + '鏉★級',
+    keywords: ['鏂扮敓', '鎶ュ埌', '鏍″洯', 'FAQ', '甯歌闂'],
     questions
 };
 
-const dir = 'd:/aaaaaaaaaaaaaaaaa/nuaa-map/frontend/src/data';
+const dir = path.join(ROOT, 'frontend/src/data');
 const files = fs.readdirSync(dir).filter(f => f.includes('qa-') && f.endsWith('.json'));
 console.log('JSON files in dir:', files);
 
-const garbled = files.find(f => !f.includes('新生问答'));
+const garbled = files.find(f => f !== 'qa-鏂扮敓闂瓟.json');
 if (garbled) {
     const garbledPath = dir + '/' + garbled;
     console.log('Deleting garbled file:', garbled);
@@ -79,7 +83,7 @@ if (garbled) {
 }
 
 const content = JSON.stringify(json, null, 4) + '\n';
-const correctFile = files.find(f => f.includes('新生问答'));
+const correctFile = files.find(f => f.includes('鏂扮敓闂瓟'));
 const outPath = dir + '/' + correctFile;
 fs.writeFileSync(outPath, content, 'utf8');
 
