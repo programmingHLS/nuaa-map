@@ -12,54 +12,67 @@ export async function onRequestPost(context) {
 
         let answer = null;
         let sources = [];
+        let sourceType = null;
+        let llmError = null;
         let qaContext = [];
         let bestScore = 0;
 
-        if (db) {
-            const keywords = tokenize(question);
-            const allResults = new Map();
+        try {
+            if (db) {
+                const allKeywords = tokenize(question);
+                const keywords = allKeywords
+                    .sort((a, b) => b.length - a.length)
+                    .slice(0, 8);
+                const allResults = new Map();
 
-            if (keywords.length > 0) {
-                const likeClauses = keywords.map(() => '(question LIKE ? OR answer LIKE ?)').join(' OR ');
-                const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
-                const { results } = await db.prepare(
-                    `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (${likeClauses}) LIMIT 10`
-                ).bind(...params).all();
-                for (const row of results) {
-                    if (!allResults.has(row.id)) allResults.set(row.id, row);
+                if (keywords.length > 0) {
+                    const likeClauses = keywords.map(() => '(question LIKE ? OR answer LIKE ?)').join(' OR ');
+                    const params = keywords.flatMap(k => [`%${k}%`, `%${k}%`]);
+                    const { results } = await db.prepare(
+                        `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (${likeClauses}) LIMIT 10`
+                    ).bind(...params).all();
+                    for (const row of results) {
+                        if (!allResults.has(row.id)) allResults.set(row.id, row);
+                    }
+                }
+
+                {
+                    const { results } = await db.prepare(
+                        `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (question LIKE ? OR answer LIKE ?) LIMIT 5`
+                    ).bind(`%${question}%`, `%${question}%`).all();
+                    for (const row of results) {
+                        if (!allResults.has(row.id)) allResults.set(row.id, row);
+                    }
+                }
+
+                const scored = [...allResults.values()].map(row => ({
+                    row,
+                    score: scoreMatch(allKeywords, row.question, row.answer || ''),
+                })).sort((a, b) => b.score - a.score);
+
+                qaContext = scored
+                    .filter(s => s.score > 0 && s.row.answer)
+                    .slice(0, 5)
+                    .map(s => s.row);
+
+                bestScore = scored.length > 0 ? scored[0].score : 0;
+
+                if (bestScore >= 30 && scored[0].row.answer) {
+                    sources = [scored[0].row.id];
+                    sourceType = 'd1';
                 }
             }
-
-            {
-                const { results } = await db.prepare(
-                    `SELECT id, question, answer FROM qa_entries WHERE answer IS NOT NULL AND (question LIKE ? OR answer LIKE ?) LIMIT 5`
-                ).bind(`%${question}%`, `%${question}%`).all();
-                for (const row of results) {
-                    if (!allResults.has(row.id)) allResults.set(row.id, row);
-                }
-            }
-
-            const scored = [...allResults.values()].map(row => ({
-                row,
-                score: scoreMatch(keywords, row.question, row.answer || ''),
-            })).sort((a, b) => b.score - a.score);
-
-            qaContext = scored
-                .filter(s => s.score > 0 && s.row.answer)
-                .slice(0, 5)
-                .map(s => s.row);
-
-            bestScore = scored.length > 0 ? scored[0].score : 0;
-
-            if (bestScore >= 30 && scored[0].row.answer) {
-                sources = [scored[0].row.id];
-            }
+        } catch (dbErr) {
+            console.error('D1 query failed:', dbErr.message);
         }
 
-        // 本地匹配分数过低或没有匹配时，才联网搜索，节省 Tavily 额度
         let webResults = [];
         if ((qaContext.length === 0 || bestScore < 30) && env.TAVILY_API_KEY) {
-            webResults = await searchWeb(env, question, 3);
+            try {
+                webResults = await searchWeb(env, question, 3);
+            } catch (webErr) {
+                console.error('Web search failed:', webErr.message);
+            }
         }
 
         if (bestScore >= 60 && qaContext.length > 0) {
@@ -67,35 +80,38 @@ export async function onRequestPost(context) {
         } else if (env.LLM_API_KEY && env.LLM_API_URL) {
             try {
                 answer = await callLLM(env, question, buildingId, buildingName, buildingCtx, qaContext, webResults);
+                if (answer) sourceType = 'llm';
             } catch (llmErr) {
-                answer = qaContext.length > 0
-                    ? qaContext[0].answer
-                    : null;
+                console.error('LLM call failed:', llmErr.message);
+                llmError = llmErr.message;
+                answer = qaContext.length > 0 ? qaContext[0].answer : null;
             }
         } else if (qaContext.length > 0) {
             answer = qaContext[0].answer;
+        } else {
+            llmError = `LLM not configured: LLM_API_KEY=${env.LLM_API_KEY ? 'set' : 'missing'}, LLM_API_URL=${env.LLM_API_URL || 'missing'}`;
         }
 
         if (!answer) {
-            answer = env.LLM_API_KEY
-                ? '抱歉，智能问答服务暂时不可用，请稍后重试。'
-                : '智能问答服务尚未配置，请联系管理员。';
+            answer = '智能问答服务尚未配置，请联系管理员。';
         }
 
-        if (db) {
-            try {
+        try {
+            if (db) {
                 await db.prepare(
                     'INSERT INTO chat_logs (id, question, answer, building_id, building_name) VALUES (?, ?, ?, ?, ?)'
                 ).bind(
                     `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                     question, answer, buildingId || null, buildingName || null
                 ).run();
-            } catch (logErr) {
-                // 日志写入失败不影响主响应
             }
+        } catch (logErr) {
+            console.error('chat_logs insert failed:', logErr.message);
         }
 
-        return jsonResponse({ answer, sources });
+        const resp = { answer, sources, sourceType };
+        if (llmError) resp.llmError = llmError;
+        return jsonResponse(resp);
     } catch (err) {
         return jsonResponse({
             answer: '抱歉，智能问答服务暂时不可用。',
@@ -137,7 +153,7 @@ const STOP_WORDS = new Set([
 ]);
 
 function tokenize(text) {
-    const raw = text.toLowerCase().split(/[\s,.。，！？、；：“”‘’（）()【】《》/\\|]+/);
+    const raw = text.toLowerCase().split(/[\s,.。，！？、；：""''（）()【】《》/\\|]+/);
     const tokens = [];
     for (const token of raw) {
         if (/[\u4e00-\u9fff]/.test(token)) {
