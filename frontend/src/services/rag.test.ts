@@ -30,7 +30,7 @@ describe('askRAG', () => {
     expect(JSON.parse(init!.body as string)).toMatchObject({ question: '宿舍几点关门' });
   });
 
-  it('携带建筑上下文时请求体包含 buildingId 与描述', async () => {
+  it('携带建筑上下文时请求体包含 buildingId、buildingName 与描述', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ answer: 'ok' }) } as Response);
     vi.stubGlobal('fetch', fetchMock);
 
@@ -42,6 +42,7 @@ describe('askRAG', () => {
     const [, init] = fetchMock.mock.calls[0];
     const body = JSON.parse(init!.body as string);
     expect(body.buildingId).toBe('building-017');
+    expect(body.buildingName).toBe('东篱苑餐厅');
     expect(body.context).toBe('天目湖校区食堂');
   });
 
