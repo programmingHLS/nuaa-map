@@ -295,7 +295,20 @@ app.get('/api/freshman-questions', (req, res) => {
     })));
 });
 
-app.post('/api/freshman-questions', async (req, res) => {
+// 兼容旧版前端端点 /api/qa（2026-08-23 新增）：老前端仍调用 /api/qa，
+// 返回 { entries: [...] } 供 FreshmanWindow 同步最新问答库
+app.get('/api/qa', (req, res) => {
+    res.json({
+        entries: qaEntries.map(e => ({
+            id: e.id,
+            question: e.question,
+            answer: e.answer,
+            createdAt: 'RAG Knowledge Base',
+        })),
+    });
+});
+
+const handleFreshmanQuestion = async (req, res) => {
     const { question } = req.body || {};
 
     if (!question || typeof question !== 'string' || !question.trim()) {
@@ -317,7 +330,10 @@ app.post('/api/freshman-questions', async (req, res) => {
         answer: llmResp.content,
         createdAt: new Date().toISOString(),
     });
-});
+};
+
+app.post('/api/freshman-questions', handleFreshmanQuestion);
+app.post('/api/qa', handleFreshmanQuestion);
 
 app.post('/api/chat', async (req, res) => {
     const body = req.body || {};
