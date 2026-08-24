@@ -17,6 +17,9 @@ type PanelPhase = 'hidden' | 'entering' | 'visible' | 'exiting';
 const STORAGE_KEY = 'nuaa-map-freshman-qa';
 const STORAGE_VERSION = 5;
 const QA_API_URL = '/api/qa';
+/** 列表懒渲染：移动端一次性渲染 380+ 条 DOM 会导致打开面板卡顿甚至闪退，
+ *  先渲染前 PAGE_SIZE 条，滚动接近底部时再加载下一页 */
+const PAGE_SIZE = 50;
 
 import qaData from '../../data/qa-新生问答.json';
 
@@ -44,7 +47,13 @@ function readLocalEntries(): FreshmanEntry[] {
 }
 
 function writeLocalEntries(entries: FreshmanEntry[]) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ _v: STORAGE_VERSION, _entries: entries }));
+  // localStorage 在隐私模式/存储满时可能抛异常（移动端常见），
+  // 失败时静默降级为仅内存数据，避免异常穿透到 React 渲染导致白屏闪退
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ _v: STORAGE_VERSION, _entries: entries }));
+  } catch {
+    // 忽略：内存数据仍在，功能不受影响
+  }
 }
 
 export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expanded: boolean) => void }) {
@@ -60,6 +69,7 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
   const [askResult, setAskResult] = useState<{ question: string; answer: string } | null>(null);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const openPanel = () => {
     setExpanded(true);
@@ -295,6 +305,20 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
     });
   }, [entries, searchTerm]);
 
+  /* 懒渲染分页：无搜索词时按 visibleCount 截断；搜索时展示全部命中结果 */
+  const displayEntries = useMemo(() => {
+    if (!searchTerm.trim()) return filteredEntries.slice(0, visibleCount);
+    return filteredEntries;
+  }, [filteredEntries, searchTerm, visibleCount]);
+
+  /* 滚动接近底部时加载下一页 */
+  const handleListScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const el = event.currentTarget;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
+      setVisibleCount((c) => c + PAGE_SIZE);
+    }
+  };
+
   const handleAskSubmit = (event: FormEvent) => {
     event.preventDefault();
     void submitQuestion(question);
@@ -317,6 +341,10 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
         onMouseDown={(event) => event.stopPropagation()}
         onMouseMove={(event) => event.stopPropagation()}
         onMouseUp={(event) => event.stopPropagation()}
+        onTouchStart={(event) => event.stopPropagation()}
+        onTouchMove={(event) => event.stopPropagation()}
+        onTouchEnd={(event) => event.stopPropagation()}
+        onTouchCancel={(event) => event.stopPropagation()}
         aria-expanded={expanded}
         aria-label={expanded ? '\u5173\u95ed\u65b0\u751f\u95ee\u7b54' : '\u6253\u5f00\u65b0\u751f\u95ee\u7b54'}
       >
@@ -393,17 +421,18 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
 
               <div
                 className="freshman-window__list"
+                onScroll={handleListScroll}
                 onMouseDown={(event) => event.stopPropagation()}
                 onMouseMove={(event) => event.stopPropagation()}
                 onMouseUp={(event) => event.stopPropagation()}
                 onWheelCapture={(event) => event.stopPropagation()}
               >
-                {filteredEntries.length === 0 ? (
+                {displayEntries.length === 0 ? (
                   <div className="freshman-window__empty">
                     {searchTerm.trim() ? '没有匹配的问题，试试其他关键词' : '暂无常见问题'}
                   </div>
                 ) : (
-                  filteredEntries.map((item) => (
+                  displayEntries.map((item) => (
                     <article key={item.id} className="freshman-window__item">
                       <div className="freshman-window__item-title">Q: {highlightMatch(item.question, searchTerm)}</div>
                       <p className="freshman-window__item-answer">{highlightMatch(item.answer || '等待后续回复…', searchTerm)}</p>

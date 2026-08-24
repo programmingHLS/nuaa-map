@@ -161,7 +161,10 @@ describe('FreshmanWindow', () => {
     const toggle = screen.getByRole('button', { name: /新生问答/ });
     await waitFor(() => expect(toggle.textContent).toMatch(/新生问答\d+/));
     await userEvent.click(toggle);
-    expect(screen.getByText(/南航校园网怎么登知网并免费下载论文/)).toBeInTheDocument();
+    // 列表懒渲染：目标条目位于内置知识库第 68 条，滚动列表触发加载后续分页
+    const list = document.querySelector('.freshman-window__list') as HTMLElement;
+    fireEvent.scroll(list);
+    expect(await screen.findByText(/南航校园网怎么登知网并免费下载论文/)).toBeInTheDocument();
   });
 
   it('展开状态变化通知 onExpandedChange', async () => {

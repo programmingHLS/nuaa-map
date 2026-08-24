@@ -109,18 +109,18 @@ describe('useMapInteraction', () => {
     fireEvent.wheel(el, { deltaY: -100, clientX: 400, clientY: 300 });
     expect(get().scale).toBeGreaterThan(2);
 
-    // 多次放大不能超过 MAX_SCALE=4
+    // 多次放大不能超过 MAX_SCALE=3
     for (let i = 0; i < 100; i++) {
       fireEvent.wheel(el, { deltaY: -1000, clientX: 400, clientY: 300 });
     }
-    expect(get().scale).toBeLessThanOrEqual(4);
+    expect(get().scale).toBeLessThanOrEqual(3);
   });
 
   it('触控板缩放（ctrlKey + 小 deltaY）系数较小', () => {
     const { el, get } = setup();
-    // 先把 scale 推到 MAX_SCALE=4，脱离 minScale=2 钳制
+    // 先把 scale 推到 MAX_SCALE=3，脱离 minScale=2 钳制
     fireEvent.wheel(el, { deltaY: -5000, clientX: 400, clientY: 300 });
-    expect(get().scale).toBe(4);
+    expect(get().scale).toBe(3);
 
     // 触控板缩小：deltaY=5, ctrlKey → 系数 0.012 → 缩得更多
     fireEvent.wheel(el, { deltaY: 5, ctrlKey: true, clientX: 400, clientY: 300 });
@@ -128,7 +128,7 @@ describe('useMapInteraction', () => {
     expect(afterTrackpad).toBeLessThan(4);
 
     // 鼠标缩小：deltaY=5 → 系数 0.0007 → 缩得少
-    fireEvent.wheel(el, { deltaY: -5000, clientX: 400, clientY: 300 }); // 拉回 4
+    fireEvent.wheel(el, { deltaY: -5000, clientX: 400, clientY: 300 }); // 拉回 3
     fireEvent.wheel(el, { deltaY: 5, clientX: 400, clientY: 300 });
     const afterMouse = get().scale;
 
@@ -149,5 +149,45 @@ describe('useMapInteraction', () => {
     unmount();
     expect(spy).toHaveBeenCalledWith('mouseup', expect.any(Function));
     spy.mockRestore();
+  });
+
+  it('双指缩放中抬起一指后，剩余单指可继续拖动（修复不跟手）', () => {
+    const { el, get } = setup({ width: 2000, height: 1500 });
+    const t = (x: number, y: number, identifier: number) => ({ clientX: x, clientY: y, identifier });
+
+    // 双指按下（距离 200），进入 pinch
+    fireEvent.touchStart(el, { touches: [t(100, 300, 0), t(300, 300, 1)] });
+    // 双指张开到 280（ratio=1.4）→ 直写 ref：scale=1.4, x=-80, y=-120
+    fireEvent.touchMove(el, { touches: [t(60, 300, 0), t(340, 300, 1)] });
+
+    // 抬起一指（id=1），只剩 id=0 在屏幕上
+    fireEvent.touchEnd(el, { touches: [t(60, 300, 0)], changedTouches: [t(340, 300, 1)] });
+    // 剩余单指向左拖动 100px：跟手时 x = -80 - 100 = -180
+    fireEvent.touchMove(el, { touches: [t(-40, 300, 0)] });
+    // 全部抬起 → state 同步 transformRef
+    fireEvent.touchEnd(el, { touches: [], changedTouches: [t(-40, 300, 0)] });
+
+    const after = get();
+    // 修复前：状态残留导致单指拖动无响应，x 停在 -80；修复后 x=-180
+    expect(after.x).toBe(-180);
+    expect(after.dragging).toBe(false);
+  });
+
+  it('双指缩放中距离突变（第二指重放）时重置基准，不产生缩放跳变', () => {
+    const { el, get } = setup({ width: 2000, height: 1500 });
+    const t = (x: number, y: number, identifier: number) => ({ clientX: x, clientY: y, identifier });
+
+    // 双指按下：距离 200
+    fireEvent.touchStart(el, { touches: [t(100, 300, 0), t(300, 300, 1)] });
+    // 距离突变为 400（ratio=2 > 1.7）→ 应重置基准，scale 不应翻倍
+    fireEvent.touchMove(el, { touches: [t(100, 300, 0), t(500, 300, 1)] });
+    const scaleAfterJump = get().scale;
+    expect(scaleAfterJump).toBe(1); // 基准重置，不放大
+
+    // 突变后按新基准缩放：距离 400→480（ratio=1.2）→ 放大 1.2 倍
+    fireEvent.touchMove(el, { touches: [t(100, 300, 0), t(580, 300, 1)] });
+    fireEvent.touchEnd(el, { touches: [], changedTouches: [t(100, 300, 0), t(580, 300, 1)] });
+    const scaleAfterStable = get().scale;
+    expect(scaleAfterStable).toBeCloseTo(1.2, 1);
   });
 });

@@ -207,11 +207,21 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
 
       {!selectedBuilding && <FreshmanWindow onExpandedChange={onFreshmanExpand} />}
 
-      {/* 缩放控件 */}
+      {/* 缩放控件：wheel 事件必须携带容器中心的 clientX/clientY，
+          否则缩放锚点会落到左上角容器外，放大/缩小时视野跑偏 */}
       <div className="map-controls">
         <button className="map-ctrl-btn" aria-label="放大"
-          onClick={() => containerRef.current?.dispatchEvent(
-            new WheelEvent('wheel', { deltaY: -200, bubbles: true }))}>
+          onClick={() => {
+            const el = containerRef.current;
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            el.dispatchEvent(new WheelEvent('wheel', {
+              deltaY: -200,
+              bubbles: true,
+              clientX: rect.left + rect.width / 2,
+              clientY: rect.top + rect.height / 2,
+            }));
+          }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/>
@@ -219,8 +229,17 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
           </svg>
         </button>
         <button className="map-ctrl-btn" aria-label="缩小"
-          onClick={() => containerRef.current?.dispatchEvent(
-            new WheelEvent('wheel', { deltaY: 200, bubbles: true }))}>
+          onClick={() => {
+            const el = containerRef.current;
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            el.dispatchEvent(new WheelEvent('wheel', {
+              deltaY: 200,
+              bubbles: true,
+              clientX: rect.left + rect.width / 2,
+              clientY: rect.top + rect.height / 2,
+            }));
+          }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/>
