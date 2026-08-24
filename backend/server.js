@@ -150,8 +150,9 @@ function buildSystemPrompt() {
    （nuaa.edu.cn）获取信息**，不得使用其他来源的信息。
 3. 只要使用了联网搜索，回答中必须明确标注「（联网搜索 · 来源：南航官网）」；
    若使用了 AI 生成内容，也必须标明「由 AI 生成」。
-4. 回答要简洁、准确，符合学生助手语境。
-5. 涉及报到、缴费、考试、报销等关键流程时，建议用户咨询学校相关部门确认。
+4. 如果知识库和联网搜索都没有相关信息，直接回答「知识库暂无该信息，建议咨询学校相关部门确认」，
+   **严禁使用自身知识编造答案**。
+5. 回答要简洁、准确，符合学生助手语境。
 6. 使用中文回答。
 7. 可以适当使用 Markdown 格式提升可读性：用 **粗体** 强调关键信息，
    用有序/无序列表展示办事流程或多个选项，
@@ -371,14 +372,26 @@ app.post('/api/chat', async (req, res) => {
 
     // 本地知识库匹配分数低或无结果，调用 Tavily 联网搜索补充上下文
     let userPrompt = buildUserPrompt(trimmed, qaResults, buildingResults, buildingContext);
+    let usedWebSearch = false;
     if ((qaResults.length === 0 || bestScore < 30) && process.env.TAVILY_API_KEY) {
         const webResults = await searchWeb(trimmed, 3);
         if (webResults.length > 0) {
+            usedWebSearch = true;
             const webText = webResults.map((r, i) =>
                 `来源 ${i + 1}：${r.title}\n链接：${r.url}\n内容：${r.content}`
             ).join('\n\n');
             userPrompt += `\n\n--- 联网搜索结果 ---\n${webText}\n--- 结束 ---`;
         }
+    }
+
+    // 硬性约束：知识库与南航官网联网搜索均无结果时，不调用 AI 编造，直接返回固定提示
+    const hasReliableQa = qaResults.length > 0 && bestScore >= 30;
+    if (!hasReliableQa && !usedWebSearch) {
+        return res.json({
+            answer: '知识库暂无该信息，建议咨询学校相关部门确认。',
+            reply: '知识库暂无该信息，建议咨询学校相关部门确认。',
+            sources: [],
+        });
     }
 
     if (!LLM_API_KEY) {
