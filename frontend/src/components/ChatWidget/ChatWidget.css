@@ -19,17 +19,16 @@
   transition:transform var(--transition-fast), box-shadow var(--transition-fast);
   animation:bubble-breathe 2.8s ease-in-out infinite;
 }
-/* 右下角小尖：聊天气泡尾巴，朝下指向阿源头像 */
+/* 右下角尾巴：聊天气泡式小尖，朝右下方指向阿源头像 */
 .chat-bubble::after {
   content:'';
   position:absolute;
-  right:18px;
-  bottom:-8px;
-  width:0;
-  height:0;
-  border-left:8px solid transparent;
-  border-right:8px solid transparent;
-  border-top:9px solid #eef4ff;
+  right:-6px;
+  bottom:2px;
+  width:12px;
+  height:12px;
+  background:#eef4ff;
+  transform:rotate(45deg);
 }
 .chat-bubble:hover {
   transform:translateY(-2px);
