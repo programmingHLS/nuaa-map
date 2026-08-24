@@ -415,25 +415,31 @@
 
 /* ── 回复结果区域 ── */
 .freshman-window__reply {
-  padding: 12px;
+  padding: 12px 14px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(226, 232, 240, 0.85);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  /* 长回答在回答区内滚动，不溢出卡片（修复穿模） */
+  max-height: min(340px, 42dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-gutter: stable;
   animation: reply-slide-in 0.35s var(--ease-spring) forwards;
   box-shadow: 0 2px 12px rgba(37, 99, 235, 0.06);
 }
+/* 入场动画只做透明度/位移，不锁 max-height，避免内容被裁剪 */
 @keyframes reply-slide-in {
   from {
     opacity: 0;
-    max-height: 0;
     transform: translateY(-8px);
   }
   to {
     opacity: 1;
-    max-height: 300px;
     transform: translateY(0);
   }
 }
@@ -442,14 +448,18 @@
   font-size: 0.86rem;
   color: var(--color-slate-600);
   line-height: 1.7;
-  padding-left: 10px;
-  border-left: 3px solid var(--color-blue-500);
+  /* 无左边框/缩进：markdown 内容贴齐卡片内边距 */
+}
+.freshman-window__reply-text .markdown-body {
+  font-size: inherit;
+  color: inherit;
 }
 
 .freshman-window__reply-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 /* ── 搜索元信息 ── */
@@ -547,6 +557,8 @@
   color: var(--color-slate-600);
   margin-bottom: 8px;
   line-height: 1.6;
+  /* 多行答案保留换行，不挤成一行 */
+  white-space: pre-line;
   position: relative;
   z-index: 1;
 }
@@ -642,8 +654,7 @@
 
 /* ── 关键词高亮 ── */
 .freshman-window__item-title mark,
-.freshman-window__item-answer mark,
-.freshman-window__reply-text mark {
+.freshman-window__item-answer mark {
   background: linear-gradient(180deg, rgba(251,191,36,0.35) 0%, rgba(251,191,36,0.15) 100%);
   color: inherit;
   padding: 1px 3px;

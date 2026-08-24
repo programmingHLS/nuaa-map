@@ -162,3 +162,156 @@ button:focus-visible,a:focus-visible,input:focus-visible { outline:2px solid var
   0%   { transform: translateX(-100%) skewX(-15deg); }
   100% { transform: translateX(200%) skewX(-15deg); }
 }
+
+/* ═══════════════════════════════════════════
+   Markdown 统一排版 (.markdown-body)
+   所有 AI 回答 / 富文本内容共用的紧凑排版：
+   - 段落间距收紧（避免浏览器默认 1em 上下边距）
+   - 无左缩进，首行贴齐容器内边距
+   - 列表 / 引用 / 代码 / 表格均有克制样式
+   ═══════════════════════════════════════════ */
+.markdown-body {
+  font-size: inherit;
+  line-height: 1.7;
+  color: inherit;
+  /* 覆盖气泡上的 pre-wrap，避免 markdown 源换行产生多余空行 */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* 段落：紧凑间距，首/末段贴边 */
+.markdown-body p {
+  margin: 0.45em 0;
+}
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+.markdown-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* 加粗 / 斜体 */
+.markdown-body strong {
+  font-weight: 700;
+  color: inherit;
+}
+.markdown-body em {
+  font-style: italic;
+}
+
+/* 链接 */
+.markdown-body a {
+  color: var(--color-blue-500);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+.markdown-body a:hover {
+  color: var(--color-blue-600);
+}
+
+/* 列表：紧凑 */
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0.4em 0;
+  padding-left: 1.35em;
+}
+.markdown-body li {
+  margin: 0.2em 0;
+  line-height: 1.65;
+}
+.markdown-body li > p {
+  margin: 0.2em 0;
+}
+.markdown-body ul ul,
+.markdown-body ol ol,
+.markdown-body ul ol,
+.markdown-body ol ul {
+  margin: 0.15em 0;
+}
+
+/* 引用块 */
+.markdown-body blockquote {
+  margin: 0.5em 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--color-blue-500);
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 0 8px 8px 0;
+  color: var(--color-slate-600);
+}
+.markdown-body blockquote p {
+  margin: 0.2em 0;
+}
+
+/* 行内代码 / 代码块 */
+.markdown-body code {
+  font-family: ui-monospace, 'SF Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.88em;
+  background: rgba(30, 41, 59, 0.07);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+.markdown-body pre {
+  margin: 0.5em 0;
+  padding: 10px 12px;
+  background: rgba(30, 41, 59, 0.92);
+  border-radius: 10px;
+  overflow-x: auto;
+  white-space: pre;
+}
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  color: #e2e8f0;
+  font-size: 0.85em;
+}
+
+/* 分隔线 */
+.markdown-body hr {
+  margin: 0.7em 0;
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* 标题：紧凑，不破坏布局 */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-slate-800);
+  line-height: 1.35;
+  margin: 0.7em 0 0.35em;
+}
+.markdown-body h1 { font-size: 1.15em; }
+.markdown-body h2 { font-size: 1.08em; }
+.markdown-body h3 { font-size: 1em; }
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 { font-size: 0.95em; }
+
+/* 表格：紧凑、可横向滚动 */
+.markdown-body table {
+  margin: 0.5em 0;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92em;
+  display: block;
+  overflow-x: auto;
+}
+.markdown-body th,
+.markdown-body td {
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  text-align: left;
+  white-space: nowrap;
+}
+.markdown-body th {
+  background: rgba(37, 99, 235, 0.06);
+  font-weight: 600;
+  color: var(--color-slate-700);
+}

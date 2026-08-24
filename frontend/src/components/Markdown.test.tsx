@@ -36,11 +36,29 @@ describe('Markdown', () => {
     expect(screen.getByText('引用内容')).toBeInTheDocument();
   });
 
-  it('不允许的 HTML 标签被过滤（如标题、图片）', () => {
-    render(<Markdown content={'# 大标题\n\n<img src="x" />\n\n正文'} />);
-    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+  it('标题被渲染（AI 偶尔会用 #）', () => {
+    render(<Markdown content={'# 大标题\n\n正文内容'} />);
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(screen.getByText('正文内容')).toBeInTheDocument();
+  });
+
+  it('不允许的 HTML 标签被过滤（如图片）', () => {
+    render(<Markdown content={'<img src="x" />\n\n正文'} />);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     expect(screen.getByText('正文')).toBeInTheDocument();
+  });
+
+  it('渲染表格', () => {
+    render(<Markdown content={'| 地点 | 时间 |\n| --- | --- |\n| 图书馆 | 8:00 |'} />);
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByText('图书馆')).toBeInTheDocument();
+    expect(screen.getByText('8:00')).toBeInTheDocument();
+  });
+
+  it('根节点带 markdown-body class', () => {
+    const { container } = render(<Markdown content="你好" />);
+    const el = container.querySelector('.markdown-body');
+    expect(el).not.toBeNull();
   });
 
   it('保留换行（同一段落内换行保留）', () => {
