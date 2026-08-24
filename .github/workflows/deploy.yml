@@ -28,14 +28,19 @@ jobs:
               -o ProxyCommand="cloudflared access ssh --hostname ssh-server.liguiyu.com --service-token-id ${{ secrets.CF_SERVICE_TOKEN_ID }} --service-token-secret ${{ secrets.CF_SERVICE_TOKEN_SECRET }}" \
               LiGuiyu@ssh-server.liguiyu.com "
             cd /vol1/1000/Docker/NUAAMap
+            set -e
 
             # Setup GitHub SSH key (one-time, survives across deploys)
             if [ ! -f ~/.ssh/github_deploy_key ]; then
               echo '$GH_KEY_B64' | base64 -d > ~/.ssh/github_deploy_key
               chmod 600 ~/.ssh/github_deploy_key
               ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-              git remote set-url origin git@github.com:programmingWTF/nuaa-map.git
             fi
+
+            # 强制走 SSH remote：HTTPS 直连 GitHub 在 NAS 网络环境常被 TLS 中断
+            # （GnuTLS recv error），fetch 失败后无 set -e 的旧脚本会用缓存的旧
+            # main 重建容器并假成功退出——修复没上线 CI 却显示绿。
+            git remote set-url origin git@github.com:programmingHLS/nuaa-map.git
 
             GIT_SSH_COMMAND='ssh -i ~/.ssh/github_deploy_key -o StrictHostKeyChecking=accept-new' \
               git fetch origin main
