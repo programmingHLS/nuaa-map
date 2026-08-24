@@ -101,8 +101,8 @@ export function ChatWidget({ selectedBuilding, onViewBuilding }: ChatWidgetProps
     <div className={`chat-widget ${isOpen ? 'chat-widget--open' : ''}`} ref={chatRef}>
       {!isOpen ? (
         <>
-          <button className="chat-bubble" onClick={() => setIsOpen(true)} type="button" aria-label="有疑问？点我问阿源吧">
-            有疑问？点我问阿源吧！
+          <button className="chat-bubble" onClick={() => setIsOpen(true)} type="button" aria-label="有疑问？点击问阿源吧">
+            有疑问？点击问阿源吧！
           </button>
           <button className="chat-fab" onClick={() => setIsOpen(true)} aria-label="打开智能问答">
             <img src="/buildings/sprites/assistant.png" alt="阿源" className="chat-fab-img" />
