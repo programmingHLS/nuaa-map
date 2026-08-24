@@ -17,14 +17,14 @@
   transition:transform var(--transition-fast), box-shadow var(--transition-fast);
   animation:bubble-breathe 2.8s ease-in-out infinite;
 }
-/* 小三角：指向右下的 FAB */
+/* 小三角：指向右下的 FAB，尖端戳到图标上 */
 .chat-bubble::after {
   content:'';
   position:absolute;
-  right:-7px;
+  right:-12px;
   top:50%;
   transform:translateY(-50%);
-  border-left:7px solid #eef4ff;
+  border-left:8px solid #eef4ff;
   border-top:7px solid transparent;
   border-bottom:7px solid transparent;
   filter:drop-shadow(1px 0 1px rgba(37,99,235,0.08));
