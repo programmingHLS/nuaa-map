@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEven
 import { highlightMatch } from '../../utils/highlight';
 import { matchBestAnswer } from '../../data/qa-matcher';
 import { askRAG } from '../../services/rag';
+import { Markdown } from '../Markdown';
 import './FreshmanWindow.css';
 
 type FreshmanEntry = {
@@ -387,7 +388,9 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
               {askResult && (
                 <div className="freshman-window__reply">
                   <div className="freshman-window__section-title">参考答案</div>
-                  <p className="freshman-window__reply-text">{askResult.answer}</p>
+                  <div className="freshman-window__reply-text">
+                    <Markdown content={askResult.answer} />
+                  </div>
                   <div className="freshman-window__reply-actions">
                     <button className="freshman-window__submit freshman-window__submit--secondary" type="button" onClick={handleMarkResolved}>
                       ✓ 已解决
