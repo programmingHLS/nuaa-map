@@ -67,7 +67,7 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
   const [panelPhase, setPanelPhase] = useState<PanelPhase>('hidden');
   const [submitting, setSubmitting] = useState(false);
   const [statusText, setStatusText] = useState('\u77e5\u8bc6\u5e93\u5df2\u5c31\u7eea');
-  const [askResult, setAskResult] = useState<{ question: string; answer: string } | null>(null);
+  const [askResult, setAskResult] = useState<{ question: string; answer: string; usedAI?: boolean } | null>(null);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -162,6 +162,7 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
 
     let answerText = '';
     let statusText = '';
+    let usedAI = false;
 
     if (match) {
       answerText = match.entry.answer;
@@ -172,6 +173,7 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
       if (resp.fromRemote) {
         answerText = resp.answer;
         statusText = '已通过 AI 生成回答';
+        usedAI = true;
       } else if (resp.answer && resp.answer.includes('思考中')) {
         // 超时与不可用区分：透传 askRAG 的超时提示，避免误报「找不到答案」
         answerText = resp.answer;
@@ -182,7 +184,7 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
       }
     }
 
-    setAskResult({ question: trimmedQuestion, answer: answerText });
+    setAskResult({ question: trimmedQuestion, answer: answerText, usedAI });
     setSearchTerm(trimmedQuestion);
     setStatusText(statusText);
     setSubmitting(false);
@@ -388,6 +390,14 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
               {askResult && (
                 <div className="freshman-window__reply">
                   <div className="freshman-window__section-title">参考答案</div>
+                  {askResult.usedAI && (
+                    <span className="freshman-window__source-badge freshman-window__source-badge--ai">
+                      🤖 已使用 AI 生成
+                    </span>
+                  )}
+                  {!askResult.usedAI && askResult.answer && (
+                    <span className="freshman-window__source-badge">📚 来自知识库</span>
+                  )}
                   <div className="freshman-window__reply-text">
                     <Markdown content={askResult.answer} />
                   </div>
