@@ -389,3 +389,4 @@ INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-20
 INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-2026-0389', '请问能走“绿色通道”的是哪些同学呢？', '已办理生源地国家助学贷款或已申请校园地国家助学贷款，以及家庭困难暂时无法缴纳学费住宿费但还没有办理贷款的2025级本科新生。', 'resolved', '2026-08-24');
 INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-2026-0390', '请问“绿色通道”开放的时间和地点是什么呢？', '“绿色通道”办理点：天目湖校区位于一站式“学生社区”B8-119文化活动室。如有任何疑问，欢迎咨询南京航空航天大学学生资助管理中心。电话热线：025-52119832；工作时间：周一至周五上午8:00-12:00、下午14:00-18:00；微信公众号：nuaazzzx（南航学生资助管理中心）；咨询E-MAIL：zhuxue@nuaa.edu.cn。', 'resolved', '2026-08-24');
 INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-2026-0391', '致元书院联系电话？', '辅导员老师：张大龙、伍琳玲、何玉婷、石阳、朱函颍、成刘婕，联系电话：0519-88970193。', 'resolved', '2026-08-24');
+INSERT INTO qa_entries (id, question, answer, status, created_at) VALUES ('qa-2026-0392', '能提前报道吗？', '不能，只能在规定时间内完成报道', 'resolved', '2026-08-24');

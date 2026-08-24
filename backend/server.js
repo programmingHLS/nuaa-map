@@ -143,15 +143,16 @@ function retrieveBuildingInfo(question, buildingId) {
 
 function buildSystemPrompt() {
     return `你是南京航空航天大学校园地图智能问答助手。
-请基于提供的知识库（QA 问答、建筑信息）回答用户关于南航天目湖校区的各种问题。
 请严格遵守以下规则：
-1. 优先使用提供的知识库内容回答，不要编造信息。
-2. 如果知识库中没有相关信息，可以结合自身知识和联网搜索结果回答，
-   并注明信息来源；涉及报到、缴费、考试、报销等关键流程时，
-   建议用户咨询学校相关部门确认。
-3. 回答要简洁、准确，符合学生助手语境。
-4. 回答中可以适当引导用户（如"建议你咨询师生服务大厅X号窗口办理"）。
-5. 涉及时间、地点、办事流程的信息时，直接给出明确答案。
+1. 所有回答必须基于提供的知识库（QA 问答、建筑信息）作答，知识库中没有的信息不得编造；
+   若知识库未覆盖该问题，明确告知「知识库暂无该信息」，并建议用户咨询学校相关部门。
+2. 知识库无法回答时，可进行联网搜索，但**只能从南京航空航天大学官网及其子域名
+   （nuaa.edu.cn）获取信息**，不得使用其他来源的信息。
+3. 只要使用了联网搜索，回答中必须明确标注「（联网搜索 · 来源：南航官网）」；
+   若使用了 AI 生成内容，也必须标明「由 AI 生成」。
+4. 如果知识库和联网搜索都没有相关信息，直接回答「知识库暂无该信息，建议咨询学校相关部门确认」，
+   **严禁使用自身知识编造答案**。
+5. 回答要简洁、准确，符合学生助手语境。
 6. 使用中文回答。
 7. 可以适当使用 Markdown 格式提升可读性：用 **粗体** 强调关键信息，
    用有序/无序列表展示办事流程或多个选项，
@@ -205,6 +206,8 @@ async function searchWeb(query, maxResults = 3) {
                 query,
                 max_results: maxResults,
                 search_depth: 'basic',
+                // 限定只搜南航官网及其子域名
+                include_domains: ['nuaa.edu.cn'],
             }),
         });
         if (!resp.ok) return [];
@@ -369,14 +372,26 @@ app.post('/api/chat', async (req, res) => {
 
     // 本地知识库匹配分数低或无结果，调用 Tavily 联网搜索补充上下文
     let userPrompt = buildUserPrompt(trimmed, qaResults, buildingResults, buildingContext);
+    let usedWebSearch = false;
     if ((qaResults.length === 0 || bestScore < 30) && process.env.TAVILY_API_KEY) {
         const webResults = await searchWeb(trimmed, 3);
         if (webResults.length > 0) {
+            usedWebSearch = true;
             const webText = webResults.map((r, i) =>
                 `来源 ${i + 1}：${r.title}\n链接：${r.url}\n内容：${r.content}`
             ).join('\n\n');
             userPrompt += `\n\n--- 联网搜索结果 ---\n${webText}\n--- 结束 ---`;
         }
+    }
+
+    // 硬性约束：知识库与南航官网联网搜索均无结果时，不调用 AI 编造，直接返回固定提示
+    const hasReliableQa = qaResults.length > 0 && bestScore >= 30;
+    if (!hasReliableQa && !usedWebSearch) {
+        return res.json({
+            answer: '知识库暂无该信息，建议咨询学校相关部门确认。',
+            reply: '知识库暂无该信息，建议咨询学校相关部门确认。',
+            sources: [],
+        });
     }
 
     if (!LLM_API_KEY) {

@@ -98,10 +98,11 @@ describe('buildSystemPrompt / buildUserPrompt', () => {
         assert.ok(p.includes('中文'));
     });
 
-    test('系统提示：允许结合自身知识与联网搜索但要求提示咨询', () => {
+    test('系统提示：必须基于知识库，联网仅限南航官网且需标注来源', () => {
         const p = buildSystemPrompt();
-        assert.ok(p.includes('可以结合自身知识和联网搜索结果回答'));
-        assert.ok(p.includes('注明信息来源'));
+        assert.ok(p.includes('所有回答必须基于提供的知识库'));
+        assert.ok(p.includes('nuaa.edu.cn'));
+        assert.ok(p.includes('联网搜索 · 来源：南航官网'));
         assert.ok(p.includes('咨询学校相关部门确认'));
     });
 

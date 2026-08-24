@@ -455,6 +455,23 @@
   color: inherit;
 }
 
+/* 来源徽章：知识库 / AI 生成标注 */
+.freshman-window__source-badge {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.freshman-window__source-badge--ai {
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--color-blue-600);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
 .freshman-window__reply-actions {
   display: flex;
   gap: 8px;

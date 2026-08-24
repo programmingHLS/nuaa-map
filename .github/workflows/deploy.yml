@@ -45,6 +45,8 @@ jobs:
             GIT_SSH_COMMAND='ssh -i ~/.ssh/github_deploy_key -o StrictHostKeyChecking=accept-new' \
               git fetch origin main
             git reset --hard origin/main
+            # 先 build 成功再 down/up：构建失败时 set -e 中断，线上容器保持运行不中断服务
+            docker compose build
             docker compose down
-            docker compose up -d --build
+            docker compose up -d
           "

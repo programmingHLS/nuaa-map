@@ -81,6 +81,8 @@ describe('FreshmanWindow', () => {
     await user.click(screen.getByRole('button', { name: '提交问题' }));
     expect(await screen.findByText('AI 生成的新生回答')).toBeInTheDocument();
     expect(screen.getByText('已通过 AI 生成回答')).toBeInTheDocument();
+    // AI 回答必须标明「使用了 AI」
+    expect(screen.getByText(/已使用 AI 生成/)).toBeInTheDocument();
   });
 
   it('提交问题：AI 超时时透传「正在思考中」提示（与不可用区分）', async () => {
