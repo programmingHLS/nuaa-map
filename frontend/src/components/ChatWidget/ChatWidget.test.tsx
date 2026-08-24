@@ -29,10 +29,17 @@ describe('ChatWidget', () => {
     mockedAskRAG.mockReset();
   });
 
-  it('初始为收起状态，只显示 FAB 按钮', () => {
+  it('初始为收起状态，显示 FAB 按钮与提示气泡', () => {
     setup();
     expect(screen.getByLabelText('打开智能问答')).toBeInTheDocument();
+    expect(screen.getByLabelText('有疑问？点我问阿源吧')).toBeInTheDocument();
     expect(screen.queryByText('阿源')).not.toBeInTheDocument();
+  });
+
+  it('点击提示气泡也能打开聊天面板', () => {
+    setup();
+    fireEvent.click(screen.getByLabelText('有疑问？点我问阿源吧'));
+    expect(screen.getByText('阿源')).toBeInTheDocument();
   });
 
   it('点击 FAB 打开面板，显示欢迎消息与快捷建议', () => {

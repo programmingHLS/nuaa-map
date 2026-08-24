@@ -1,4 +1,47 @@
-.chat-widget { position:fixed; bottom:28px; right:28px; z-index:500; }
+.chat-widget { position:fixed; bottom:28px; right:28px; z-index:500; display:flex; align-items:center; gap:10px; }
+
+/* ── 提示气泡（引导大家和阿源对话）── */
+.chat-bubble {
+  position:relative;
+  max-width:min(240px, calc(100vw - 120px));
+  padding:10px 14px;
+  border-radius:16px 16px 16px 4px;
+  background:linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
+  border:1px solid rgba(37,99,235,0.15);
+  box-shadow:0 6px 24px rgba(37,99,235,0.12), inset 0 1px 0 rgba(255,255,255,0.9);
+  color:var(--color-slate-700);
+  font-size:13px;
+  font-weight:600;
+  line-height:1.5;
+  cursor:pointer;
+  transition:transform var(--transition-fast), box-shadow var(--transition-fast);
+  animation:bubble-breathe 2.8s ease-in-out infinite;
+}
+/* 小三角：指向右下的 FAB */
+.chat-bubble::after {
+  content:'';
+  position:absolute;
+  right:-7px;
+  top:50%;
+  transform:translateY(-50%);
+  border-left:7px solid #eef4ff;
+  border-top:7px solid transparent;
+  border-bottom:7px solid transparent;
+  filter:drop-shadow(1px 0 1px rgba(37,99,235,0.08));
+}
+.chat-bubble:hover {
+  transform:translateY(-2px);
+  box-shadow:0 10px 32px rgba(37,99,235,0.2), inset 0 1px 0 rgba(255,255,255,0.9);
+  animation:none;
+}
+.chat-bubble:active {
+  transform:scale(0.97);
+}
+/* 呼吸浮动：轻微上下 + 光晕 */
+@keyframes bubble-breathe {
+  0%, 100% { transform:translateY(0); box-shadow:0 6px 24px rgba(37,99,235,0.12), inset 0 1px 0 rgba(255,255,255,0.9); }
+  50%      { transform:translateY(-3px); box-shadow:0 10px 32px rgba(37,99,235,0.22), inset 0 1px 0 rgba(255,255,255,0.9); }
+}
 
 .chat-fab {
   width:58px; height:58px; border-radius:50%;
@@ -132,6 +175,11 @@
 
 @media (max-width:480px) {
   .chat-widget { bottom:16px; right:16px; }
+  .chat-bubble {
+    font-size:12px;
+    padding:9px 12px;
+    max-width:min(190px, calc(100vw - 96px));
+  }
   .chat-panel { position:fixed; bottom:0; right:0; width:100vw; height:80dvh; max-height:none; border-radius:var(--radius-lg) var(--radius-lg) 0 0; }
   .chat-panel::before { display:none; }
   .chat-fab { width:50px; height:50px; }
