@@ -5,7 +5,7 @@
   position:relative;
   max-width:min(240px, calc(100vw - 120px));
   padding:10px 14px;
-  border-radius:16px 16px 16px 4px;
+  border-radius:16px 16px 4px 16px;
   background:linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
   border:1px solid rgba(37,99,235,0.15);
   box-shadow:0 6px 24px rgba(37,99,235,0.12), inset 0 1px 0 rgba(255,255,255,0.9);
@@ -17,17 +17,17 @@
   transition:transform var(--transition-fast), box-shadow var(--transition-fast);
   animation:bubble-breathe 2.8s ease-in-out infinite;
 }
-/* 小三角：指向右下的 FAB，尖端戳到图标上 */
+/* 小三角：整体镜像后指向左侧（气泡以中垂线翻转） */
 .chat-bubble::after {
   content:'';
   position:absolute;
-  right:-12px;
+  left:-12px;
   top:50%;
   transform:translateY(-50%);
-  border-left:8px solid #eef4ff;
+  border-right:8px solid #eef4ff;
   border-top:7px solid transparent;
   border-bottom:7px solid transparent;
-  filter:drop-shadow(1px 0 1px rgba(37,99,235,0.08));
+  filter:drop-shadow(-1px 0 1px rgba(37,99,235,0.08));
 }
 .chat-bubble:hover {
   transform:translateY(-2px);
