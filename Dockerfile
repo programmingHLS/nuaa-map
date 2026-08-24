@@ -2,6 +2,9 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+# npm 使用国内镜像，避免 NAS 网络直连 npmjs.org 超时/卡死
+ENV npm_config_registry=https://registry.npmmirror.com
+
 # 安装依赖（利用 Docker 层缓存）
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
