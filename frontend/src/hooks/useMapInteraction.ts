@@ -1,10 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { MapTransform } from '../types';
 
-const MAX_SCALE = 4;
+// 最大缩放：底图 7168px 宽，×3 = 21504px，仍超过移动端合成层安全范围，
+// 但比 ×4（28672px）低一档；配合 translate 钳制可显著降低移动端 GPU 内存压力，
+// 避免频繁放大/缩放后合成层过大导致浏览器标签页闪退。
+const MAX_SCALE = 3;
 const ZOOM_SPEED_MOUSE = 0.0007;     // 鼠标滚轮速度（~7%/刻度）
 const ZOOM_SPEED_TRACKPAD = 0.012;   // 触控板双指缩放（事件频率高，需较低系数）
 const PINCH_DELTA_MAX = 50;          // 触控板 pinch 最大 deltaY：超过此值视为 Ctrl+滚轮
+// pinch 距离突变阈值：第二指刚按下/中途重新放置时，两指距离相对上次记录突变，
+// 若继续按旧基准计算会让缩放瞬间跳变（不跟手）。超出该范围时重置手势基准。
+const PINCH_RESET_RATIO_MIN = 0.6;
+const PINCH_RESET_RATIO_MAX = 1.7;
 
 interface UseMapInteractionOptions {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -182,7 +189,9 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
   }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    e.preventDefault(); // 阻止浏览器默认手势（页面缩放/滚动），与 CSS touch-action: none 双保险
+    // 注意：此处不调用 e.preventDefault()。React 的合成 touch 事件监听器是 passive 的，
+    // preventDefault 无效且会触发控制台警告；浏览器默认手势已由 CSS touch-action: none
+    // 和 useEffect 中的原生 non-passive touchmove 监听双重拦截。
     const container = containerRef.current;
     if (!container || !imageSize) return;
     const rect = container.getBoundingClientRect();
@@ -205,6 +214,21 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
       const [t1, t2] = [e.touches[0], e.touches[1]];
       const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
       const ratio = dist / pinchRef.current.lastDist;
+
+      // 距离突变（第二指刚按下 / 中途重新放置）：以当前状态重置手势基准，
+      // 避免缩放瞬间跳变和频繁操作后的误差累积（transform 漂移）。
+      if (ratio < PINCH_RESET_RATIO_MIN || ratio > PINCH_RESET_RATIO_MAX) {
+        pinchRef.current = {
+          lastDist: dist,
+          startScale: transformRef.current.scale,
+          startX: transformRef.current.x,
+          startY: transformRef.current.y,
+          midX: (t1.clientX + t2.clientX) / 2,
+          midY: (t1.clientY + t2.clientY) / 2,
+        };
+        return;
+      }
+
       const minScale = getMinScale();
       const newScale = Math.min(MAX_SCALE, Math.max(minScale, pinchRef.current.startScale * ratio));
 
@@ -222,15 +246,47 @@ export function useMapInteraction({ containerRef, imageSize }: UseMapInteraction
   }, [containerRef, imageSize, getMinScale]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length > 0) return;
+    // e.touches 在 touchend 里是「仍停留在屏幕上的触点」，不是本次抬起的触点。
+    // 双指 pinch 中抬起一指时剩余 1 指：必须把剩余单指重新初始化为拖拽起点，
+    // 否则 pinchRef/dragRef 状态残留，剩余手指的移动完全无响应（缩放/拖拽不跟手）。
+    const remaining = e.touches.length;
+    if (remaining === 1) {
+      if (pinchRef.current.lastDist > 0) {
+        const t = e.touches[0];
+        const cur = transformRef.current;
+        dragRef.current = {
+          active: true,
+          startX: t.clientX, startY: t.clientY,
+          startTx: cur.x, startTy: cur.y,
+        };
+        pinchRef.current.lastDist = 0;
+        setIsDragging(true);
+      }
+      return;
+    }
+    if (remaining > 1) return;
     dragRef.current.active = false;
     pinchRef.current.lastDist = 0;
     setTransform(transformRef.current);
     setIsDragging(false);
   }, []);
 
-  /* touchcancel：系统中断手势时强制复位，防止 ref 状态残留阻塞 wheel 事件 */
-  const handleTouchCancel = useCallback(() => {
+  /* touchcancel：系统中断手势时强制复位，防止 ref 状态残留阻塞 wheel 事件；
+     若系统仍保留一根手指（iOS 手势识别打断 pinch），同样转为拖拽起点 */
+  const handleTouchCancel = useCallback((e: React.TouchEvent) => {
+    const remaining = e.touches.length;
+    if (remaining === 1 && pinchRef.current.lastDist > 0) {
+      const t = e.touches[0];
+      const cur = transformRef.current;
+      dragRef.current = {
+        active: true,
+        startX: t.clientX, startY: t.clientY,
+        startTx: cur.x, startTy: cur.y,
+      };
+      pinchRef.current.lastDist = 0;
+      setIsDragging(true);
+      return;
+    }
     dragRef.current.active = false;
     pinchRef.current.lastDist = 0;
     setTransform(transformRef.current);
