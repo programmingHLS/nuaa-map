@@ -66,10 +66,10 @@ describe('FreshmanWindow', () => {
 
   it('提交问题：知识库未命中且 AI 可用时展示 AI 回答', async () => {
     fetchMock.mockImplementation((url: RequestInfo | URL) => {
-      if (String(url).includes('/api/chat')) {
+      if (String(url).includes('/api/ask')) {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ answer: 'AI 生成的新生回答', sources: [] }),
+          json: async () => ({ answer: 'AI 生成的新生回答', source: 'ai' }),
         } as Response);
       }
       return Promise.resolve({ ok: false } as Response);
@@ -87,7 +87,7 @@ describe('FreshmanWindow', () => {
 
   it('提交问题：AI 超时时透传「正在思考中」提示（与不可用区分）', async () => {
     fetchMock.mockImplementation((url: RequestInfo | URL) => {
-      if (String(url).includes('/api/chat')) {
+      if (String(url).includes('/api/ask')) {
         return Promise.reject(new DOMException('The operation was aborted', 'AbortError'));
       }
       return Promise.resolve({ ok: false } as Response);
@@ -99,6 +99,26 @@ describe('FreshmanWindow', () => {
     await user.click(screen.getByRole('button', { name: '提交问题' }));
     expect(await screen.findByText(/AI 正在思考中/)).toBeInTheDocument();
     expect(screen.getByText('AI 响应超时，请稍后重试')).toBeInTheDocument();
+  });
+
+  it('提交问题：LLM 判定命中知识库时返回原答案且不显示 AI 标记', async () => {
+    fetchMock.mockImplementation((url: RequestInfo | URL) => {
+      if (String(url).includes('/api/ask')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ answer: '图书馆闭馆时间为22:00', source: 'kb' }),
+        } as Response);
+      }
+      return Promise.resolve({ ok: false } as Response);
+    });
+    const user = userEvent.setup();
+    setup();
+    await user.click(screen.getByRole('button', { name: /新生问答/ }));
+    await user.type(screen.getByPlaceholderText('例如：图书馆几点关门？'), '图书馆几点关门');
+    await user.click(screen.getByRole('button', { name: '提交问题' }));
+    expect(await screen.findByText('图书馆闭馆时间为22:00')).toBeInTheDocument();
+    expect(screen.getByText(/来自知识库/)).toBeInTheDocument();
+    expect(screen.queryByText(/已使用 AI 生成/)).not.toBeInTheDocument();
   });
 
   it('关键词搜索过滤常见问题列表', async () => {

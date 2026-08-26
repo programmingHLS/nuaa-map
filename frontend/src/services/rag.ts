@@ -21,6 +21,49 @@ function getChatEndpoint(): string {
 const MSG_TIMEOUT = 'AI \u6b63\u5728\u601d\u8003\u4e2d\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002';
 const MSG_UNAVAILABLE = '\u62b1\u6b49\uff0c\u667a\u80fd\u95ee\u7b54\u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002';
 
+export interface SmartAskResponse {
+    answer: string;
+    source?: 'kb' | 'ai';
+    fromRemote: boolean;
+    error?: string;
+}
+
+/** 新生问答专用：两阶段智能检索端点（LLM 判定命中则返回知识库原答案） */
+function getAskEndpoint(): string {
+    if (RAG_API_URL) return `${RAG_API_URL}/api/ask`;
+    return '/api/ask';
+}
+
+export async function askSmart(question: string): Promise<SmartAskResponse> {
+    try {
+        const resp = await fetch(getAskEndpoint(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question }),
+            signal: AbortSignal.timeout(45000),
+        });
+
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}`);
+        }
+
+        const data = (await resp.json()) as { answer: string; source?: 'kb' | 'ai' };
+        return {
+            answer: data.answer,
+            source: data.source ?? 'ai',
+            fromRemote: true,
+        };
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const isTimeout = msg.includes('Timeout') || msg.includes('timeout') || msg.includes('abort');
+        return {
+            answer: isTimeout ? MSG_TIMEOUT : MSG_UNAVAILABLE,
+            fromRemote: false,
+            error: msg,
+        };
+    }
+}
+
 async function callRemoteRAG(
     question: string,
     context?: RagContext,

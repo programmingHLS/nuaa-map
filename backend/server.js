@@ -283,7 +283,7 @@ const LLM_API_URL = process.env.LLM_API_URL || 'https://api.deepseek.com/v1/chat
 const LLM_API_KEY = process.env.LLM_API_KEY || '';
 const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-v4-flash';
 
-async function callLLM(systemPrompt, userPrompt) {
+async function callLLM(systemPrompt, userPrompt, opts = {}) {
     if (!LLM_API_KEY) {
         return {
             content: '服务端未配置 LLM_API_KEY，请联系管理员设置。',
@@ -304,8 +304,9 @@ async function callLLM(systemPrompt, userPrompt) {
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt },
                 ],
-                temperature: 0.7,
+                temperature: opts.jsonMode ? 0.2 : 0.7,
                 max_tokens: 1024,
+                ...(opts.jsonMode ? { response_format: { type: 'json_object' } } : {}),
             }),
         });
 
@@ -443,6 +444,119 @@ app.post('/api/qa', (req, res) => {
             createdAt: entry.createdAt,
         },
     });
+});
+
+/* =============================================================
+ *  智能问答 /api/ask：两阶段检索
+ *  ① 本地粗筛 top N 候选（官方 + 社区，含待审核）
+ *  ② LLM 结构化判定：命中 → 回传知识库原答案(source=kb，页面不显示AI标)
+ *                  未命中 → AI 生成回答(source=ai)
+ *  ③ 解析失败兜底：本地匹配 >=30 直答，否则提示稍后再试
+ * ============================================================= */
+
+const ASK_CANDIDATE_COUNT = 15;
+
+function buildAskPool() {
+    return [
+        ...qaEntries.map((e, i) => ({
+            id: `qa-official-${i + 1}`,
+            question: e.question,
+            answer: e.answer,
+            _kind: 'official',
+        })),
+        ...visibleUserEntries()
+            .filter(e => e.answer && e.answer !== PENDING_PLACEHOLDER)
+            .map(e => ({
+                id: e.id,
+                question: e.question,
+                answer: e.answer,
+                _kind: 'community',
+                _status: e.status,
+            })),
+    ];
+}
+
+app.post('/api/ask', async (req, res) => {
+    const body = req.body || {};
+    const q = typeof body.question === 'string' ? body.question.trim() : '';
+    if (!q) {
+        return res.status(400).json({ error: 'question is required' });
+    }
+
+    // ① 本地粗筛候选（阈值宽松：score>0 全收，排序取前 N，交给 LLM 精判）
+    const tokens = tokenize(q);
+    const candidates = buildAskPool()
+        .map(entry => ({ entry, score: scoreEntry(tokens, entry.question) }))
+        .filter(s => s.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, ASK_CANDIDATE_COUNT)
+        .map(s => s.entry);
+
+    const candidateText = candidates.length > 0
+        ? candidates.map(c =>
+            `[${c.id}]${c._status === 'pending' ? '【待审核】' : ''}问：${c.question}\n答：${c.answer}`
+        ).join('\n\n')
+        : '（无候选条目）';
+
+    const systemPrompt = `你是校园问答系统的检索判定引擎。根据用户问题和候选知识库条目，只输出一个 JSON 对象（不要输出任何其他文字或代码块标记），格式二选一：
+{"hit": true, "entry_id": "<命中的条目id>", "answer": null}
+{"hit": false, "entry_id": null, "answer": "<你生成的回答>"}
+
+判定规则：
+1. 仅当某条候选【完整回答】了用户的问题时才 hit=true；只沾边、只回答一部分、语义只是相近都算 false。
+2. hit=true 时只回传该条目的 entry_id，answer 必须为 null（系统会自动取原文展示）。
+3. hit=false 时生成回答：只能依据候选内容和常识性公开信息，不得编造具体的数字、电话、地点、时间；候选中没有可用信息时如实回答「知识库暂无该信息，建议咨询学校相关部门确认」。
+4. 带【待审核】标记的候选若对你的生成回答有贡献，必须在回答末尾另起一行注明：「⚠️ 以上部分信息来自社区贡献，尚未经审核，仅供参考。」`;
+
+    const userPrompt = `候选知识库条目：\n${candidateText}\n\n用户问题：${q}\n\n请输出 JSON。`;
+
+    try {
+        if (!LLM_API_KEY) throw new Error('LLM not configured');
+        const llm = await callLLM(systemPrompt, userPrompt, { jsonMode: true });
+        let parsed;
+        try {
+            parsed = JSON.parse(llm.content);
+        } catch {
+            throw new Error('bad json: ' + String(llm.content).slice(0, 200));
+        }
+
+        if (parsed && parsed.hit === true && parsed.entry_id) {
+            const found = candidates.find(
+                c => c.id === parsed.entry_id || String(parsed.entry_id).endsWith(c.id)
+            );
+            if (found && found.answer) {
+                let answer = found.answer;
+                if (found._status === 'pending') {
+                    answer += '\n\n> ⚠️ 该答案来自社区贡献，尚未经管理员审核，仅供参考。';
+                }
+                return res.json({ answer, source: 'kb', entry_id: found.id });
+            }
+        }
+
+        const genAnswer = typeof parsed?.answer === 'string' ? parsed.answer.trim() : '';
+        if (genAnswer) {
+            return res.json({ answer: genAnswer, source: 'ai' });
+        }
+        throw new Error('empty payload');
+    } catch (err) {
+        console.error('[ask] LLM judge failed:', err.message);
+        // ③ 兜底：本地高分直答，否则提示暂不可用（保持服务可用性优先）
+        const localBest = candidates.length > 0 ? candidates[0] : null;
+        const tokensLen = tokens.length;
+        void tokensLen;
+        if (localBest && scoreEntry(tokenize(q), localBest.question) >= 30 && localBest.answer) {
+            let answer = localBest.answer;
+            if (localBest._status === 'pending') {
+                answer += '\n\n> ⚠️ 该答案来自社区贡献，尚未经管理员审核，仅供参考。';
+            }
+            return res.json({ answer, source: 'kb', fallback: true });
+        }
+        return res.json({
+            answer: '暂时没有找到答案，可标记为待处理问题。',
+            source: 'ai',
+            error: err.message,
+        });
+    }
 });
 
 /* =============================================================

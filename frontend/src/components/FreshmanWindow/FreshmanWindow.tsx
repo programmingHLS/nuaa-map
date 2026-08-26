@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { highlightMatch } from '../../utils/highlight';
 import { matchBestAnswer } from '../../data/qa-matcher';
-import { askRAG } from '../../services/rag';
+import { askSmart } from '../../services/rag';
 import { Markdown } from '../Markdown';
 import './FreshmanWindow.css';
 
@@ -158,26 +158,27 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
     if (!expanded) openPanel();
     setAskResult(null);
 
-    const match = matchBestAnswer(trimmedQuestion);
-
     let answerText = '';
     let statusText = '';
     let usedAI = false;
 
-    if (match) {
-      answerText = match.entry.answer;
-      statusText = '已找到参考答案，您可以继续查看常见问题并标记结果';
+    setStatusText('正在检索知识库...');
+    const resp = await askSmart(trimmedQuestion);
+    if (resp.fromRemote) {
+      answerText = resp.answer;
+      // source=kb 表示命中知识库原答案（用户无感知）；source=ai 才是 AI 生成
+      usedAI = resp.source !== 'kb';
+      statusText = usedAI ? '已通过 AI 生成回答' : '已找到参考答案，您可以继续查看常见问题并标记结果';
+    } else if (resp.answer.includes('思考中')) {
+      // 超时与不可用区分：透传超时提示，避免误报「找不到答案」
+      answerText = resp.answer;
+      statusText = 'AI 响应超时，请稍后重试';
     } else {
-      statusText = '本地知识库未命中，正在调用 AI 回答...';
-      const resp = await askRAG(trimmedQuestion);
-      if (resp.fromRemote) {
-        answerText = resp.answer;
-        statusText = '已通过 AI 生成回答';
-        usedAI = true;
-      } else if (resp.answer && resp.answer.includes('思考中')) {
-        // 超时与不可用区分：透传 askRAG 的超时提示，避免误报「找不到答案」
-        answerText = resp.answer;
-        statusText = 'AI 响应超时，请稍后重试';
+      // 网络层失败 → 本地匹配兜底，保证服务可用
+      const fallbackMatch = matchBestAnswer(trimmedQuestion);
+      if (fallbackMatch) {
+        answerText = fallbackMatch.entry.answer;
+        statusText = '已找到参考答案，您可以继续查看常见问题并标记结果';
       } else {
         answerText = '暂时没有找到答案，可标记为待处理问题。';
         statusText = 'AI 服务暂不可用，可点击「未解决」保存问题';
