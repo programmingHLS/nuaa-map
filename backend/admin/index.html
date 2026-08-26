@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex,nofollow" />
+<title>NUAAMap 问答审核</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f3f5f9; color: #1f2937;
+  }
+  .container { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #6b7280; font-size: 13px; margin-bottom: 20px; }
+  /* 登录卡片 */
+  .login-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 28px; max-width: 380px; margin: 60px auto; text-align: center;
+  }
+  .login-card input {
+    width: 100%; padding: 10px 12px; margin: 14px 0; font-size: 15px;
+    border: 1px solid #d1d5db; border-radius: 8px;
+  }
+  button { cursor: pointer; border: none; border-radius: 8px; font-size: 13px; padding: 8px 14px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: #2563eb; color: #fff; width: 100%; padding: 10px; font-size: 15px; }
+  .err { color: #dc2626; font-size: 13px; min-height: 18px; }
+  /* 工具栏 */
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .tab { background: #fff; border: 1px solid #e5e7eb; color: #374151; }
+  .tab.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .count { color: #6b7280; font-size: 13px; margin-left: auto; }
+  /* 条目卡片 */
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .q { font-weight: 600; font-size: 15px; margin: 0 0 6px; word-break: break-all; }
+  .a { font-size: 14px; color: #374151; white-space: pre-wrap; word-break: break-all; margin: 0 0 10px; }
+  .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: #9ca3af; }
+  .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+  .badge-pending  { background: #fef3c7; color: #92400e; }
+  .badge-approved { background: #d1fae5; color: #065f46; }
+  .badge-rejected { background: #fee2e2; color: #991b1b; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .btn-ok   { background: #10b981; color: #fff; }
+  .btn-no   { background: #ef4444; color: #fff; }
+  .btn-edit { background: #e5e7eb; color: #374151; }
+  .btn-del  { background: transparent; color: #dc2626; border: 1px solid #fecaca; margin-left: auto; }
+  textarea {
+    width: 100%; min-height: 72px; padding: 8px 10px; font-size: 14px;
+    border: 1px solid #d1d5db; border-radius: 8px; resize: vertical; margin-bottom: 8px;
+    font-family: inherit;
+  }
+  input.qedit {
+    width: 100%; padding: 8px 10px; font-size: 14px; margin-bottom: 8px;
+    border: 1px solid #d1d5db; border-radius: 8px;
+  }
+  .empty { text-align: center; color: #9ca3af; padding: 48px 0; }
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+    background: #111827; color: #fff; padding: 10px 18px; border-radius: 8px;
+    font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none;
+  }
+  .toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 登录 -->
+  <div id="login" class="login-card">
+    <h1>🔐 NUAAMap 问答审核</h1>
+    <div class="sub">仅管理员访问</div>
+    <input id="pwd" type="password" placeholder="管理密码" autocomplete="current-password" />
+    <div id="loginErr" class="err"></div>
+    <button id="loginBtn" class="btn-primary">进入后台</button>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="main" style="display:none">
+    <h1>📋 新生问答审核台</h1>
+    <div class="sub">社区提交的问答在这里审核 · 通过后正式生效（去掉待审核标记）</div>
+    <div class="toolbar">
+      <button class="tab active" data-st="">全部</button>
+      <button class="tab" data-st="pending">⏳ 待审核</button>
+      <button class="tab" data-st="approved">✅ 已通过</button>
+      <button class="tab" data-st="rejected">🚫 已拒绝</button>
+      <span id="count" class="count"></span>
+      <button class="tab" id="logoutBtn" style="margin-left:8px">退出</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY = 'nuaamap-admin-session';
+let filter = '';
+const $ = (id) => document.getElementById(id);
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+async function api(path, opts = {}) {
+  const pwd = sessionStorage.getItem(KEY);
+  const resp = await fetch(path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-password': pwd || '',
+      ...(opts.headers || {}),
+    },
+  });
+  if (resp.status === 401) { showLogin('密码已失效，请重新输入'); throw new Error('unauthorized'); }
+  if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).error || ('HTTP ' + resp.status));
+  return resp.json();
+}
+
+function fmtTime(iso) {
+  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }); } catch { return iso; }
+}
+
+function badge(st) {
+  if (st === 'pending') return '<span class="badge badge-pending">⏳ 待审核</span>';
+  if (st === 'approved') return '<span class="badge badge-approved">✅ 已通过</span>';
+  return '<span class="badge badge-rejected">🚫 已拒绝</span>';
+}
+
+function renderList(entries) {
+  const list = $('list');
+  const shown = filter ? entries.filter(e => e.status === filter) : entries;
+  $('count').textContent = `共 ${entries.length} 条${filter ? `，显示 ${shown.length} 条` : ''}`;
+  if (!shown.length) { list.innerHTML = '<div class="empty">暂无条目</div>'; return; }
+  list.innerHTML = shown.map(e => `
+    <div class="card" data-id="${e.id}">
+      <p class="q">Q: ${esc(e.question)}</p>
+      ${e.answer
+        ? `<p class="a">A: ${esc(e.answer)}</p>`
+        : `<p class="a" style="color:#9ca3af">(尚无答案 — 等待人工回复)</p>`}
+      <div class="meta">${badge(e.status)}<span>${fmtTime(e.createdAt)}</span>${e.updatedAt && e.updatedAt !== e.createdAt ? `<span>· 更新于 ${fmtTime(e.updatedAt)}</span>` : ''}</div>
+      <div class="actions">
+        ${e.status !== 'approved' ? '<button class="btn-ok" act="approve">通过</button>' : ''}
+        ${e.status !== 'rejected' ? '<button class="btn-no" act="reject">拒绝</button>' : ''}
+        ${e.status !== 'pending' ? '<button class="btn-edit" act="repending">退回待审</button>' : ''}
+        <button class="btn-edit" act="edit">修改</button>
+        <button class="btn-del" act="delete">删除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function refresh() {
+  const data = await api('/api/admin/entries');
+  renderList(data.entries || []);
+}
+
+$('list').addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('button[act]');
+  if (!btn) return;
+  const card = btn.closest('.card');
+  const id = card.dataset.id;
+  const act = btn.dataset.act ?? btn.getAttribute('act');
+  btn.disabled = true;
+  try {
+    if (act === 'approve') { await api(`/api/admin/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'approved' }) }); toast('已通过 ✅'); }
+    else if (act === 'reject') { await api(`/api/admin/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'rejected' }) }); toast('已拒绝 🚫'); }
+    else if (act === 'repending') { await api(`/api/admin/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'pending' }) }); toast('已退回待审核'); }
+    else if (act === 'delete') { if (!confirm('确定删除该条目？不可恢复')) { btn.disabled = false; return; } await api(`/api/admin/entries/${id}`, { method:'DELETE' }); toast('已删除'); }
+    else if (act === 'edit') { enterEdit(card, id); return; }
+    await refresh();
+  } catch (err) { toast('操作失败：' + err.message); btn.disabled = false; }
+});
+
+function enterEdit(card, id) {
+  const qEl = card.querySelector('.q'), aEl = card.querySelector('.a');
+  const qText = qEl.textContent.replace(/^Q:\s*/, '');
+  const hasA = !/^\(尚无答案/.test(aEl.textContent);
+  const aText = hasA ? aEl.textContent.replace(/^A:\s*/, '') : '';
+  card.querySelector('.actions').style.display = 'none';
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <label style="font-size:12px;color:#6b7280">问题</label>
+    <input class="qedit" value="${esc(qText)}" />
+    <label style="font-size:12px;color:#6b7280">答案</label>
+    <textarea>${esc(aText)}</textarea>
+    <div class="actions">
+      <button class="btn-ok" id="saveBtn">保存并设为已通过</button>
+      <button class="btn-edit" id="cancelBtn">取消</button>
+    </div>`;
+  card.insertBefore(wrap, card.querySelector('.meta'));
+  wrap.querySelector('#cancelBtn').onclick = () => { wrap.remove(); card.querySelector('.actions').style.display = ''; };
+  wrap.querySelector('#saveBtn').onclick = async () => {
+    try {
+      await api(`/api/admin/entries/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          question: wrap.querySelector('input').value,
+          answer: wrap.querySelector('textarea').value,
+          status: 'approved',
+        }),
+      });
+      toast('已保存并通过 ✅');
+      await refresh();
+    } catch (err) { toast('保存失败：' + err.message); }
+  };
+}
+
+document.querySelectorAll('.tab[data-st]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab[data-st]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    filter = tab.dataset.st;
+    refresh().catch(() => {});
+  });
+});
+
+function showMain() { $('login').style.display = 'none'; $('main').style.display = ''; refresh().catch(e => toast(e.message)); }
+function showLogin(msg) {
+  sessionStorage.removeItem(KEY);
+  $('main').style.display = 'none'; $('login').style.display = '';
+  $('loginErr').textContent = msg || '';
+}
+
+$('loginBtn').addEventListener('click', async () => {
+  const pwd = $('pwd').value;
+  $('loginErr').textContent = '';
+  $('loginBtn').disabled = true;
+  try {
+    sessionStorage.setItem(KEY, pwd);
+    await api('/api/admin/check');
+    showMain();
+  } catch (err) {
+    showLogin(err.message === 'unauthorized' ? '密码错误' : '连接失败：' + err.message);
+  } finally { $('loginBtn').disabled = false; $('pwd').value = ''; }
+});
+$('pwd').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
+$('logoutBtn').addEventListener('click', () => showLogin());
+
+// 自动登录：sessionStorage 里还有密码就直接试
+if (sessionStorage.getItem(KEY)) {
+  api('/api/admin/check').then(showMain).catch(() => {});
+}
+</script>
+</body>
+</html>

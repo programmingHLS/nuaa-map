@@ -140,7 +140,7 @@ describe('FreshmanWindow', () => {
     expect(saved._entries[0].status).toBe('pending');
   });
 
-  it('服务端返回数据时展示服务端条目（含待人工回复状态）', async () => {
+  it('服务端返回数据时展示服务端条目（含待审核状态）', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -153,7 +153,7 @@ describe('FreshmanWindow', () => {
     setup();
     await user.click(screen.getByRole('button', { name: /新生问答/ }));
     expect(await screen.findByText(/Q: 服务器问题一/)).toBeInTheDocument();
-    expect(screen.getByText('待人工回复')).toBeInTheDocument();
+    expect(screen.getByText('⏳ 待审核')).toBeInTheDocument();
     // 显示补充回复按钮
     expect(screen.getByRole('button', { name: '补充回复' })).toBeInTheDocument();
   });

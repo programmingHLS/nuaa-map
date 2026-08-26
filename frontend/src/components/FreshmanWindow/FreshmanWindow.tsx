@@ -222,7 +222,7 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
     setEntries((prevEntries) => {
       const nextEntries = prevEntries.map((item) => {
         if (item.id === entryId) {
-          return { ...item, answer: trimmed, status: 'resolved' as const };
+          return { ...item, answer: trimmed, status: 'pending' as const };
         }
         return item;
       });
@@ -236,13 +236,13 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
       body: JSON.stringify({
         question: entry.question,
         answer: trimmed,
-        status: 'resolved',
+        status: 'pending',
       }),
     }).catch(() => { });
 
     setReplyingTo(null);
     setReplyText('');
-    setStatusText('\u56de\u590d\u5df2\u4fdd\u5b58');
+    setStatusText('\u56de\u7b54\u5df2\u63d0\u4ea4\uff0c\u7b49\u5f85\u7ba1\u7406\u5458\u5ba1\u6838');
   };
 
   useEffect(() => {
@@ -451,7 +451,13 @@ export function FreshmanWindow({ onExpandedChange }: { onExpandedChange?: (expan
                       <p className="freshman-window__item-answer">{highlightMatch(item.answer || '等待后续回复…', searchTerm)}</p>
                       <div className="freshman-window__item-meta">
                         <time className="freshman-window__item-time">{item.createdAt}</time>
-                        {item.status === 'pending' && <span className="freshman-window__chip">待人工回复</span>}
+                        {item.status === 'pending' && (
+                          <span className="freshman-window__chip">
+                            {item.answer && item.answer !== '等待人工回复'
+                              ? '⏳ 待审核'
+                              : '待人工回复'}
+                          </span>
+                        )}
                         {item.status === 'pending' && (
                           <button
                             className="freshman-window__submit freshman-window__submit--secondary"

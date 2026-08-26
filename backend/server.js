@@ -30,6 +30,44 @@ const qaEntries = qaData.questions || [];
 
 const buildings = loadJSON(path.join(FRONTEND_DATA, 'mock-buildings.json'));
 
+/* =============================================================
+ *  社区共建问答存储（JSON 文件持久化，容器需挂载 backend/data 卷）
+ * ============================================================= */
+const USER_QA_DIR = path.join(__dirname, 'data');
+const USER_QA_PATH = path.join(USER_QA_DIR, 'qa-user.json');
+const PENDING_PLACEHOLDER = '等待人工回复';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'nuaamap';
+
+function loadUserQA() {
+    try {
+        const parsed = JSON.parse(fs.readFileSync(USER_QA_PATH, 'utf-8'));
+        return Array.isArray(parsed.entries) ? parsed.entries : [];
+    } catch {
+        return [];
+    }
+}
+
+let userQaEntries = loadUserQA();
+
+function saveUserQA() {
+    try {
+        fs.mkdirSync(USER_QA_DIR, { recursive: true });
+        const tmp = `${USER_QA_PATH}.tmp`;
+        fs.writeFileSync(tmp, JSON.stringify({ _v: 1, entries: userQaEntries }, null, 2), 'utf-8');
+        fs.renameSync(tmp, USER_QA_PATH);
+    } catch (err) {
+        console.error('saveUserQA failed:', err.message);
+    }
+}
+
+function normalizeQuestion(q) {
+    return String(q || '').trim().toLowerCase().replace(/\s+/g, '');
+}
+
+function visibleUserEntries() {
+    return userQaEntries.filter(e => e.status !== 'rejected');
+}
+
 const CATEGORY_LABELS = {
     teaching: '教学楼', dormitory: '宿舍', canteen: '食堂',
     library: '图书馆', sports: '体育设施', service: '生活服务',
@@ -106,7 +144,14 @@ function scoreEntry(userTokens, questionText) {
 
 function retrieveQA(question, topN = 5) {
     const tokens = tokenize(question);
-    const scored = qaEntries.map(entry => ({
+    // 检索池 = 官方知识库 + 社区条目（含待审核，供 AI 打标说明）
+    const pool = [
+        ...qaEntries.map(e => ({ question: e.question, answer: e.answer, _source: 'official' })),
+        ...visibleUserEntries()
+            .filter(e => e.answer && e.answer !== PENDING_PLACEHOLDER)
+            .map(e => ({ question: e.question, answer: e.answer, _source: 'community', _status: e.status })),
+    ];
+    const scored = pool.map(entry => ({
         entry,
         score: scoreEntry(tokens, entry.question),
     }));
@@ -156,7 +201,12 @@ function buildSystemPrompt() {
 6. 使用中文回答。
 7. 可以适当使用 Markdown 格式提升可读性：用 **粗体** 强调关键信息，
    用有序/无序列表展示办事流程或多个选项，
-   用 > 引用块标注注意事项。但不要使用标题（#）或图片。`;
+   用 > 引用块标注注意事项。但不要使用标题（#）或图片。
+8. 标有【待审核】的参考内容来自社区用户提交、尚未经管理员审核，可信度较低：
+   - 若你的回答用到了【待审核】内容，必须在回答末尾单独一段明确说明，格式为：
+     「⚠️ 以上回答引用了 N 条待审核的社区贡献信息：<逐条简述对应问题>。该信息尚未经审核，仅供参考。」
+   - 若未使用任何【待审核】内容，则完全不需要提及待审核相关字样。
+   - 官方知识库与【待审核】内容冲突时，以官方知识库为准。`;
 }
 
 function buildUserPrompt(question, qaResults, buildingResults, contextText) {
@@ -167,9 +217,10 @@ function buildUserPrompt(question, qaResults, buildingResults, contextText) {
     }
 
     if (qaResults.length > 0) {
-        const qaText = qaResults.map((r, i) =>
-            `参考 ${i + 1}：问：${r.entry.question}\n答：${r.entry.answer}`
-        ).join('\n\n');
+        const qaText = qaResults.map((r, i) => {
+            const tag = r.entry._status === 'pending' ? '【待审核】' : '';
+            return `${tag}参考 ${i + 1}：问：${r.entry.question}\n答：${r.entry.answer}`;
+        }).join('\n\n');
         contextSections.push(`以下是从校园知识库中检索到的相关问答：\n${qaText}`);
     }
 
@@ -284,6 +335,8 @@ app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         qaEntries: qaEntries.length,
+        communityPending: userQaEntries.filter(e => e.status === 'pending').length,
+        communityApproved: userQaEntries.filter(e => e.status === 'approved').length,
         buildings: buildings.length,
         llmConfigured: !!LLM_API_KEY,
     });
@@ -299,16 +352,24 @@ app.get('/api/freshman-questions', (req, res) => {
 });
 
 // 兼容旧版前端端点 /api/qa（2026-08-23 新增）：老前端仍调用 /api/qa，
-// 返回 { entries: [...] } 供 FreshmanWindow 同步最新问答库
+// 返回官方知识库 + 社区共建条目（pending/approved 均公开可见，rejected 不展示）
 app.get('/api/qa', (req, res) => {
-    res.json({
-        entries: qaEntries.map(e => ({
+    const community = visibleUserEntries()
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+        .map(e => ({
             id: e.id,
             question: e.question,
-            answer: e.answer,
-            createdAt: 'RAG Knowledge Base',
-        })),
-    });
+            answer: e.answer || undefined,
+            status: e.status,
+            createdAt: e.createdAt,
+        }));
+    const official = qaEntries.map((e, i) => ({
+        id: `qa-official-${i + 1}`,
+        question: e.question,
+        answer: e.answer,
+        createdAt: '官方知识库',
+    }));
+    res.json({ entries: [...community, ...official] });
 });
 
 const handleFreshmanQuestion = async (req, res) => {
@@ -336,7 +397,96 @@ const handleFreshmanQuestion = async (req, res) => {
 };
 
 app.post('/api/freshman-questions', handleFreshmanQuestion);
-app.post('/api/qa', handleFreshmanQuestion);
+
+// POST /api/qa：社区共建提交（无需密码，人人可填）
+// - 未解决的问题（answer 为空或「等待人工回复」）→ 存为待审核问题
+// - 用户补充的答案 → 存为待审核答案（审核通过前同样公开可见并打标）
+app.post('/api/qa', (req, res) => {
+    const body = req.body || {};
+    const q = typeof body.question === 'string' ? body.question.trim() : '';
+    if (!q) {
+        return res.status(400).json({ error: 'question is required' });
+    }
+
+    const now = new Date().toISOString();
+    const rawAnswer = typeof body.answer === 'string' ? body.answer.trim() : '';
+    const cleanAnswer = rawAnswer && rawAnswer !== PENDING_PLACEHOLDER ? rawAnswer : null;
+
+    let entry = userQaEntries.find(e => normalizeQuestion(e.question) === normalizeQuestion(q));
+    if (entry) {
+        if (cleanAnswer) {
+            entry.answer = cleanAnswer;
+            entry.status = 'pending';
+            entry.updatedAt = now;
+        } else {
+            entry.updatedAt = now; // 重复点击「未解决」只刷新时间，不重复建条
+        }
+    } else {
+        entry = {
+            id: `uqa-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            question: q,
+            answer: cleanAnswer,
+            status: 'pending',
+            createdAt: now,
+            updatedAt: now,
+        };
+        userQaEntries.unshift(entry);
+    }
+    saveUserQA();
+
+    res.status(201).json({
+        entry: {
+            id: entry.id,
+            question: entry.question,
+            answer: entry.answer || undefined,
+            status: entry.status,
+            createdAt: entry.createdAt,
+        },
+    });
+});
+
+/* =============================================================
+ *  管理后台 API（/admin 页面专用，密码见 ADMIN_PASSWORD）
+ * ============================================================= */
+
+function requireAdmin(req, res, next) {
+    if (req.get('x-admin-password') === ADMIN_PASSWORD) return next();
+    return res.status(401).json({ error: 'unauthorized' });
+}
+
+app.get('/api/admin/check', requireAdmin, (req, res) => {
+    res.json({ ok: true });
+});
+
+app.get('/api/admin/entries', requireAdmin, (req, res) => {
+    const status = req.query.status;
+    const entries = status
+        ? userQaEntries.filter(e => e.status === status)
+        : userQaEntries;
+    res.json({ entries });
+});
+
+// 审核/修改：支持更新 question、answer、status（approved / pending / rejected）
+app.patch('/api/admin/entries/:id', requireAdmin, (req, res) => {
+    const entry = userQaEntries.find(e => e.id === req.params.id);
+    if (!entry) return res.status(404).json({ error: 'entry not found' });
+
+    const body = req.body || {};
+    if (typeof body.question === 'string' && body.question.trim()) entry.question = body.question.trim();
+    if (typeof body.answer === 'string') entry.answer = body.answer.trim() || null;
+    if (['pending', 'approved', 'rejected'].includes(body.status)) entry.status = body.status;
+    entry.updatedAt = new Date().toISOString();
+    saveUserQA();
+    res.json({ entry });
+});
+
+app.delete('/api/admin/entries/:id', requireAdmin, (req, res) => {
+    const idx = userQaEntries.findIndex(e => e.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'entry not found' });
+    const [removed] = userQaEntries.splice(idx, 1);
+    saveUserQA();
+    res.json({ removed: removed.id });
+});
 
 app.post('/api/chat', async (req, res) => {
     const body = req.body || {};
