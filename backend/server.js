@@ -454,11 +454,11 @@ function requireAdmin(req, res, next) {
     return res.status(401).json({ error: 'unauthorized' });
 }
 
-app.get('/api/admin/check', requireAdmin, (req, res) => {
+app.get('/api/review/check', requireAdmin, (req, res) => {
     res.json({ ok: true });
 });
 
-app.get('/api/admin/entries', requireAdmin, (req, res) => {
+app.get('/api/review/entries', requireAdmin, (req, res) => {
     const status = req.query.status;
     const entries = status
         ? userQaEntries.filter(e => e.status === status)
@@ -467,7 +467,7 @@ app.get('/api/admin/entries', requireAdmin, (req, res) => {
 });
 
 // 审核/修改：支持更新 question、answer、status（approved / pending / rejected）
-app.patch('/api/admin/entries/:id', requireAdmin, (req, res) => {
+app.patch('/api/review/entries/:id', requireAdmin, (req, res) => {
     const entry = userQaEntries.find(e => e.id === req.params.id);
     if (!entry) return res.status(404).json({ error: 'entry not found' });
 
@@ -480,7 +480,7 @@ app.patch('/api/admin/entries/:id', requireAdmin, (req, res) => {
     res.json({ entry });
 });
 
-app.delete('/api/admin/entries/:id', requireAdmin, (req, res) => {
+app.delete('/api/review/entries/:id', requireAdmin, (req, res) => {
     const idx = userQaEntries.findIndex(e => e.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'entry not found' });
     const [removed] = userQaEntries.splice(idx, 1);

@@ -157,7 +157,7 @@ function esc(s) {
 }
 
 async function refresh() {
-  const data = await api('/api/admin/entries');
+  const data = await api('/api/review/entries');
   renderList(data.entries || []);
 }
 
@@ -169,10 +169,10 @@ $('list').addEventListener('click', async (ev) => {
   const act = btn.dataset.act ?? btn.getAttribute('act');
   btn.disabled = true;
   try {
-    if (act === 'approve') { await api(`/api/admin/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'approved' }) }); toast('已通过 ✅'); }
-    else if (act === 'reject') { await api(`/api/admin/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'rejected' }) }); toast('已拒绝 🚫'); }
-    else if (act === 'repending') { await api(`/api/admin/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'pending' }) }); toast('已退回待审核'); }
-    else if (act === 'delete') { if (!confirm('确定删除该条目？不可恢复')) { btn.disabled = false; return; } await api(`/api/admin/entries/${id}`, { method:'DELETE' }); toast('已删除'); }
+    if (act === 'approve') { await api(`/api/review/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'approved' }) }); toast('已通过 ✅'); }
+    else if (act === 'reject') { await api(`/api/review/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'rejected' }) }); toast('已拒绝 🚫'); }
+    else if (act === 'repending') { await api(`/api/review/entries/${id}`, { method:'PATCH', body: JSON.stringify({ status:'pending' }) }); toast('已退回待审核'); }
+    else if (act === 'delete') { if (!confirm('确定删除该条目？不可恢复')) { btn.disabled = false; return; } await api(`/api/review/entries/${id}`, { method:'DELETE' }); toast('已删除'); }
     else if (act === 'edit') { enterEdit(card, id); return; }
     await refresh();
   } catch (err) { toast('操作失败：' + err.message); btn.disabled = false; }
@@ -198,7 +198,7 @@ function enterEdit(card, id) {
   wrap.querySelector('#cancelBtn').onclick = () => { wrap.remove(); card.querySelector('.actions').style.display = ''; };
   wrap.querySelector('#saveBtn').onclick = async () => {
     try {
-      await api(`/api/admin/entries/${id}`, {
+      await api(`/api/review/entries/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({
           question: wrap.querySelector('input').value,
@@ -234,7 +234,7 @@ $('loginBtn').addEventListener('click', async () => {
   $('loginBtn').disabled = true;
   try {
     sessionStorage.setItem(KEY, pwd);
-    await api('/api/admin/check');
+    await api('/api/review/check');
     showMain();
   } catch (err) {
     showLogin(err.message === 'unauthorized' ? '密码错误' : '连接失败：' + err.message);
@@ -245,7 +245,7 @@ $('logoutBtn').addEventListener('click', () => showLogin());
 
 // 自动登录：sessionStorage 里还有密码就直接试
 if (sessionStorage.getItem(KEY)) {
-  api('/api/admin/check').then(showMain).catch(() => {});
+  api('/api/review/check').then(showMain).catch(() => {});
 }
 </script>
 </body>
