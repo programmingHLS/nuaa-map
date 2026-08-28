@@ -97,7 +97,7 @@ describe('MapView', () => {
     const last = onMapStateChange.mock.calls.at(-1)![0];
     expect(last.imageWidth).toBe(3840);
     expect(last.imageHeight).toBe(3328);
-    expect(last.imageSrc).toContain('hand-drawn-map-v1.jpg');
+    expect(last.imageSrc).toContain('hand-drawn-map-v1.webp');
   });
 
   it('map-navigate 事件更新地图变换（钳制边界）', async () => {

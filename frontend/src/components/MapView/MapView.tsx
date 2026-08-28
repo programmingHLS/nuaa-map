@@ -10,7 +10,7 @@ import { getCenterTransform, POPOVER_CENTER_OFFSET } from '../BuildingPopover/Bu
 import { buildingSprites } from '../../data/building-sprites';
 import './MapView.css';
 
-const MAP_SRC = `${CDN_BASE}/map/hand-drawn-map-v1.jpg`;
+const MAP_SRC = `${CDN_BASE}/map/hand-drawn-map-v1.webp`;
 
 export interface MapViewState {
   transform: MapTransform;

@@ -603,7 +603,7 @@
     "description": "波音公司双发中短程运输机，学校自主采购。南航第一台用于民航专业实验教学的主流民用机型，使南航成为工信部高校中首架拥有适航教学飞机的高校。",
     "floors": 0,
     "images": [
-      "https://nuaamap-1378966268.cos.ap-nanjing.myqcloud.com/buildings/b737/01.webp"
+      "/buildings/b737/01.webp"
     ]
   },
   {
@@ -619,7 +619,7 @@
     "description": "英国宇航公司四发短程喷气式支线客机，南航上海校友会捐赠（C919总设计师、南航77级校友吴光辉院士牵头推动）。标准载客量100人，主打短跑道起降性能。",
     "floors": 0,
     "images": [
-      "https://nuaamap-1378966268.cos.ap-nanjing.myqcloud.com/buildings/bae146/01.webp"
+      "/buildings/bae146/01.webp"
     ]
   },
   {
@@ -635,11 +635,11 @@
     "description": "位于B5-104，致元书院教务员辅导员办公室。致元书院是南航面向数智时代人才培养设立的创新型特色书院，现有2025级本科生720人，覆盖材料、数学、计算机、人工智能等4个学院14个专业。",
     "floors": 1,
     "images": [
-      "/buildings/shyuan/01.jpg",
-      "/buildings/shyuan/02.jpg",
-      "/buildings/shyuan/03.jpg",
-      "/buildings/shyuan/04.jpg",
-      "/buildings/shyuan/05.jpg"
+      "/buildings/shyuan/01.webp",
+      "/buildings/shyuan/02.webp",
+      "/buildings/shyuan/03.webp",
+      "/buildings/shyuan/04.webp",
+      "/buildings/shyuan/05.webp"
     ]
   }
 ]

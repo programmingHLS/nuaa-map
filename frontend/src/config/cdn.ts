@@ -1,10 +1,9 @@
 /**
- * CDN 资源基础 URL（腾讯云 COS）
+ * CDN 资源基础 URL（V4 实验版：自有 NAS 直链）
  *
- * 所有静态图片（底图、精灵图、占位图等）通过 COS 分发，
- * 不在 Git 仓库中存储大体积图片文件。
+ * 2026-08-28 V4 改造：放弃腾讯云 COS，图片改由自家 NAS 提供。
+ * 访问链路：nuaamap-data.liguiyu.com 灰云 DNS 直连公网 IP:10443 → NPM → V4 容器。
  *
- * 要更新图片：直接上传到 COS bucket（覆盖同名文件），前端无需任何改动。
- * 上传脚本见：scripts/upload-to-cos.cjs
+ * 要更新图片：上传到 NAS V4 容器对应目录（覆盖同名文件），前端无需任何改动。
  */
-export const CDN_BASE = 'https://nuaamap-1378966268.cos.ap-nanjing.myqcloud.com';
+export const CDN_BASE = 'https://nuaamap-data.liguiyu.com:10443';

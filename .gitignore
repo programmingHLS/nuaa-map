@@ -46,10 +46,9 @@ coverage/
 .playwright-mcp/
 tianmuhu-campus-map.png
 
-# Large static images served via CDN (腾讯云 COS)
-frontend/public/hand-drawn-map-v1.jpg
-frontend/public/tianmuhu-map.jpg
-frontend/public/placeholder-map.svg
+# Static images now self-hosted on NAS (2026-08-28 V4 改造: 弃用腾讯云 COS)
+# 图片以 WebP 形式入库，随仓库存放：frontend/public/sprites/*.webp 等
+# 旧 COS 时代的忽略规则已移除；手绘底图 webp 已入库
 frontend/public/buildings/sprites/
 
 # Claude Code
@@ -60,5 +59,3 @@ frontend/public/buildings/sprites/
 scripts/hand-drawn-map*.jpg
 scripts/sprite-cropper.html
 scripts/airplane*
-frontend/public/buildings/b737/
-frontend/public/buildings/bae146/
