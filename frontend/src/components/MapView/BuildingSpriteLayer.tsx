@@ -62,6 +62,9 @@ export function BuildingSpriteLayer({
    * 触屏设备手指点击区域大，直接走包围盒命中，避免 26 张 2496×1600 大图
    * 全量解码导致移动端内存爆炸（~400MB）崩溃） */
   useEffect(() => {
+    let loaded = 0;
+    const total = buildingSprites.length;
+
     const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
     if (isCoarsePointer) {
       // 触屏：只加载小图拿真实宽高比用于包围盒命中（corsBlocked 路径）。
@@ -93,8 +96,6 @@ export function BuildingSpriteLayer({
       return;
     }
 
-    let loaded = 0;
-    const total = buildingSprites.length;
     cacheRef.current = new Array(total).fill(null);
 
     buildingSprites.forEach((sprite, idx) => {

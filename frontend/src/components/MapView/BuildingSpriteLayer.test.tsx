@@ -140,4 +140,27 @@ describe('BuildingSpriteLayer', () => {
     await new Promise(r => setTimeout(r, 30));
     expect(onBuildingClick).not.toHaveBeenCalled();
   });
+
+  it('触屏设备(pointer:coarse)跳过 canvas 解码，onReady 正常触发', async () => {
+    stubImage();
+    // 模拟触屏指针
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes('(pointer: coarse)'),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+
+    const { onReady } = setup();
+    await waitFor(() => expect(onReady).toHaveBeenCalled(), { timeout: 2000 });
+
+    // 触屏：DOM img 全部引用 small.webp，不引用原图（避免大图解码内存爆炸）
+    const srcs = Array.from(document.querySelectorAll<HTMLImageElement>('img.building-sprite-img')).map(i => i.src);
+    expect(srcs.length).toBeGreaterThan(0);
+    expect(srcs.every(s => s.includes('.small.webp'))).toBe(true);
+  });
 });
