@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node -e \"const fs=require('fs');fs.mkdirSync('dist/admin',{recursive:true});fs.copyFileSync('../backend/admin/index.html','dist/admin/index.html')\"",
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
