@@ -58,8 +58,41 @@ export function BuildingSpriteLayer({
   /* disabled 时重置 hover 状态 */
   useEffect(() => { if (disabled) setActiveIdx(-1); }, [disabled]);
 
-  /* 预加载所有精灵图到离屏 canvas */
+  /* 预加载所有精灵图到离屏 canvas（仅桌面鼠标设备需要像素级 alpha 检测；
+   * 触屏设备手指点击区域大，直接走包围盒命中，避免 26 张 2496×1600 大图
+   * 全量解码导致移动端内存爆炸（~400MB）崩溃） */
   useEffect(() => {
+    const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+    if (isCoarsePointer) {
+      // 触屏：只加载小图拿真实宽高比用于包围盒命中（corsBlocked 路径）。
+      // 每张小图仅 0.9MB 解码内存（原图 15MB），26 张合计 ~25MB，安全。
+      cacheRef.current = new Array(buildingSprites.length).fill(null);
+      buildingSprites.forEach((sprite, idx) => {
+        const img = new Image();
+        img.onload = () => {
+          cacheRef.current[idx] = {
+            sw: 1, sh: 1, alpha: new Uint8Array(1),
+            naturalW: img.naturalWidth, naturalH: img.naturalHeight,
+            corsBlocked: true,
+          };
+          loaded++;
+          if (loaded >= total) onReady?.();
+        };
+        img.onerror = () => {
+          cacheRef.current[idx] = {
+            sw: 1, sh: 1, alpha: new Uint8Array(1),
+            naturalW: sprite.displayWidth,
+            naturalH: sprite.displayWidth * FALLBACK_ASPECT_RATIO,
+            corsBlocked: true,
+          };
+          loaded++;
+          if (loaded >= total) onReady?.();
+        };
+        img.src = sprite.image.replace(/\.webp$/, '.small.webp');
+      });
+      return;
+    }
+
     let loaded = 0;
     const total = buildingSprites.length;
     cacheRef.current = new Array(total).fill(null);
@@ -285,6 +318,7 @@ export function BuildingSpriteLayer({
       {buildingSprites.map((sprite, idx) => {
         const isActive = idx === activeIdx;
         const isSelected = sprite.buildingIds.includes(selectedBuildingId ?? '');
+        const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
 
         return (
           <div
@@ -301,12 +335,14 @@ export function BuildingSpriteLayer({
             }}
           >
             <img
-              src={sprite.image}
+              src={isCoarsePointer ? sprite.image.replace(/\.webp$/, '.small.webp') : sprite.image}
               alt={sprite.buildingIds
                 .map((id) => buildings.find((b) => b.id === id)?.name)
                 .filter(Boolean)
                 .join(' / ')}
               draggable={false}
+              loading="lazy"
+              decoding="async"
               className="building-sprite-img"
             />
           </div>

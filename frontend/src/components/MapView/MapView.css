@@ -113,7 +113,11 @@
 
 .map-layer { position:absolute; top:0; left:0; transition:opacity 0.4s ease; }
 .map-container--dragging .map-layer { transition:opacity 0.4s ease; }
-.map-image { display:block; max-width:none; user-select:none; -webkit-user-drag:none; }
+.map-image { display:block; max-width:none; user-select:none; -webkit-user-drag:none;
+  /* 固定逻辑尺寸（热点/精灵图坐标锚定 7176×5382）。
+   * srcset 可能加载 2048 小图，但 CSS 尺寸必须保持 7176×5382，
+   * 由 transform: scale() 负责缩放显示，坐标系才不乱 */
+  width: 7176px; height: 5382px; }
 
 .map-controls { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:10; }
 .map-ctrl-btn {

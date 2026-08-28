@@ -95,9 +95,10 @@ describe('MapView', () => {
     const { onMapStateChange } = await setup();
     await waitFor(() => expect(onMapStateChange).toHaveBeenCalled());
     const last = onMapStateChange.mock.calls.at(-1)![0];
-    expect(last.imageWidth).toBe(3840);
-    expect(last.imageHeight).toBe(3328);
-    expect(last.imageSrc).toContain('hand-drawn-map-v1.webp');
+    // 底图逻辑尺寸固定 7176×5382（srcset 小图仅用于渲染，坐标锚定不变）
+    expect(last.imageWidth).toBe(7176);
+    expect(last.imageHeight).toBe(5382);
+    expect(last.imageSrc).toContain('hand-drawn-map-v1.small.webp');
   });
 
   it('map-navigate 事件更新地图变换（钳制边界）', async () => {
@@ -135,9 +136,9 @@ describe('MapView', () => {
     fireEvent.click(screen.getByLabelText('重置视图'));
     await waitFor(() => {
       const layer = container.querySelector('.map-layer') as HTMLElement;
-      // 宽度适配：scale = 800 / 3840，x = 0
+      // 宽度适配：scale = 800 / 7176（底图逻辑宽度），x = 0
       expect(layer.style.transform).toContain('translate(0px, ');
-      expect(layer.style.transform).toContain('scale(0.20833333333333334)');
+      expect(layer.style.transform).toContain('scale(0.11148272017837235)');
     });
   });
 });

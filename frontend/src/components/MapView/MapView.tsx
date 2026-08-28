@@ -11,6 +11,11 @@ import { buildingSprites } from '../../data/building-sprites';
 import './MapView.css';
 
 const MAP_SRC = `${CDN_BASE}/map/hand-drawn-map-v1.webp`;
+const MAP_SRC_SMALL = `${CDN_BASE}/map/hand-drawn-map-v1.small.webp`;
+/** 底图逻辑尺寸恒为 7176×5382（热点/精灵图坐标锚定），
+ *  移动端 srcset 加载的 2048px 小图仅用于渲染，naturalWidth 不可用作坐标系 */
+const MAP_WIDTH = 7176;
+const MAP_HEIGHT = 5382;
 
 export interface MapViewState {
   transform: MapTransform;
@@ -72,13 +77,14 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
       containerHeight: containerSize.h,
       imageWidth: imageMeta.width,
       imageHeight: imageMeta.height,
-      imageSrc: MAP_SRC,
+      imageSrc: MAP_SRC_SMALL,
     });
   }, [transform, containerSize, imageMeta, onMapStateChange]);
 
   const handleImageLoad = useCallback(() => {
-    const img = imageRef.current;
-    if (img) setImageMeta({ width: img.naturalWidth, height: img.naturalHeight, loaded: true });
+    // 注意：srcset 可能加载 2048px 小图，naturalWidth 不等于逻辑尺寸。
+    // 热点/精灵图坐标全部锚定 7176×5382，必须用常量，否则坐标系错乱。
+    setImageMeta({ width: MAP_WIDTH, height: MAP_HEIGHT, loaded: true });
   }, []);
 
   /* 图片 + 容器就绪后宽度适配（左右对齐窗口） */
@@ -178,7 +184,9 @@ export function MapView({ buildings, selectedBuilding, onBuildingClick, onMapSta
         }}
       >
         <img ref={imageRef} className="map-image" src={MAP_SRC}
-          alt="南航天目湖校区地图" onLoad={handleImageLoad} draggable={false} />
+          srcSet={`${MAP_SRC_SMALL} 2048w, ${MAP_SRC} 7176w`}
+          sizes="(max-width: 900px) 2048px, 7176px"
+          alt="南航天目湖校区地图" onLoad={handleImageLoad} draggable={false} decoding="async" />
 
         {imageMeta.loaded && (
           <BuildingSpriteLayer
